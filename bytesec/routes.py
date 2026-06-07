@@ -72,6 +72,46 @@ def _course_stats():
     }
 
 
+def _learning_tracks():
+    return [
+        {
+            "title": "Web Exploitation",
+            "description": "Browser, HTTP, database, and access-control flaws taught from concept to controlled lab practice.",
+            "icon": "language",
+            "status": "Live",
+            "status_class": "bg-secondary-container text-on-secondary-container",
+        },
+        {
+            "title": "Reverse Engineering",
+            "description": "Static and dynamic analysis workflows for understanding compiled programs and hidden logic.",
+            "icon": "memory",
+            "status": "Planned",
+            "status_class": "bg-surface-container text-on-surface-variant",
+        },
+        {
+            "title": "Pwn",
+            "description": "Binary exploitation fundamentals, process memory, stack behavior, and dockerized practice targets.",
+            "icon": "terminal",
+            "status": "Planned",
+            "status_class": "bg-surface-container text-on-surface-variant",
+        },
+        {
+            "title": "Forensics",
+            "description": "Evidence-driven investigation across files, logs, packets, images, and challenge artifacts.",
+            "icon": "travel_explore",
+            "status": "Planned",
+            "status_class": "bg-surface-container text-on-surface-variant",
+        },
+        {
+            "title": "Cryptography",
+            "description": "Encoding, classical crypto, implementation mistakes, and practical reasoning through guided puzzles.",
+            "icon": "vpn_key",
+            "status": "Planned",
+            "status_class": "bg-surface-container text-on-surface-variant",
+        },
+    ]
+
+
 def _parse_options(step):
     """Parse JSON options into template-ready format."""
     raw = json.loads(step.options) if isinstance(step.options, str) else step.options
@@ -193,9 +233,12 @@ def _highlight_line(line, language):
 def index():
     modules = Module.query.order_by(Module.order_index).all()
     user_count = User.query.count()
+    tracks = _learning_tracks()
     return render_template(
         "index.html",
         modules=modules,
+        tracks=tracks,
+        track_count=len(tracks),
         user_count=user_count,
         **_course_stats(),
     )
