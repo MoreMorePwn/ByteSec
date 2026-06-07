@@ -285,6 +285,9 @@
           <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.dashboard') }}">Dashboard</a>
           <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.course') }}">Course</a>
           <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+          {% if is_admin_user() %}
+          <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.admin_docker') }}">Admin</a>
+          {% endif %}
           {% endif %}
         </div>
       </div>
@@ -294,6 +297,11 @@
           <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
         </button>
         {% if g.user %}
+        {% if is_admin_user() %}
+        <a href="{{ url_for('main.admin_docker') }}" class="text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full flex items-center justify-center" title="Docker admin">
+          <span class="material-symbols-outlined">deployed_code</span>
+        </a>
+        {% endif %}
         <a href="{{ url_for('main.leaderboard') }}" class="text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full flex items-center justify-center">
           <span class="material-symbols-outlined">military_tech</span>
         </a>

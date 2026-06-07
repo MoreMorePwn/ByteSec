@@ -1,8 +1,12 @@
+import base64
 import json
 import hashlib
 import html
+import os
 import re
+import subprocess
 from functools import wraps
+from pathlib import Path
 
 from flask import (
     Blueprint, g, flash, jsonify, redirect, render_template,
@@ -16,6 +20,8 @@ from .models import Lesson, LessonStep, Module, User, UserProgress
 
 
 bp = Blueprint("main", __name__)
+ROOT_DIR = Path(__file__).resolve().parents[1]
+CTF_DIR = ROOT_DIR / "ctf_chall" / "ezsqli"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -28,6 +34,35 @@ def login_required(view):
             return redirect(url_for("main.login"))
         return view(*a, **kw)
     return wrapped
+
+
+def _is_admin_user():
+    if g.user is None:
+        return False
+    admins = {
+        username.strip()
+        for username in os.environ.get("BYTESEC_ADMIN_USERS", "demo").split(",")
+        if username.strip()
+    }
+    return g.user.username in admins
+
+
+def admin_required(view):
+    @wraps(view)
+    def wrapped(*a, **kw):
+        if g.user is None:
+            flash("Please log in first.", "warning")
+            return redirect(url_for("main.login"))
+        if not _is_admin_user():
+            flash("Admin access is required.", "danger")
+            return redirect(url_for("main.dashboard"))
+        return view(*a, **kw)
+    return wrapped
+
+
+@bp.app_context_processor
+def inject_admin_helpers():
+    return {"is_admin_user": _is_admin_user}
 
 
 @bp.before_app_request
@@ -187,6 +222,40 @@ def _render_table(lines):
     return "".join(table)
 
 
+def _looks_like_diagram(code):
+    markers = ("╔", "║", "╚", "╱", "╲", "│", "├", "└", "→", "↓")
+    return any(marker in code for marker in markers)
+
+
+def _render_diagram_image(code, label="Diagram"):
+    lines = code.splitlines() or [""]
+    char_width = 9
+    line_height = 20
+    padding_x = 20
+    padding_y = 18
+    width = max(360, min(1200, max(len(line) for line in lines) * char_width + padding_x * 2))
+    height = len(lines) * line_height + padding_y * 2
+    text_rows = []
+    for index, line in enumerate(lines):
+        y = padding_y + 14 + index * line_height
+        text_rows.append(f'<text x="{padding_x}" y="{y}">{html.escape(line)}</text>')
+    svg = (
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" '
+        f'viewBox="0 0 {width} {height}" role="img" aria-label="{html.escape(label)}">'
+        '<rect width="100%" height="100%" rx="12" fill="#0d1117"/>'
+        '<style>text{font-family:"JetBrains Mono","Consolas",monospace;font-size:14px;fill:#d4d4d4;white-space:pre}</style>'
+        + "".join(text_rows)
+        + "</svg>"
+    )
+    encoded = base64.b64encode(svg.encode()).decode()
+    return (
+        '<figure class="my-4 overflow-x-auto">'
+        f'<img class="max-w-none rounded-lg border border-outline-variant shadow-sm" '
+        f'src="data:image/svg+xml;base64,{encoded}" alt="{html.escape(label)}">'
+        "</figure>"
+    )
+
+
 def _render_material(value):
     """Render the small markdown subset used by seeded lesson material."""
     text = _normalize_material(value).strip()
@@ -233,12 +302,16 @@ def _render_material(value):
             flush_table()
             flush_lists()
             if in_code:
-                code = html.escape("\n".join(code_lines))
-                lang_class = f" language-{html.escape(code_lang)}" if code_lang else ""
-                blocks.append(
-                    f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[16px]">'
-                    f'<code class="{lang_class}">{code}</code></pre>'
-                )
+                raw_code = "\n".join(code_lines)
+                if _looks_like_diagram(raw_code):
+                    blocks.append(_render_diagram_image(raw_code))
+                else:
+                    code = html.escape(raw_code)
+                    lang_class = f" language-{html.escape(code_lang)}" if code_lang else ""
+                    blocks.append(
+                        f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[16px]">'
+                        f'<code class="{lang_class}">{code}</code></pre>'
+                    )
                 code_lines.clear()
                 code_lang = ""
                 in_code = False
@@ -310,11 +383,15 @@ def _render_material(value):
     flush_table()
     flush_lists()
     if in_code and code_lines:
-        code = html.escape("\n".join(code_lines))
-        blocks.append(
-            f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[16px]">'
-            f'<code>{code}</code></pre>'
-        )
+        raw_code = "\n".join(code_lines)
+        if _looks_like_diagram(raw_code):
+            blocks.append(_render_diagram_image(raw_code))
+        else:
+            code = html.escape(raw_code)
+            blocks.append(
+                f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[16px]">'
+                f'<code>{code}</code></pre>'
+            )
 
     return Markup("\n".join(blocks))
 
@@ -332,8 +409,6 @@ def _build_table_html(raw_json):
 
     cols = data["columns"]
     rows = data.get("rows", [])
-    highlight = data.get("highlight_row", -1)
-
     html = '<table class="w-full text-left border-collapse whitespace-nowrap">'
     html += '<thead><tr class="bg-surface-container border-b border-outline-variant">'
     for col in cols:
@@ -341,8 +416,6 @@ def _build_table_html(raw_json):
     html += '</tr></thead><tbody class="font-label-mono text-[13px]">'
     for i, row in enumerate(rows):
         cls = "border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors"
-        if i == highlight:
-            cls = "border-b border-secondary/40 bg-secondary-container/20"
         html += f'<tr class="{cls}">'
         for j, val in enumerate(row):
             tcls = "p-3 border-r border-outline-variant/50 last:border-r-0"
@@ -378,8 +451,9 @@ def _highlight_line(line, language):
     """Very basic syntax highlighting via span classes. Input is already HTML-escaped."""
     import re
     if language in ("python", "py"):
+        if line.lstrip().startswith("#"):
+            return f'<span class="syntax-comment">{line}</span>'
         # Comments first (uses # which is safe in escaped HTML)
-        line = re.sub(r'(#.*)', r'<span class="syntax-comment">\1</span>', line)
         # Keywords
         keywords = r'\b(import|from|def|return|if|else|elif|for|class|try|except|with|as|and|or|not|in|is|None|True|False)\b'
         line = re.sub(keywords, r'<span class="syntax-keyword">\1</span>', line)
@@ -388,13 +462,16 @@ def _highlight_line(line, language):
         # Function calls
         line = re.sub(r'\b([a-zA-Z_]\w*)\s*\(', r'<span class="syntax-function">\1</span>(', line)
     elif language in ("sql",):
+        if line.lstrip().startswith("--"):
+            return f'<span class="syntax-comment">{line}</span>'
         keywords = r'\b(SELECT|FROM|WHERE|AND|OR|INSERT|UPDATE|DELETE|DROP|CREATE|TABLE|INTO|VALUES|SET|LIKE|UNION|ORDER|BY|LIMIT|JOIN|ON|AS|NULL|NOT|IN|EXISTS|BETWEEN|HAVING|GROUP|DISTINCT|TOP|SLEEP|IF|CONCAT|SUBSTRING|CONVERT|LOAD_FILE|EXTRACTVALUE)\b'
         line = re.sub(keywords, r'<span class="syntax-keyword">\1</span>', line, flags=re.IGNORECASE)
         # SQL strings use &#x27; (escaped single quotes)
         line = re.sub(r'(&#x27;[^&]*?&#x27;)', r'<span class="syntax-string">\1</span>', line)
         line = re.sub(r'(--.*)', r'<span class="syntax-comment">\1</span>', line)
     elif language in ("javascript", "js"):
-        line = re.sub(r'(//.*)', r'<span class="syntax-comment">\1</span>', line)
+        if line.lstrip().startswith("//"):
+            return f'<span class="syntax-comment">{line}</span>'
         keywords = r'\b(const|let|var|function|return|if|else|for|while|class|new|this|async|await|import|export|from|require)\b'
         line = re.sub(keywords, r'<span class="syntax-keyword">\1</span>', line)
         line = re.sub(r'(`[^`]*`|&quot;.*?&quot;|&#x27;.*?&#x27;)', r'<span class="syntax-string">\1</span>', line)
@@ -534,6 +611,57 @@ def course():
         mod_progress=mod_progress,
         overall_pct=overall_pct,
         first_lesson=first_lesson,
+    )
+
+
+def _docker_compose(args, timeout=45):
+    try:
+        result = subprocess.run(
+            ["docker", "compose", *args],
+            cwd=CTF_DIR,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+    except FileNotFoundError:
+        return {"ok": False, "output": "Docker is not installed or not on PATH."}
+    except subprocess.TimeoutExpired:
+        return {"ok": False, "output": "Docker command timed out."}
+
+    output = "\n".join(part for part in (result.stdout.strip(), result.stderr.strip()) if part)
+    return {"ok": result.returncode == 0, "output": output or "Command completed."}
+
+
+@bp.route("/admin/docker", methods=["GET", "POST"])
+@admin_required
+def admin_docker():
+    action_result = None
+    if request.method == "POST":
+        action = request.form.get("action", "")
+        commands = {
+            "start": ["up", "-d", "--build"],
+            "stop": ["down"],
+            "restart": ["restart"],
+        }
+        if action in commands:
+            action_result = _docker_compose(commands[action], timeout=90)
+            flash(
+                f"Docker {action} {'completed' if action_result['ok'] else 'failed'}.",
+                "success" if action_result["ok"] else "danger",
+            )
+        else:
+            flash("Unknown Docker action.", "danger")
+
+    status = _docker_compose(["ps"], timeout=20)
+    logs = _docker_compose(["logs", "--tail=80"], timeout=20)
+    return render_template(
+        "admin_docker.html",
+        ctf_dir=CTF_DIR,
+        ctf_url=os.environ.get("BYTESEC_CTF_URL", "http://127.0.0.1:8004"),
+        status=status,
+        logs=logs,
+        action_result=action_result,
     )
 
 

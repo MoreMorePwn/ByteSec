@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Docker Admin — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+  <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-2">Admin</p>
+      <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary mb-2 font-['Hanken_Grotesk']">Docker Lab Control</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+        Manage the local EzSQLi CTF container used by the final challenge module.
+      </p>
+    </div>
+    <a href="{{ ctf_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity items-center gap-2">
+      Open CTF <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+    </a>
+  </header>
+
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5">
+      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider mb-2">Challenge URL</p>
+      <p class="font-label-mono text-[14px] text-primary break-all">{{ ctf_url }}</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5 lg:col-span-2">
+      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider mb-2">Compose Path</p>
+      <p class="font-label-mono text-[14px] text-primary break-all">{{ ctf_dir }}</p>
+    </div>
+  </section>
+
+  <section class="bg-surface-container-lowest border border-border-muted rounded-lg p-5">
+    <h2 class="font-headline-md text-headline-md text-primary mb-4">Controls</h2>
+    <form method="post" class="flex flex-wrap gap-3">
+      <button name="action" value="start" class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">play_arrow</span> Start
+      </button>
+      <button name="action" value="restart" class="bg-surface-container border border-outline-variant text-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">restart_alt</span> Restart
+      </button>
+      <button name="action" value="stop" class="bg-surface-container border border-outline-variant text-error font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-80 transition-opacity flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">stop</span> Stop
+      </button>
+    </form>
+    {% if action_result %}
+    <pre class="editor-bg rounded-lg p-4 overflow-x-auto mt-4 font-label-mono text-[13px] leading-[16px]">{{ action_result.output }}</pre>
+    {% endif %}
+  </section>
+
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant bg-surface-container-high">
+        <h2 class="font-headline-sm text-headline-sm text-primary">Status</h2>
+      </div>
+      <pre class="editor-bg p-4 overflow-x-auto font-label-mono text-[13px] leading-[16px] min-h-[180px]">{{ status.output }}</pre>
+    </div>
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg overflow-hidden">
+      <div class="px-5 py-3 border-b border-outline-variant bg-surface-container-high">
+        <h2 class="font-headline-sm text-headline-sm text-primary">Recent Logs</h2>
+      </div>
+      <pre class="editor-bg p-4 overflow-x-auto font-label-mono text-[13px] leading-[16px] min-h-[180px]">{{ logs.output }}</pre>
+    </div>
+  </section>
+</div>
+{% endblock %}

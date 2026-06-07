@@ -26,7 +26,6 @@ USERS_TABLE = _j({
         [3, "charlie", "qwerty", "charlie@mail.com", "user"],
         [4, "diana", "hunter2", "diana@mail.com", "moderator"],
     ],
-    "highlight_row": 0,
 })
 
 
@@ -155,6 +154,10 @@ def _activity_title(heading):
 def _activity_type(block, title):
     type_value = _field_value(block, "type")
     source = f"{type_value} {title}".upper()
+    if "GAUNTLET" in source:
+        return "mcq"
+    if any(token in source for token in ("SANDBOX", "DRAG", "DND", "BUILD", "FIX")):
+        return "skip"
     if "PREDICT" in source:
         return "predict"
     if "MULTIPLE CHOICE" in source or re.search(r"\bMC\b", source):
@@ -267,11 +270,22 @@ def _remove_first_code_block(text):
 def _step_from_activity(lesson_id, order_index, heading, block):
     title = _activity_title(heading)
     kind = _activity_type(block, title)
+    if kind == "skip":
+        return None
+
     prompt = _field_value(block, "prompt") or _before_answer_material(block)
     options, checked_answer = _options_from_block(block)
     answer = checked_answer or _option_answer_from_text(_answer_text(block))
     code_snippet = None
     code_language = None
+
+    if "GAUNTLET" in title:
+        question_match = re.search(
+            r"(Which of the following is TRUE about SQL injection defense\?)",
+            block,
+            re.IGNORECASE,
+        )
+        prompt = question_match.group(1) if question_match else "Which defense statement is correct?"
 
     if kind == "spot":
         code_snippet, code_language = _first_code_block(prompt)
@@ -280,23 +294,15 @@ def _step_from_activity(lesson_id, order_index, heading, block):
 
     if kind in ("mcq", "predict"):
         if not options:
-            options = [{"id": "done", "text": "I reviewed this activity."}]
-            answer = "done"
+            return None
         correct_answer = answer or options[0]["id"]
     elif kind == "fitb":
         correct_answer = _fitb_answers(block)
     elif kind == "spot":
         if not code_snippet:
-            kind = "mcq"
-            options = [{"id": "done", "text": "I reviewed this activity."}]
-            correct_answer = "done"
+            return None
         else:
             correct_answer = _spot_answer(block)
-    else:
-        kind = "mcq"
-        options = [{"id": "done", "text": "I reviewed this activity."}]
-        correct_answer = "done"
-
     return LessonStep(
         lesson_id=lesson_id,
         order_index=order_index,
@@ -356,8 +362,15 @@ def _seed_markdown_module(path, fallback_order):
         db.session.add(lesson)
         db.session.flush()
 
+        added_steps = 0
         for activity_index, (heading, activity_block) in enumerate(activities, 1):
-            db.session.add(_step_from_activity(lesson.id, activity_index, heading, activity_block))
+            step = _step_from_activity(lesson.id, activity_index, heading, activity_block)
+            if step is not None:
+                db.session.add(step)
+                added_steps += 1
+
+        if added_steps == 0 and not lesson.narrative:
+            db.session.delete(lesson)
 
 
 def _seed_ctf_module():
