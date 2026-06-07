@@ -18,12 +18,14 @@ CTF_URL="${BYTESEC_CTF_URL:-http://127.0.0.1:8004}"
 mkdir -p "$RUN_DIR" "$LOG_DIR"
 
 venv_activate() {
-  if [ -f "$HOME/ctf_env/bin/activate" ]; then
-    printf '%s\n' "$HOME/ctf_env/bin/activate"
-  elif [ -f "$ROOT_DIR/.venv/bin/activate" ]; then
+  if [ -f "$ROOT_DIR/.venv/bin/activate" ]; then
     printf '%s\n' "$ROOT_DIR/.venv/bin/activate"
+  elif [ -n "${VIRTUAL_ENV:-}" ] && [ -f "$VIRTUAL_ENV/bin/activate" ]; then
+    printf '%s\n' "$VIRTUAL_ENV/bin/activate"
+  elif [ -f "$HOME/ctf_env/bin/activate" ]; then
+    printf '%s\n' "$HOME/ctf_env/bin/activate"
   else
-    printf 'No virtualenv found. Expected ~/ctf_env/bin/activate or .venv/bin/activate.\n' >&2
+    printf 'No virtualenv found. Create .venv in the project root or activate one before running this script.\n' >&2
     return 1
   fi
 }

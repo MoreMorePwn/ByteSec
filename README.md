@@ -32,13 +32,12 @@ ByteSec/
 ## Requirements
 
 - Python dependencies from `requirements.txt`.
-- A virtualenv at `~/ctf_env/bin/activate` or `.venv/bin/activate`.
+- A Python virtual environment.
 - Docker and Docker Compose for the EzSQLi challenge.
 
 Install Python dependencies:
 
 ```bash
-source ~/ctf_env/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -96,21 +95,18 @@ BYTESEC_ADMIN_USERS=demo,teacher ./scripts/dev-services.sh start
 Create missing tables and seed content only when needed:
 
 ```bash
-source ~/ctf_env/bin/activate
 flask --app app ensure-db
 ```
 
 Reload course modules from markdown without deleting users:
 
 ```bash
-source ~/ctf_env/bin/activate
 flask --app app refresh-course
 ```
 
 Fully wipe and recreate the database:
 
 ```bash
-source ~/ctf_env/bin/activate
 flask --app app init-db
 ```
 
@@ -179,7 +175,6 @@ The admin dashboard exposes these same CTF container controls from the web UI.
 Basic local checks:
 
 ```bash
-source ~/ctf_env/bin/activate
 python -m compileall -q app.py bytesec
 flask --app app refresh-course
 ./scripts/dev-services.sh status
