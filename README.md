@@ -15,7 +15,7 @@ ByteSec is an interactive CTF learning platform. The first live track is Web Exp
 ## Project Layout
 
 ```text
-project2/
+ByteSec/
   app.py                         Flask entrypoint
   bytesec/
     __init__.py                  App factory, CLI commands

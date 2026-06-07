@@ -657,7 +657,7 @@ def admin_docker():
     logs = _docker_compose(["logs", "--tail=80"], timeout=20)
     return render_template(
         "admin_docker.html",
-        ctf_dir=CTF_DIR,
+        ctf_path="ctf_chall/ezsqli",
         ctf_url=os.environ.get("BYTESEC_CTF_URL", "http://127.0.0.1:8004"),
         status=status,
         logs=logs,
