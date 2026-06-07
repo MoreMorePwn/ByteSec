@@ -6,7 +6,8 @@ RUN_DIR="$ROOT_DIR/.run"
 LOG_DIR="$ROOT_DIR/logs"
 WEB_PID_FILE="$RUN_DIR/bytesec-web.pid"
 WEB_LOG="$LOG_DIR/bytesec-web.log"
-CTF_DIR="$ROOT_DIR/ctf_chall/baby_sqli"
+CTF_DIR="$ROOT_DIR/ctf_chall/ezsqli"
+LEGACY_CTF_DIR="$ROOT_DIR/ctf_chall/baby_sqli"
 
 WEB_HOST="${BYTESEC_HOST:-0.0.0.0}"
 WEB_PORT="${BYTESEC_PORT:-5000}"
@@ -50,6 +51,9 @@ start_ctf() {
 stop_ctf() {
   if docker_ready; then
     (cd "$CTF_DIR" && docker compose down)
+    if [ -d "$LEGACY_CTF_DIR" ]; then
+      (cd "$LEGACY_CTF_DIR" && docker compose down) >/dev/null 2>&1 || true
+    fi
   else
     printf 'Docker daemon is not reachable; skipped CTF shutdown.\n' >&2
   fi
@@ -158,7 +162,7 @@ start_all() {
       printf 'ByteSec web from Windows fallback: http://%s:%s\n' "$wsl_ip" "$WEB_PORT"
     fi
   fi
-  printf 'Baby SQLi CTF: %s\n' "$CTF_URL"
+  printf 'EzSQLi CTF: %s\n' "$CTF_URL"
   if [ "$ctf_status" -ne 0 ]; then
     printf 'CTF Docker lab did not start because Docker is not reachable.\n' >&2
     return "$ctf_status"

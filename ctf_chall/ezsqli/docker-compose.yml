@@ -1,0 +1,8 @@
+services:
+  ezsqli:
+    build: ./
+    restart: always
+    environment:
+      BYTESEC_EZSQLI_FLAG: BYTESEC{196f5dee6f071643}
+    ports:
+      - 8004:8000

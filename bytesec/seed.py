@@ -50,7 +50,7 @@ DESCRIPTIONS = {
     5: "Enumerate database metadata, extract target data, and reason about second-order injection.",
     6: "Apply parameterized queries, validation, least privilege, and defense-in-depth against SQL injection.",
     7: "Analyze real breaches and complete the final SQL injection assessment.",
-    8: "Solve the local Baby SQLi CTF challenge and submit the recovered flag.",
+    8: "Solve the local EzSQLi CTF challenge and submit the recovered flag.",
 }
 
 
@@ -363,7 +363,7 @@ def _seed_markdown_module(path, fallback_order):
 def _seed_ctf_module():
     module = Module(
         order_index=8,
-        title="CTF Challenge Lab: Baby SQLi",
+        title="CTF Challenge Lab: EzSQLi",
         description=DESCRIPTIONS[8],
         icon=ICONS[8],
         difficulty="Advanced",
@@ -379,7 +379,7 @@ def _seed_ctf_module():
         narrative=(
             "## Get Flag\n\n"
             f"Open the local challenge at [{CTF_CHALLENGE_URL}]({CTF_CHALLENGE_URL}).\n\n"
-            "Bypass the login, recover the `BYTESEC{...}` flag, and submit it here.\n\n"
+            "Explore the EzSQLi endpoints, recover the `BYTESEC{...}` flag, and submit it here.\n\n"
             "**Scope**: Only test this local lab or systems where you have explicit permission."
         ),
         code_snippet=None,
@@ -396,10 +396,10 @@ def _seed_ctf_module():
         prompt="Submit the exact `BYTESEC{...}` flag shown by the challenge.",
         options=_j([]),
         correct_answer=CTF_FLAG_HASH,
-        explanation="Flag accepted. You solved the Baby SQLi challenge.",
+        explanation="Flag accepted. You solved the EzSQLi challenge.",
         hints=_j([
-            "Focus on changing the login query logic around the username and password checks.",
-            "If one SQL comment style is escaped, try another comment form supported by SQLite.",
+            "Look at how request parameters are forwarded into the helper object.",
+            "A debug path can be influenced before the admin debug check runs.",
         ]),
     ))
 
@@ -446,8 +446,13 @@ def _course_is_stale():
         return True
     leaked_ctf = (
         Lesson.query
-        .filter(Lesson.title == "Solve the Baby SQLi Challenge")
-        .filter((Lesson.code_language == "bash") | (Lesson.narrative.contains("scripts/dev-services.sh")))
+        .join(Module)
+        .filter(
+            (Lesson.title == "Solve the Baby SQLi Challenge")
+            | (Lesson.narrative.contains("scripts/dev-services.sh"))
+            | (Lesson.code_language == "bash")
+            | (Module.title == "CTF Challenge Lab: Baby SQLi")
+        )
         .first()
     )
     return leaked_ctf is not None

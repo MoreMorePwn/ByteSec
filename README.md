@@ -6,14 +6,14 @@ ByteSec is an interactive CTF learning platform. The first live track is Web Exp
 
 - Flask web app with login, registration, course dashboard, progress tracking, and lesson activities.
 - SQL injection curriculum parsed from `modules/sqli/*.md`.
-- A local Baby SQLi Docker challenge used by the final CTF module.
+- A local EzSQLi Docker challenge used by the final CTF module.
 - Service helper script that starts and stops both the web app and the challenge.
 
 ## Requirements
 
 - Python dependencies from `requirements.txt`.
 - A virtualenv at `~/ctf_env/bin/activate` or `.venv/bin/activate`.
-- Docker and Docker Compose for the Baby SQLi challenge.
+- Docker and Docker Compose for the EzSQLi challenge.
 
 Install dependencies:
 
@@ -42,7 +42,7 @@ Useful commands:
 Default URLs:
 
 - ByteSec web app: `http://127.0.0.1:5000`
-- Baby SQLi challenge: `http://127.0.0.1:8004`
+- EzSQLi challenge: `http://127.0.0.1:8004`
 
 When running from WSL and opening the site from Windows Chrome, use the WSL IP if localhost does not work:
 
@@ -102,4 +102,4 @@ modules/sqli/07-real-world-cases-final-challenge.md
 
 `modules/sqli/00-course-overview.md` is documentation for the curriculum structure and is not seeded as an app module.
 
-The app adds module 8 separately as the local Baby SQLi CTF flag submission lab.
+The app adds module 8 separately as the local EzSQLi CTF flag submission lab.
