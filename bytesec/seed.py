@@ -280,10 +280,15 @@ def seed_database():
             "**Ethical boundary**: Only test this local lab or systems where you have explicit permission."
         ),
         code_snippet=(
-            "cd ctf_chall/baby_sqli\n"
-            "docker compose up --build\n\n"
-            "# Then open:\n"
+            "./scripts/dev-services.sh start\n\n"
+            "# Web app:\n"
+            "http://127.0.0.1:5000\n\n"
+            "# CTF challenge:\n"
             "http://127.0.0.1:8004\n\n"
+            "# Maintenance:\n"
+            "./scripts/dev-services.sh status\n"
+            "./scripts/dev-services.sh logs\n"
+            "./scripts/dev-services.sh stop\n\n"
             "# Goal:\n"
             "Log in as admin and read the BYTESEC{...} flag."
         ),

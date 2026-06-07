@@ -11,6 +11,8 @@ venv/
 dist/
 build/
 .pytest_cache/
+.run/
+logs/
 *.db
 !ctf_chall/**/*.db
 *.sqlite3

@@ -218,7 +218,7 @@ def _render_material(value):
                 code = html.escape("\n".join(code_lines))
                 lang_class = f" language-{html.escape(code_lang)}" if code_lang else ""
                 blocks.append(
-                    f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[21px]">'
+                    f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[18px]">'
                     f'<code class="{lang_class}">{code}</code></pre>'
                 )
                 code_lines.clear()
@@ -290,7 +290,7 @@ def _render_material(value):
     if in_code and code_lines:
         code = html.escape("\n".join(code_lines))
         blocks.append(
-            f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[21px]">'
+            f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[18px]">'
             f'<code>{code}</code></pre>'
         )
 
