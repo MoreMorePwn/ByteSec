@@ -154,6 +154,11 @@ def _normalize_material(value):
 
 def _render_inline(text):
     text = html.escape(text)
+    text = re.sub(
+        r"\[([^\]]+)\]\((https?://[^)]+)\)",
+        r'<a class="text-secondary hover:underline" href="\2" target="_blank" rel="noopener noreferrer">\1</a>',
+        text,
+    )
     text = re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
     text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
     text = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"<em>\1</em>", text)
@@ -192,6 +197,8 @@ def _render_material(value):
     paragraph = []
     code_lines = []
     table_lines = []
+    unordered_items = []
+    ordered_items = []
     in_code = False
     code_lang = ""
 
@@ -207,6 +214,16 @@ def _render_material(value):
             blocks.append(_render_table(table_lines))
             table_lines.clear()
 
+    def flush_lists():
+        if unordered_items:
+            items = "".join(f"<li>{_render_inline(item)}</li>" for item in unordered_items)
+            blocks.append(f'<ul class="list-disc pl-5 my-3 space-y-1">{items}</ul>')
+            unordered_items.clear()
+        if ordered_items:
+            items = "".join(f"<li>{_render_inline(item)}</li>" for item in ordered_items)
+            blocks.append(f'<ol class="list-decimal pl-5 my-3 space-y-1">{items}</ol>')
+            ordered_items.clear()
+
     for raw_line in text.splitlines():
         line = raw_line.rstrip()
         stripped = line.strip()
@@ -214,11 +231,12 @@ def _render_material(value):
         if stripped.startswith("```"):
             flush_paragraph()
             flush_table()
+            flush_lists()
             if in_code:
                 code = html.escape("\n".join(code_lines))
                 lang_class = f" language-{html.escape(code_lang)}" if code_lang else ""
                 blocks.append(
-                    f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[18px]">'
+                    f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[16px]">'
                     f'<code class="{lang_class}">{code}</code></pre>'
                 )
                 code_lines.clear()
@@ -236,16 +254,19 @@ def _render_material(value):
         if not stripped:
             flush_paragraph()
             flush_table()
+            flush_lists()
             continue
 
         if stripped == "---":
             flush_paragraph()
             flush_table()
+            flush_lists()
             blocks.append('<hr class="my-4 border-outline-variant">')
             continue
 
         if stripped.startswith("|") and stripped.endswith("|"):
             flush_paragraph()
+            flush_lists()
             table_lines.append(stripped)
             continue
         flush_table()
@@ -253,6 +274,7 @@ def _render_material(value):
         heading = re.match(r"^(#{1,4})\s+(.+)$", stripped)
         if heading:
             flush_paragraph()
+            flush_lists()
             level = min(len(heading.group(1)) + 2, 6)
             blocks.append(
                 f'<h{level} class="font-headline-sm text-[18px] font-semibold text-on-surface mt-5 mb-2">'
@@ -262,6 +284,7 @@ def _render_material(value):
 
         if stripped.startswith(">"):
             flush_paragraph()
+            flush_lists()
             blocks.append(
                 f'<blockquote class="border-l-4 border-secondary pl-4 my-3 text-on-surface-variant italic">'
                 f'{_render_inline(stripped.lstrip("> ").strip())}</blockquote>'
@@ -270,27 +293,26 @@ def _render_material(value):
 
         if re.match(r"^[-*]\s+", stripped):
             flush_paragraph()
-            items = [stripped]
-            blocks.append(
-                f'<ul class="list-disc pl-5 my-3 space-y-1"><li>{_render_inline(re.sub(r"^[-*]\\s+", "", stripped))}</li></ul>'
-            )
+            ordered_items.clear()
+            unordered_items.append(re.sub(r"^[-*]\s+", "", stripped))
             continue
 
         if re.match(r"^\d+\.\s+", stripped):
             flush_paragraph()
-            blocks.append(
-                f'<ol class="list-decimal pl-5 my-3 space-y-1"><li>{_render_inline(re.sub(r"^\\d+\\.\\s+", "", stripped))}</li></ol>'
-            )
+            unordered_items.clear()
+            ordered_items.append(re.sub(r"^\d+\.\s+", "", stripped))
             continue
 
+        flush_lists()
         paragraph.append(line)
 
     flush_paragraph()
     flush_table()
+    flush_lists()
     if in_code and code_lines:
         code = html.escape("\n".join(code_lines))
         blocks.append(
-            f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[18px]">'
+            f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[16px]">'
             f'<code>{code}</code></pre>'
         )
 
@@ -558,7 +580,7 @@ def lesson_view(lesson_id):
     if code_src and getattr(code_src, 'code_snippet', None):
         lang = getattr(code_src, 'code_language', None) or 'text'
         display_code, display_code_raw = _build_code_html(code_src.code_snippet, lang)
-        display_code_filename = getattr(code_src, 'code_filename', None) or f"snippet.{lang}"
+        display_code_filename = getattr(code_src, 'code_filename', None) or "code"
 
     # Table data
     table_html = _build_table_html(lesson.table_data)

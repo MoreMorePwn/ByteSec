@@ -42,4 +42,11 @@ def create_app(test_config=None):
 
         ensure_database()
 
+    @app.cli.command("refresh-course")
+    def refresh_course_command():
+        from .seed import refresh_course_content
+
+        refresh_course_content()
+        print("Course content refreshed from markdown without deleting users.")
+
     return app
