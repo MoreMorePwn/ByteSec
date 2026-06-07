@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+    <div>
+      <h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary mb-2">Welcome back.</h1>
+      <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl">
+        Your SQL Injection learning path is {{ "%.0f"|format(overall_pct) }}% complete. Keep the momentum going.
+      </p>
+    </div>
+    <div class="flex items-center gap-4 bg-surface-container-lowest p-4 rounded-lg border border-border-muted shadow-sm">
+      <div class="w-12 h-12 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant">
+        <span class="material-symbols-outlined fill text-secondary">local_fire_department</span>
+      </div>
+      <div>
+        <p class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider text-xs">Daily Streak</p>
+        <p class="font-headline-md text-headline-md text-primary">{{ g.user.streak_days }} Days</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- In Progress -->
+  <section>
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="font-headline-md text-headline-md text-primary">In Progress</h2>
+      <a class="font-label-mono text-label-mono text-secondary hover:underline flex items-center gap-1" href="{{ url_for('main.course') }}">
+        View Course <span class="material-symbols-outlined text-sm">arrow_forward</span>
+      </a>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+      {% for item in in_progress %}
+      <div class="bg-surface-container-lowest border border-border-muted rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col group cursor-pointer">
+        <div class="h-32 bg-surface-container relative w-full overflow-hidden flex items-center justify-center">
+          <span class="material-symbols-outlined text-5xl text-on-surface-variant opacity-40">{{ item.module.icon }}</span>
+          <div class="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded font-label-mono text-[12px] text-primary border border-border-muted">
+            Module {{ item.module.order_index }} of {{ module_count }}
+          </div>
+        </div>
+        <div class="p-6 flex flex-col flex-grow">
+          <h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-primary mb-2 font-['Hanken_Grotesk']">{{ item.module.title }}</h3>
+          <p class="font-body-md text-[14px] text-on-surface-variant mb-6 line-clamp-2">{{ item.module.description }}</p>
+          <div class="mt-auto">
+            <div class="flex justify-between items-end mb-2">
+              <span class="font-label-mono text-label-mono text-on-surface-variant text-xs">{{ "%.0f"|format(item.pct) }}% Complete</span>
+              <span class="font-label-mono text-label-mono text-secondary text-xs">In Progress</span>
+            </div>
+            <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden mb-6">
+              <div class="h-full bg-secondary-container" style="width:{{ item.pct }}%"></div>
+            </div>
+            {% if item.next_lesson %}
+            <a href="{{ url_for('main.lesson_view', lesson_id=item.next_lesson.id) }}" class="w-full bg-primary hover:opacity-90 text-on-primary font-label-mono text-label-mono py-3 rounded-full transition-opacity flex items-center justify-center gap-2">
+              Continue Path <span class="material-symbols-outlined text-sm">play_arrow</span>
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+
+      {% if not in_progress %}
+      <div class="col-span-full bg-surface-container-lowest border border-border-muted rounded-lg p-8 text-center">
+        <span class="material-symbols-outlined text-4xl text-on-surface-variant mb-3 block">rocket_launch</span>
+        <p class="font-headline-md text-headline-md text-primary mb-2">Ready to begin?</p>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-4">Start the SQL Injection course to see your progress here.</p>
+        <a href="{{ url_for('main.course') }}" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity">
+          Start Learning
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+
+  <!-- Completed Modules -->
+  {% if completed_modules %}
+  <section class="border-t border-border-muted pt-12">
+    <h2 class="font-headline-md text-headline-md text-primary mb-6">Completed</h2>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
+      {% for item in completed_modules %}
+      <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-6 flex items-center gap-6 opacity-80">
+        <div class="w-12 h-12 rounded-full bg-secondary-container flex items-center justify-center flex-shrink-0">
+          <span class="material-symbols-outlined text-on-secondary-container">check</span>
+        </div>
+        <div>
+          <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-0.5">Module {{ item.module.order_index }}</p>
+          <h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-primary font-['Hanken_Grotesk']">{{ item.module.title }}</h3>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

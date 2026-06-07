@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>{% block title %}ByteSec{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}ByteSec - Interactive cybersecurity learning platform{% endblock %}">
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com" rel="preconnect"/>
+  <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+  <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;700&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            /* ── Light mode tokens (dashboard/catalog stitch) ── */
+            "surface-tint":             "#515f78",
+            "on-tertiary-container":    "#9f7d5b",
+            "surface-variant":          "#e2e2e2",
+            "inverse-surface":          "#2f3131",
+            "tertiary-fixed-dim":       "#e7bf99",
+            "surface-dim":              "#dadada",
+            "on-secondary":             "#ffffff",
+            "on-primary-fixed":         "#0d1c32",
+            "surface-container-low":    "#f3f3f3",
+            "on-error":                 "#ffffff",
+            "on-secondary-fixed-variant": "#005142",
+            "primary-container":        "#0d1c32",
+            "on-primary":               "#ffffff",
+            "background":               "#f9f9f9",
+            "on-error-container":       "#93000a",
+            "outline":                  "#75777e",
+            "secondary-fixed":          "#5ffbd6",
+            "error":                    "#ba1a1a",
+            "on-surface":               "#1a1c1c",
+            "on-primary-container":     "#76849f",
+            "on-tertiary-fixed":        "#2b1701",
+            "on-secondary-container":   "#00725e",
+            "on-tertiary":              "#ffffff",
+            "surface-container-highest":"#e2e2e2",
+            "tertiary":                 "#000000",
+            "accent-blue":              "#1D4ED8",
+            "inverse-on-surface":       "#f1f1f1",
+            "on-secondary-fixed":       "#002019",
+            "on-tertiary-fixed-variant":"#5d4124",
+            "on-background":            "#1a1c1c",
+            "code-bg":                  "#0D1117",
+            "surface":                  "#f9f9f9",
+            "surface-container":        "#eeeeee",
+            "primary-fixed-dim":        "#b9c7e4",
+            "surface-bright":           "#f9f9f9",
+            "inverse-primary":          "#b9c7e4",
+            "outline-variant":          "#c5c6cd",
+            "tertiary-container":       "#2b1701",
+            "primary-fixed":            "#d6e3ff",
+            "surface-container-lowest": "#ffffff",
+            "tertiary-fixed":           "#ffdcbd",
+            "border-muted":             "#E5E7EB",
+            "surface-container-high":   "#e8e8e8",
+            "on-primary-fixed-variant": "#39475f",
+            "secondary":                "#006b58",
+            "secondary-container":      "#5ffbd6",
+            "error-container":          "#ffdad6",
+            "on-surface-variant":       "#44474d",
+            "secondary-fixed-dim":      "#38debb",
+            "primary":                  "#000000",
+            "success-green":            "#29CC57",
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg:      "0.5rem",
+            xl:      "0.75rem",
+            full:    "9999px",
+          },
+          spacing: {
+            base:           "8px",
+            "margin-desktop": "40px",
+            "margin-mobile":  "16px",
+            gutter:         "24px",
+            "container-max":  "1200px",
+          },
+          fontFamily: {
+            "label-mono":       ["JetBrains Mono"],
+            "code-block":       ["JetBrains Mono"],
+            "headline-md":      ["Hanken Grotesk"],
+            "display-lg-mobile":["Hanken Grotesk"],
+            "body-md":          ["Inter"],
+            "display-lg":       ["Hanken Grotesk"],
+            "body-lg":          ["Inter"],
+          },
+          fontSize: {
+            "label-mono":       ["14px", { lineHeight: "20px",  fontWeight: "500" }],
+            "code-block":       ["14px", { lineHeight: "22px",  fontWeight: "400" }],
+            "headline-sm":      ["20px", { lineHeight: "28px",  fontWeight: "600" }],
+            "headline-md":      ["24px", { lineHeight: "32px",  fontWeight: "600" }],
+            "display-lg-mobile":["32px", { lineHeight: "40px",  letterSpacing: "-0.01em", fontWeight: "700" }],
+            "body-md":          ["16px", { lineHeight: "24px",  fontWeight: "400" }],
+            "display-lg":       ["48px", { lineHeight: "56px",  letterSpacing: "-0.02em", fontWeight: "700" }],
+            "body-lg":          ["18px", { lineHeight: "28px",  fontWeight: "400" }],
+            "label-caps":       ["12px", { lineHeight: "1.2",   letterSpacing: "0.05em", fontWeight: "700" }],
+          },
+        },
+      },
+    }
+  </script>
+  <style>
+    /* ── Dark mode overrides ── */
+    .dark {
+      --bg:              #051424;
+      --surface:         #0d1c2d;
+      --surface-dim:     #051424;
+      --surface-low:     #0d1c2d;
+      --surface-cont:    #122131;
+      --surface-high:    #1c2b3c;
+      --surface-highest: #273647;
+      --surface-lowest:  #010f1f;
+      --on-surface:      #d4e4fa;
+      --on-surface-var:  #bbcac6;
+      --outline:         #859490;
+      --outline-var:     #3c4947;
+      --border-muted:    #273647;
+      --primary:         #4fdbc8;
+      --on-primary:      #003731;
+      --primary-cont:    #14b8a6;
+      --secondary:       #b9c7e4;
+      --secondary-cont:  #3c4962;
+      --error:           #ffb4ab;
+      --error-cont:      #93000a;
+      --code-bg:         #010f1f;
+    }
+    .dark body,
+    .dark .bg-background     { background-color: var(--bg) !important; }
+    .dark .bg-surface        { background-color: var(--surface) !important; }
+    .dark .bg-surface-container-low   { background-color: var(--surface-low) !important; }
+    .dark .bg-surface-container       { background-color: var(--surface-cont) !important; }
+    .dark .bg-surface-container-high  { background-color: var(--surface-high) !important; }
+    .dark .bg-surface-container-highest { background-color: var(--surface-highest) !important; }
+    .dark .bg-surface-container-lowest  { background-color: var(--surface-lowest) !important; }
+    .dark .text-on-surface,
+    .dark .text-primary      { color: var(--on-surface) !important; }
+    .dark .text-on-surface-variant { color: var(--on-surface-var) !important; }
+    .dark .text-on-background { color: var(--on-surface) !important; }
+    .dark .border-outline-variant { border-color: var(--outline-var) !important; }
+    .dark .border-border-muted    { border-color: var(--border-muted) !important; }
+    .dark .bg-primary-container   { background-color: var(--primary-cont) !important; }
+    .dark .text-secondary    { color: var(--primary) !important; }
+    .dark .bg-secondary-container { background-color: var(--secondary-cont) !important; }
+    .dark .bg-code-bg        { background-color: var(--code-bg) !important; }
+
+    /* Dark mode specific primary colors */
+    .dark .bg-primary {
+      background-color: var(--primary) !important;
+      color: var(--on-primary) !important;
+    }
+    .dark .text-error { color: var(--error) !important; }
+
+    /* ── Shared styles ── */
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+    .material-symbols-outlined.fill {
+      font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    }
+
+    /* MCQ interactive states */
+    .mcq-option { transition: all 0.2s ease-in-out; cursor: pointer; }
+    .mcq-option:hover { border-color: var(--primary, #000); }
+    .mcq-option.selected { border-color: var(--primary, #000); }
+    .mcq-option.correct {
+      border-color: #29CC57 !important;
+      background-color: rgba(41,204,87,0.08) !important;
+    }
+    .mcq-option.incorrect {
+      border-color: #ba1a1a !important;
+      background-color: rgba(186,26,26,0.05) !important;
+    }
+    .dark .mcq-option:hover { border-color: #4fdbc8; }
+    .dark .mcq-option.selected { border-color: #4fdbc8; background-color: rgba(79,219,200,0.08); }
+
+    /* Code line click (spot the vulnerability) */
+    .code-line { cursor: pointer; transition: background-color 0.2s, border-color 0.2s; border-left: 3px solid transparent; }
+    .code-line:hover { background-color: rgba(79,219,200,0.1); border-left-color: rgba(79,219,200,0.5); }
+    .code-line.selected { background-color: rgba(79,219,200,0.2); border-left-color: #4fdbc8; }
+    .code-line.error-selected { background-color: rgba(186,26,26,0.1); border-left-color: #ba1a1a; }
+
+    /* Editor dark background */
+    .editor-bg { background-color: #1e1e1e; color: #d4d4d4; }
+    .editor-line-num { color: #858585; }
+    .syntax-keyword { color: #c586c0; }
+    .syntax-string { color: #ce9178; }
+    .syntax-function { color: #dcdcaa; }
+    .syntax-comment { color: #6a9955; }
+    .syntax-type { color: #4ec9b0; }
+    .syntax-number { color: #b5cea8; }
+
+    /* Grid background for hero */
+    .bg-grid-pattern {
+      background-size: 40px 40px;
+      background-image:
+        linear-gradient(to right, #eeeeee 1px, transparent 1px),
+        linear-gradient(to bottom, #eeeeee 1px, transparent 1px);
+    }
+    .dark .bg-grid-pattern {
+      background-image:
+        linear-gradient(to right, #122131 1px, transparent 1px),
+        linear-gradient(to bottom, #122131 1px, transparent 1px);
+    }
+
+    /* Glow effect */
+    .glow-teal { box-shadow: 0 0 15px rgba(79,219,200,0.3); }
+
+    /* Node connectors for roadmap */
+    .node-connector::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 100%;
+      width: 2rem;
+      height: 2px;
+      background-color: #E5E7EB;
+      transform: translateY(-50%);
+      z-index: 0;
+    }
+    .node-connector:last-child::after { display: none; }
+    .node-connector.completed::after { background-color: #006b58; }
+    .dark .node-connector::after { background-color: #3c4947; }
+    .dark .node-connector.completed::after { background-color: #4fdbc8; }
+
+    /* Smooth transitions for theme toggle */
+    * { transition: background-color 0.2s ease, color 0.15s ease, border-color 0.15s ease; }
+
+    /* Flash messages */
+    .flash { padding: 12px 16px; border-radius: 0.5rem; margin-bottom: 16px; font-family: 'Inter', sans-serif; font-size: 14px; }
+    .flash.success { background: rgba(41,204,87,0.1); color: #29CC57; border: 1px solid rgba(41,204,87,0.2); }
+    .flash.danger  { background: rgba(186,26,26,0.08); color: #ba1a1a; border: 1px solid rgba(186,26,26,0.2); }
+    .flash.warning { background: rgba(245,158,11,0.08); color: #d97706; border: 1px solid rgba(245,158,11,0.2); }
+    .flash.info    { background: rgba(29,78,216,0.08); color: #1D4ED8; border: 1px solid rgba(29,78,216,0.2); }
+    .dark .flash.success { background: rgba(79,219,200,0.1); color: #4fdbc8; border-color: rgba(79,219,200,0.2); }
+    .dark .flash.danger  { background: rgba(255,180,171,0.1); color: #ffb4ab; border-color: rgba(255,180,171,0.2); }
+  </style>
+</head>
+<body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col">
+
+  <!-- ── Top Navigation Bar ── -->
+  <nav class="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant">
+    <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto h-16">
+      <div class="flex items-center gap-8">
+        <a class="font-headline-md text-headline-md font-bold text-primary" href="{{ url_for('main.index') }}">ByteSec</a>
+        <div class="hidden md:flex items-center gap-6">
+          {% if g.user %}
+          <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+          <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.course') }}">Course</a>
+          <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+          {% endif %}
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <!-- Theme Toggle -->
+        <button onclick="toggleTheme()" class="text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full flex items-center justify-center" title="Toggle dark mode" id="theme-toggle-btn">
+          <span class="material-symbols-outlined" id="theme-icon">dark_mode</span>
+        </button>
+        {% if g.user %}
+        <a href="{{ url_for('main.leaderboard') }}" class="text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full flex items-center justify-center">
+          <span class="material-symbols-outlined">military_tech</span>
+        </a>
+        <a href="{{ url_for('main.logout') }}" class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-3 py-1.5 border border-outline-variant rounded-full">
+          {{ g.user.username }}
+        </a>
+        {% else %}
+        <a href="{{ url_for('main.login') }}" class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface transition-colors px-3 py-1.5">Sign in</a>
+        <a href="{{ url_for('main.register') }}" class="font-label-mono text-label-mono bg-primary text-on-primary px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity">Join</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <main class="flex-grow pt-16">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop pt-4">
+          {% for category, message in messages %}
+            <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ── Footer ── -->
+  {% block footer %}
+  <footer class="w-full border-t border-outline-variant bg-surface-container-low mt-auto">
+    <div class="py-12 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center max-w-[1200px] mx-auto gap-4">
+      <div class="font-headline-md text-headline-md font-bold text-primary">ByteSec</div>
+      <div class="flex flex-wrap justify-center gap-6">
+        <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="#">Community</a>
+        <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="#">Discord</a>
+        <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="#">Terms of Service</a>
+        <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="#">Help Center</a>
+      </div>
+      <div class="font-body-md text-body-md text-on-surface-variant text-sm">© 2024 ByteSec Education</div>
+    </div>
+  </footer>
+  {% endblock %}
+
+  <!-- ── Theme Toggle Script ── -->
+  <script>
+    function getTheme() {
+      return localStorage.getItem('bytesec-theme') || 'light';
+    }
+    function applyTheme(theme) {
+      const html = document.getElementById('html-root');
+      if (theme === 'dark') {
+        html.classList.add('dark');
+        document.getElementById('theme-icon').textContent = 'light_mode';
+      } else {
+        html.classList.remove('dark');
+        document.getElementById('theme-icon').textContent = 'dark_mode';
+      }
+      localStorage.setItem('bytesec-theme', theme);
+    }
+    function toggleTheme() {
+      const current = getTheme();
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      // Persist to server if logged in
+      fetch('/api/set-theme', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({theme: next})
+      }).catch(() => {});
+    }
+    // Apply on load
+    applyTheme(getTheme());
+  </script>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

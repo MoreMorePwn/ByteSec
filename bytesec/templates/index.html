@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}ByteSec — Interactive Cybersecurity Learning{% endblock %}
+{% block content %}
+<!-- Hero -->
+<section class="w-full relative overflow-hidden pt-16 pb-20 bg-grid-pattern">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background opacity-90"></div>
+  <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop relative z-10 flex flex-col items-center text-center">
+    <div class="inline-flex items-center gap-2 bg-surface-container-lowest border border-border-muted rounded-full px-4 py-1.5 mb-6">
+      <span class="material-symbols-outlined text-secondary text-[18px]">bolt</span>
+      <span class="font-label-mono text-[12px] text-on-surface-variant">Interactive Learning Platform</span>
+    </div>
+    <h1 class="font-display-lg text-display-lg text-primary mb-4 max-w-3xl">Learn SQL Injection<br>By Doing.</h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto mb-8">
+      Master offensive and defensive SQL injection techniques through hands-on, interactive challenges. Predict outputs, spot vulnerabilities, fix code — learn like a Brilliant course.
+    </p>
+    <div class="flex flex-wrap gap-4 justify-center">
+      {% if g.user %}
+      <a href="{{ url_for('main.dashboard') }}" class="bg-primary text-on-primary font-label-mono text-label-mono px-8 py-3 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
+        Go to Dashboard <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+      </a>
+      {% else %}
+      <a href="{{ url_for('main.register') }}" class="bg-primary text-on-primary font-label-mono text-label-mono px-8 py-3 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
+        Start Learning Free <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+      </a>
+      <a href="{{ url_for('main.login') }}" class="bg-surface-container-lowest border border-border-muted text-primary font-label-mono text-label-mono px-8 py-3 rounded-full hover:border-secondary hover:text-secondary transition-colors">
+        Sign In
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop -mt-8 relative z-20">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5 text-center">
+      <p class="font-headline-md text-headline-md text-primary mb-1">{{ module_count }}</p>
+      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Modules</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5 text-center">
+      <p class="font-headline-md text-headline-md text-primary mb-1">{{ activity_count }}</p>
+      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Activities</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5 text-center">
+      <p class="font-headline-md text-headline-md text-primary mb-1">2.5h</p>
+      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Content</p>
+    </div>
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5 text-center">
+      <p class="font-headline-md text-headline-md text-primary mb-1">{{ user_count }}</p>
+      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Learners</p>
+    </div>
+  </div>
+</section>
+
+<!-- Module Preview -->
+<section class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-16">
+  <h2 class="font-headline-md text-headline-md text-primary mb-2">Course Modules</h2>
+  <p class="font-body-md text-body-md text-on-surface-variant mb-8">A Brilliant-style progressive learning path from SQL basics to real-world defense.</p>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+    {% for module in modules %}
+    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-6 hover:shadow-md transition-shadow duration-200 flex flex-col group">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
+          <span class="material-symbols-outlined text-on-surface-variant">{{ module.icon }}</span>
+        </div>
+        <div>
+          <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Module {{ module.order_index }}</p>
+          <p class="font-label-mono text-[12px] text-secondary">{{ module.difficulty }}</p>
+        </div>
+      </div>
+      <h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-primary mb-2 font-['Hanken_Grotesk']">{{ module.title }}</h3>
+      <p class="font-body-md text-[14px] text-on-surface-variant mb-4 line-clamp-2 flex-grow">{{ module.description }}</p>
+      <div class="flex items-center justify-between mt-auto pt-4 border-t border-border-muted">
+        <span class="font-label-mono text-[12px] text-on-surface-variant">{{ module.lessons|length }} lessons • {{ module.estimated_minutes }} min</span>
+        <span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors text-[18px]">arrow_forward</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

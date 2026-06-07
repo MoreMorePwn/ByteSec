@@ -1,0 +1,434 @@
+{% extends 'base.html' %}
+{% block title %}{{ lesson.title }} — ByteSec{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="flex h-[calc(100vh-4rem)] overflow-hidden">
+  <!-- ── Side Navigation (Desktop) ── -->
+  <aside class="hidden md:flex flex-col h-full py-6 border-r border-outline-variant bg-surface-container-low w-64 flex-shrink-0 z-40">
+    <div class="px-6 mb-8">
+      <div class="font-headline-sm text-headline-sm text-on-surface mb-1 font-['Hanken_Grotesk']">SQL Injection Mastery</div>
+      <div class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">{{ module_count }} Modules • {{ activity_count }} Activities</div>
+      <!-- Overall progress -->
+      <div class="mt-3 bg-surface-container rounded-lg p-2.5 border border-outline-variant/30">
+        <div class="flex justify-between items-center mb-1">
+          <span class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Progress</span>
+          <span class="font-label-mono text-[11px] text-secondary">{{ "%.0f"|format(overall_pct) }}%</span>
+        </div>
+        <div class="h-1 bg-surface-container-highest rounded-full overflow-hidden">
+          <div class="h-full bg-secondary-container transition-all" style="width:{{ overall_pct }}%"></div>
+        </div>
+      </div>
+    </div>
+    <nav class="flex-grow overflow-y-auto">
+      <ul class="space-y-0.5">
+        {% for mod in all_modules %}
+        <li>
+          {% set is_active = (mod.id == lesson.module_id) %}
+          <div class="px-2">
+            <div class="flex items-center gap-2.5 py-2 px-2 rounded {{ 'text-primary font-bold border-l-[3px] border-secondary bg-surface-container' if is_active else 'text-on-surface-variant hover:bg-surface-container pl-[11px]' }} transition-all cursor-pointer text-[13px]"
+                 onclick="this.nextElementSibling?.classList.toggle('hidden')">
+              <span class="material-symbols-outlined text-[18px]">{{ mod.icon }}</span>
+              <span class="font-['Hanken_Grotesk'] font-semibold truncate">{{ mod.title|truncate(22, True, '…') }}</span>
+            </div>
+            <!-- Lesson sub-items -->
+            <ul class="{{ '' if is_active else 'hidden' }} ml-7 mt-1 space-y-0.5 border-l border-outline-variant/50 pl-3">
+              {% for les in mod.lessons %}
+              <li>
+                <a href="{{ url_for('main.lesson_view', lesson_id=les.id) }}"
+                   class="block py-1.5 text-[12px] {{ 'text-secondary font-bold' if les.id == lesson.id else 'text-on-surface-variant hover:text-on-surface' }} transition-colors font-['Inter'] truncate">
+                  {{ les.title|truncate(24, True, '…') }}
+                </a>
+              </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    </nav>
+    <div class="px-6 mt-auto pt-4 border-t border-outline-variant space-y-2">
+      <a href="{{ url_for('main.dashboard') }}" class="flex items-center gap-2 text-on-surface-variant hover:text-secondary transition-colors font-label-mono text-[12px]">
+        <span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to Dashboard
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main Content Area ── -->
+  <main class="flex-grow flex flex-col md:flex-row overflow-hidden bg-surface">
+    <!-- Left Panel: Concept & Code (60%) -->
+    <div class="w-full md:w-[60%] p-6 md:p-10 overflow-y-auto relative">
+      <div class="max-w-[800px] mx-auto">
+        <!-- Breadcrumb -->
+        <div class="flex items-center gap-2 mb-6">
+          <span class="inline-block px-2 py-1 bg-primary-container text-on-primary-container font-label-mono text-[12px] uppercase tracking-wider rounded">Module {{ lesson.module.order_index }}</span>
+          <span class="text-outline-variant">•</span>
+          <span class="text-on-surface-variant font-label-mono text-[12px]">Lesson {{ lesson.order_index }}</span>
+        </div>
+
+        <h1 class="font-display-lg-mobile text-display-lg-mobile text-on-surface mb-8 font-['Hanken_Grotesk']">{{ lesson.title }}</h1>
+
+        <!-- Narrative -->
+        {% if lesson.narrative %}
+        <div class="bg-surface-container-low border-l-4 border-secondary p-6 rounded-r mb-8 border border-outline-variant shadow-sm">
+          <div class="font-body-md text-body-md text-on-surface leading-relaxed prose-content">{{ lesson.narrative|safe }}</div>
+          {% if current_step and current_step.kind != 'spot' %}
+          <div class="flex items-start gap-3 mt-4">
+            <span class="material-symbols-outlined text-secondary fill mt-0.5">lightbulb</span>
+            <p class="font-body-md text-[14px] text-on-surface-variant italic">
+              Pay close attention to the code and data below — you'll need it for the activity on the right.
+            </p>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Code Block -->
+        {% if display_code %}
+        <div class="mb-8 rounded-xl overflow-hidden shadow-sm border border-outline-variant">
+          <div class="flex items-center justify-between bg-surface-container-high px-4 py-2.5 border-b border-outline-variant">
+            <span class="font-label-mono text-label-mono text-on-surface-variant">{{ display_code_filename or 'code' }}</span>
+            <button onclick="navigator.clipboard.writeText(document.getElementById('code-raw').textContent)" class="material-symbols-outlined text-on-surface-variant text-[18px] cursor-pointer hover:text-secondary transition-colors">content_copy</button>
+          </div>
+          <div class="editor-bg p-4 overflow-x-auto" id="code-container">
+            <pre class="font-label-mono text-[14px] leading-[22px]" id="code-block">{{ display_code|safe }}</pre>
+            <pre class="hidden" id="code-raw">{{ display_code_raw }}</pre>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Mock DB Table -->
+        {% if table_html %}
+        <div class="mt-8">
+          <h3 class="font-headline-sm text-headline-sm text-on-surface mb-4 border-b border-outline-variant pb-2 font-['Hanken_Grotesk']">Mock Database Context</h3>
+          <div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden overflow-x-auto">
+            {{ table_html|safe }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right Panel: Interactive Activity (40%) -->
+    <div class="w-full md:w-[40%] bg-surface-container-lowest border-t md:border-t-0 md:border-l border-outline-variant flex flex-col p-6 md:p-10 z-10 relative overflow-y-auto">
+      <div class="flex-grow flex flex-col justify-center max-w-[500px] w-full mx-auto">
+        {% if current_step %}
+        <!-- Step header -->
+        <div class="mb-6">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="font-label-mono text-[12px] text-on-surface-variant">Step {{ step_number }} of {{ total_steps }}</span>
+            <div class="flex-1 h-1 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-secondary-container transition-all" id="step-progress" style="width:{{ (step_number / total_steps * 100)|round }}%"></div>
+            </div>
+          </div>
+          <h2 class="font-headline-md text-headline-md text-on-surface font-['Hanken_Grotesk']">{{ current_step.title }}</h2>
+          <p class="font-body-md text-body-md text-on-surface-variant mt-1">{{ current_step.prompt }}</p>
+        </div>
+
+        <!-- Activity Area -->
+        <div class="space-y-3" id="activity-container" data-step-id="{{ current_step.id }}" data-kind="{{ current_step.kind }}">
+          {% if current_step.kind in ['mcq', 'predict'] %}
+            {% for opt in step_options %}
+            <div class="mcq-option border border-outline-variant rounded-xl p-4 bg-surface flex items-start gap-3 shadow-sm" data-option-id="{{ opt.id }}" onclick="selectOption(this)">
+              <div class="w-6 h-6 rounded-full border border-outline-variant flex items-center justify-center mt-0.5 flex-shrink-0 bg-surface-container indicator">
+                <span class="font-label-mono text-[12px] text-on-surface-variant indicator-label">{{ opt.label_letter }}</span>
+              </div>
+              <div class="font-body-md text-[14px] text-on-surface">{{ opt.text }}</div>
+            </div>
+            {% endfor %}
+
+          {% elif current_step.kind == 'fitb' %}
+            <div class="border border-outline-variant rounded-xl p-4 bg-surface">
+              <label class="font-label-mono text-label-mono text-on-surface-variant block mb-2">Your Answer</label>
+              <input type="text" id="fitb-input" placeholder="Type your answer here…"
+                class="w-full px-4 py-3 border border-outline-variant rounded-lg bg-surface-container-lowest font-label-mono text-label-mono text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors">
+            </div>
+
+          {% elif current_step.kind == 'spot' %}
+            <p class="font-body-md text-[14px] text-on-surface-variant mb-3">Click on the vulnerable line in the code editor on the left.</p>
+            <div class="bg-surface-container border border-outline-variant rounded-xl p-4 border-t-4 border-t-secondary">
+              <div class="flex items-start gap-3">
+                <span class="material-symbols-outlined text-secondary text-[28px]">troubleshoot</span>
+                <div>
+                  <h3 class="font-headline-sm text-[16px] font-semibold text-on-surface mb-1 font-['Hanken_Grotesk']">Analyze the Logic</h3>
+                  <p class="font-body-md text-[14px] text-on-surface-variant">{{ current_step.prompt }}</p>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Feedback Area (hidden initially) -->
+        <div class="mt-6 hidden" id="feedback-area">
+          <div class="bg-surface-container border border-outline-variant rounded-xl p-5 relative overflow-hidden">
+            <div class="absolute left-0 top-0 bottom-0 w-1.5" id="feedback-bar"></div>
+            <h4 class="font-headline-sm text-[16px] font-semibold mb-2 flex items-center gap-2 font-['Hanken_Grotesk']" id="feedback-title">
+              <span class="material-symbols-outlined" id="feedback-icon"></span>
+              <span id="feedback-heading"></span>
+            </h4>
+            <p class="font-body-md text-[14px] text-on-surface-variant" id="feedback-message"></p>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-6 flex gap-3" id="action-area">
+          <button onclick="showHint()" id="hint-btn" class="bg-surface border border-outline-variant text-on-surface-variant py-3 px-5 rounded-xl font-label-mono text-label-mono hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">lightbulb</span> Hint
+          </button>
+          <button onclick="checkAnswer()" id="check-btn" class="flex-1 bg-primary text-on-primary py-3 rounded-xl font-label-mono text-label-mono hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+            Check Answer
+          </button>
+        </div>
+        <!-- Try Again (shown on wrong answer) -->
+        <div class="mt-3 hidden" id="retry-area">
+          <button onclick="retryAnswer()" class="w-full bg-surface border border-outline-variant text-on-surface py-3 rounded-xl font-label-mono text-label-mono hover:bg-surface-container-low transition-colors flex items-center justify-center gap-2">
+            <span class="material-symbols-outlined text-sm">refresh</span> Try Again
+          </button>
+        </div>
+        <!-- Continue (shown on correct answer) -->
+        <div class="mt-3 hidden" id="continue-area">
+          {% if next_lesson %}
+          <a href="{{ url_for('main.lesson_view', lesson_id=next_lesson.id) }}" id="continue-btn" class="w-full bg-primary text-on-primary py-3 rounded-xl font-label-mono text-label-mono hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+            Continue <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </a>
+          {% elif next_step_lesson %}
+          <a href="{{ url_for('main.lesson_view', lesson_id=next_step_lesson.id) }}" class="w-full bg-primary text-on-primary py-3 rounded-xl font-label-mono text-label-mono hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+            Next Lesson <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </a>
+          {% else %}
+          <a href="{{ url_for('main.dashboard') }}" class="w-full bg-secondary-container text-on-secondary-container py-3 rounded-xl font-label-mono text-label-mono hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
+            Course Complete! <span class="material-symbols-outlined text-sm">emoji_events</span>
+          </a>
+          {% endif %}
+        </div>
+        <!-- Hint area -->
+        <div class="mt-3 hidden" id="hint-area">
+          <div class="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
+            <span class="material-symbols-outlined text-amber-600 text-[20px] mt-0.5">tips_and_updates</span>
+            <p class="font-body-md text-[14px] text-amber-800" id="hint-text"></p>
+          </div>
+        </div>
+
+        {% else %}
+        <!-- No steps — narrative only lesson -->
+        <div class="text-center">
+          <span class="material-symbols-outlined text-5xl text-on-surface-variant mb-4 block">auto_stories</span>
+          <h2 class="font-headline-md text-headline-md text-on-surface mb-2 font-['Hanken_Grotesk']">Read & Absorb</h2>
+          <p class="font-body-md text-body-md text-on-surface-variant mb-6">Review the material on the left, then continue to the next lesson.</p>
+          {% if next_step_lesson %}
+          <a href="{{ url_for('main.lesson_view', lesson_id=next_step_lesson.id) }}" class="inline-flex bg-primary text-on-primary py-3 px-8 rounded-xl font-label-mono text-label-mono hover:opacity-90 transition-opacity items-center gap-2">
+            Continue <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </main>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const STEP_ID = {{ current_step.id if current_step else 'null' }};
+  const STEP_KIND = '{{ current_step.kind if current_step else '' }}';
+  const CORRECT_ANSWER = {{ correct_answer_json|safe }};
+  const EXPLANATION = {{ explanation_json|safe }};
+  const HINTS = {{ hints_json|safe }};
+  let answered = false;
+  let selectedOptionId = null;
+  let hintIndex = 0;
+
+  // Store original indicator labels for reset
+  const originalLabels = {};
+  document.querySelectorAll('.mcq-option').forEach(o => {
+    originalLabels[o.dataset.optionId] = o.querySelector('.indicator-label')?.innerHTML || '';
+  });
+
+  function selectOption(el) {
+    if (answered) return;
+    document.querySelectorAll('.mcq-option').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedOptionId = el.dataset.optionId;
+  }
+
+  function showHint() {
+    if (HINTS.length === 0) return;
+    const hintArea = document.getElementById('hint-area');
+    const hintText = document.getElementById('hint-text');
+    hintArea.classList.remove('hidden');
+    hintText.textContent = HINTS[Math.min(hintIndex, HINTS.length - 1)];
+    if (hintIndex < HINTS.length - 1) hintIndex++;
+  }
+
+  function retryAnswer() {
+    answered = false;
+    selectedOptionId = null;
+
+    // Reset MCQ options
+    document.querySelectorAll('.mcq-option').forEach(o => {
+      o.classList.remove('selected', 'correct', 'incorrect');
+      o.style.pointerEvents = '';
+      o.style.opacity = '';
+      const indicator = o.querySelector('.indicator');
+      const label = o.querySelector('.indicator-label');
+      if (indicator) {
+        indicator.classList.remove('bg-green-100', 'border-green-500', 'bg-red-100', 'border-red-400');
+        indicator.classList.add('bg-surface-container');
+      }
+      if (label && originalLabels[o.dataset.optionId]) {
+        label.innerHTML = originalLabels[o.dataset.optionId];
+      }
+    });
+
+    // Reset FITB
+    const fitbInput = document.getElementById('fitb-input');
+    if (fitbInput) { fitbInput.value = ''; fitbInput.disabled = false; }
+
+    // Reset code lines (spot)
+    document.querySelectorAll('.code-line').forEach(l => l.classList.remove('selected', 'error-selected'));
+
+    // Hide feedback and retry, show check
+    document.getElementById('feedback-area')?.classList.add('hidden');
+    document.getElementById('retry-area')?.classList.add('hidden');
+    document.getElementById('check-btn')?.classList.remove('hidden');
+    document.getElementById('check-btn').disabled = false;
+  }
+
+  async function checkAnswer() {
+    if (answered) return;
+
+    let userAnswer = null;
+
+    if (STEP_KIND === 'mcq' || STEP_KIND === 'predict') {
+      if (!selectedOptionId) {
+        showFeedback(false, 'Please select an option first.', '');
+        return;
+      }
+      userAnswer = selectedOptionId;
+    } else if (STEP_KIND === 'fitb') {
+      userAnswer = document.getElementById('fitb-input')?.value.trim().toLowerCase() || '';
+      if (!userAnswer) {
+        showFeedback(false, 'Please type your answer.', '');
+        return;
+      }
+    } else if (STEP_KIND === 'spot') {
+      if (!selectedOptionId) {
+        showFeedback(false, 'Click on a line in the code editor.', '');
+        return;
+      }
+      userAnswer = selectedOptionId;
+    }
+
+    // Check answer
+    let isCorrect = false;
+    if (Array.isArray(CORRECT_ANSWER)) {
+      isCorrect = CORRECT_ANSWER.includes(userAnswer);
+    } else {
+      isCorrect = userAnswer === CORRECT_ANSWER;
+    }
+
+    answered = true;
+
+    // Mark visual states
+    if (STEP_KIND === 'mcq' || STEP_KIND === 'predict') {
+      document.querySelectorAll('.mcq-option').forEach(o => {
+        o.style.pointerEvents = 'none';
+        const id = o.dataset.optionId;
+        const indicator = o.querySelector('.indicator');
+        const label = o.querySelector('.indicator-label');
+        if (id === userAnswer) {
+          if (isCorrect) {
+            o.classList.add('correct');
+            indicator.classList.add('bg-green-100', 'border-green-500');
+            indicator.classList.remove('bg-surface-container');
+            label.innerHTML = '<span class="material-symbols-outlined text-green-600 text-[16px]">check</span>';
+          } else {
+            o.classList.add('incorrect');
+            indicator.classList.add('bg-red-100', 'border-red-400');
+            indicator.classList.remove('bg-surface-container');
+            label.innerHTML = '<span class="material-symbols-outlined text-red-600 text-[16px]">close</span>';
+          }
+        }
+        if (!isCorrect && id !== userAnswer) {
+          o.style.opacity = '0.5';
+        }
+      });
+    }
+
+    // For spot activities
+    if (STEP_KIND === 'spot') {
+      const clickedLine = document.querySelector(`.code-line[data-line="${userAnswer}"]`);
+      if (clickedLine) {
+        if (isCorrect) {
+          clickedLine.classList.add('selected');
+        } else {
+          clickedLine.classList.remove('selected');
+          clickedLine.classList.add('error-selected');
+        }
+      }
+    }
+
+    // For FITB
+    if (STEP_KIND === 'fitb') {
+      const fitbInput = document.getElementById('fitb-input');
+      if (fitbInput) fitbInput.disabled = true;
+    }
+
+    showFeedback(isCorrect, isCorrect ? 'Correct!' : 'Not quite right.', isCorrect ? EXPLANATION : 'Review the hint and try again.');
+
+    // Record progress & show continue on correct
+    if (isCorrect && STEP_ID) {
+      fetch('/api/complete-step', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({step_id: STEP_ID})
+      }).catch(() => {});
+
+      document.getElementById('check-btn')?.classList.add('hidden');
+      document.getElementById('continue-area')?.classList.remove('hidden');
+    } else if (!isCorrect) {
+      // Show retry button on wrong answer
+      document.getElementById('check-btn')?.classList.add('hidden');
+      document.getElementById('retry-area')?.classList.remove('hidden');
+    }
+  }
+
+  function showFeedback(isCorrect, heading, message) {
+    const area = document.getElementById('feedback-area');
+    const bar = document.getElementById('feedback-bar');
+    const icon = document.getElementById('feedback-icon');
+    const headingEl = document.getElementById('feedback-heading');
+    const msgEl = document.getElementById('feedback-message');
+
+    area.classList.remove('hidden');
+    const isDark = document.getElementById('html-root').classList.contains('dark');
+
+    if (isCorrect) {
+      bar.className = 'absolute left-0 top-0 bottom-0 w-1.5 ' + (isDark ? 'bg-emerald-400' : 'bg-green-500');
+      icon.textContent = 'check_circle';
+      icon.className = 'material-symbols-outlined ' + (isDark ? 'text-emerald-400' : 'text-green-600');
+      headingEl.textContent = heading;
+      headingEl.className = isDark ? 'text-emerald-400' : 'text-green-700';
+    } else {
+      bar.className = 'absolute left-0 top-0 bottom-0 w-1.5 ' + (isDark ? 'bg-red-400' : 'bg-red-500');
+      icon.textContent = 'cancel';
+      icon.className = 'material-symbols-outlined ' + (isDark ? 'text-red-400' : 'text-red-600');
+      headingEl.textContent = heading;
+      headingEl.className = isDark ? 'text-red-400' : 'text-red-700';
+    }
+
+    msgEl.textContent = message;
+  }
+
+  // Spot-the-vulnerability: make code lines clickable
+  document.querySelectorAll('.code-line[data-line]').forEach(line => {
+    line.addEventListener('click', () => {
+      if (answered) return;
+      document.querySelectorAll('.code-line').forEach(l => l.classList.remove('selected', 'error-selected'));
+      line.classList.add('selected');
+      selectedOptionId = line.dataset.line;
+    });
+  });
+</script>
+{% endblock %}
