@@ -36,4 +36,10 @@ def create_app(test_config=None):
         seed_database()
         print("Database initialized with SQLi course data.")
 
+    @app.cli.command("ensure-db")
+    def ensure_db_command():
+        from .seed import ensure_database
+
+        ensure_database()
+
     return app

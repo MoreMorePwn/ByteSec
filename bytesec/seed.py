@@ -317,3 +317,27 @@ def seed_database():
 
     db.session.commit()
     print(f"Seeded {Module.query.count()} modules, {Lesson.query.count()} lessons, {LessonStep.query.count()} steps.")
+
+
+def ensure_database():
+    """Create missing tables/content without wiping existing users or progress."""
+    db.create_all()
+
+    if Module.query.count() == 0:
+        seed_database()
+        return
+
+    demo = User.query.filter_by(username="demo").first()
+    if demo is None:
+        demo = User(username="demo", email="demo@bytesec.local")
+        demo.set_password("demo123")
+        db.session.add(demo)
+    elif not demo.check_password("demo123"):
+        demo.set_password("demo123")
+
+    db.session.commit()
+    print(
+        f"Database ready with {Module.query.count()} modules, "
+        f"{Lesson.query.count()} lessons, {LessonStep.query.count()} steps, "
+        f"{User.query.count()} users."
+    )

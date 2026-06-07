@@ -70,15 +70,30 @@ start_web() {
   (
     cd "$ROOT_DIR"
     source "$activate"
-    if [ ! -f "$ROOT_DIR/instance/bytesec.db" ]; then
-      flask --app app init-db
+    flask --app app ensure-db
+    if command -v setsid >/dev/null 2>&1; then
+      setsid -f env BYTESEC_HOST="$WEB_HOST" BYTESEC_PORT="$WEB_PORT" python app.py >"$WEB_LOG" 2>&1
+      sleep 0.5
+      pgrep -f "python app.py" | while read -r pid; do
+        if [ "$(readlink -f "/proc/$pid/cwd" 2>/dev/null || true)" = "$ROOT_DIR" ]; then
+          printf '%s\n' "$pid" >"$WEB_PID_FILE"
+          break
+        fi
+      done
+    else
+      BYTESEC_HOST="$WEB_HOST" BYTESEC_PORT="$WEB_PORT" nohup python app.py >"$WEB_LOG" 2>&1 &
+      printf '%s\n' "$!" >"$WEB_PID_FILE"
     fi
-    nohup flask --app app run --host "$WEB_HOST" --port "$WEB_PORT" >"$WEB_LOG" 2>&1 &
-    printf '%s\n' "$!" >"$WEB_PID_FILE"
   )
 
-  sleep 1
-  if web_running; then
+  for _ in 1 2 3 4 5; do
+    if web_responding; then
+      break
+    fi
+    sleep 1
+  done
+
+  if web_responding; then
     printf 'ByteSec web app started at %s (pid %s).\n' "$WEB_URL" "$(cat "$WEB_PID_FILE")"
   else
     printf 'ByteSec web app failed to start. Check %s.\n' "$WEB_LOG" >&2
