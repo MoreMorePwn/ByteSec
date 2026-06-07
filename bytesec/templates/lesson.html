@@ -71,7 +71,7 @@
         <!-- Narrative -->
         {% if lesson.narrative %}
         <div class="bg-surface-container-low border-l-4 border-secondary p-6 rounded-r mb-8 border border-outline-variant shadow-sm">
-          <div class="font-body-md text-body-md text-on-surface leading-relaxed prose-content">{{ lesson.narrative|safe }}</div>
+          <div class="font-body-md text-body-md text-on-surface leading-relaxed prose-content">{{ lesson_narrative_html|safe }}</div>
           {% if current_step and current_step.kind != 'spot' %}
           <div class="flex items-start gap-3 mt-4">
             <span class="material-symbols-outlined text-secondary fill mt-0.5">lightbulb</span>
@@ -122,7 +122,7 @@
             </div>
           </div>
           <h2 class="font-headline-md text-headline-md text-on-surface font-['Hanken_Grotesk']">{{ current_step.title }}</h2>
-          <p class="font-body-md text-body-md text-on-surface-variant mt-1">{{ current_step.prompt }}</p>
+          <div class="font-body-md text-body-md text-on-surface-variant mt-1 prose-content">{{ step_prompt_html|safe }}</div>
         </div>
 
         <!-- Activity Area -->
@@ -133,13 +133,13 @@
               <div class="w-6 h-6 rounded-full border border-outline-variant flex items-center justify-center mt-0.5 flex-shrink-0 bg-surface-container indicator">
                 <span class="font-label-mono text-[12px] text-on-surface-variant indicator-label">{{ opt.label_letter }}</span>
               </div>
-              <div class="font-body-md text-[14px] text-on-surface">{{ opt.text }}</div>
+              <div class="font-body-md text-[14px] text-on-surface prose-content">{{ opt.html|safe }}</div>
             </div>
             {% endfor %}
 
-          {% elif current_step.kind == 'fitb' %}
+          {% elif current_step.kind in ['fitb', 'flag'] %}
             <div class="border border-outline-variant rounded-xl p-4 bg-surface">
-              <label class="font-label-mono text-label-mono text-on-surface-variant block mb-2">Your Answer</label>
+              <label class="font-label-mono text-label-mono text-on-surface-variant block mb-2">{{ 'Submit Flag' if current_step.kind == 'flag' else 'Your Answer' }}</label>
               <input type="text" id="fitb-input" placeholder="Type your answer here…"
                 class="w-full px-4 py-3 border border-outline-variant rounded-lg bg-surface-container-lowest font-label-mono text-label-mono text-on-surface placeholder:text-outline focus:outline-none focus:border-secondary focus:ring-1 focus:ring-secondary transition-colors">
             </div>
@@ -151,7 +151,7 @@
                 <span class="material-symbols-outlined text-secondary text-[28px]">troubleshoot</span>
                 <div>
                   <h3 class="font-headline-sm text-[16px] font-semibold text-on-surface mb-1 font-['Hanken_Grotesk']">Analyze the Logic</h3>
-                  <p class="font-body-md text-[14px] text-on-surface-variant">{{ current_step.prompt }}</p>
+                  <div class="font-body-md text-[14px] text-on-surface-variant prose-content">{{ step_prompt_html|safe }}</div>
                 </div>
               </div>
             </div>
@@ -233,8 +233,8 @@
   const STEP_ID = {{ current_step.id if current_step else 'null' }};
   const STEP_KIND = '{{ current_step.kind if current_step else '' }}';
   const CORRECT_ANSWER = {{ correct_answer_json|safe }};
-  const EXPLANATION = {{ explanation_json|safe }};
-  const HINTS = {{ hints_json|safe }};
+  const EXPLANATION_HTML = {{ explanation_html_json|safe }};
+  const HINTS_HTML = {{ hints_html_json|safe }};
   let answered = false;
   let selectedOptionId = null;
   let hintIndex = 0;
@@ -253,12 +253,12 @@
   }
 
   function showHint() {
-    if (HINTS.length === 0) return;
+    if (HINTS_HTML.length === 0) return;
     const hintArea = document.getElementById('hint-area');
     const hintText = document.getElementById('hint-text');
     hintArea.classList.remove('hidden');
-    hintText.textContent = HINTS[Math.min(hintIndex, HINTS.length - 1)];
-    if (hintIndex < HINTS.length - 1) hintIndex++;
+    hintText.innerHTML = HINTS_HTML[Math.min(hintIndex, HINTS_HTML.length - 1)];
+    if (hintIndex < HINTS_HTML.length - 1) hintIndex++;
   }
 
   function retryAnswer() {
@@ -306,7 +306,7 @@
         return;
       }
       userAnswer = selectedOptionId;
-    } else if (STEP_KIND === 'fitb') {
+    } else if (STEP_KIND === 'fitb' || STEP_KIND === 'flag') {
       userAnswer = document.getElementById('fitb-input')?.value.trim().toLowerCase() || '';
       if (!userAnswer) {
         showFeedback(false, 'Please type your answer.', '');
@@ -318,6 +318,39 @@
         return;
       }
       userAnswer = selectedOptionId;
+    }
+
+    if (STEP_KIND === 'flag') {
+      answered = true;
+      const fitbInput = document.getElementById('fitb-input');
+      if (fitbInput) fitbInput.disabled = true;
+
+      let response;
+      try {
+        response = await fetch('/api/check-flag-step', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({step_id: STEP_ID, answer: userAnswer})
+        });
+      } catch {
+        showFeedback(false, 'Could not validate flag.', 'Check your connection and try again.');
+        document.getElementById('check-btn')?.classList.add('hidden');
+        document.getElementById('retry-area')?.classList.remove('hidden');
+        return;
+      }
+
+      const result = await response.json();
+      const message = result.message_html || '';
+      showFeedback(!!result.correct, result.correct ? 'Correct!' : 'Not quite right.', message);
+
+      if (result.correct) {
+        document.getElementById('check-btn')?.classList.add('hidden');
+        document.getElementById('continue-area')?.classList.remove('hidden');
+      } else {
+        document.getElementById('check-btn')?.classList.add('hidden');
+        document.getElementById('retry-area')?.classList.remove('hidden');
+      }
+      return;
     }
 
     // Check answer
@@ -370,12 +403,12 @@
     }
 
     // For FITB
-    if (STEP_KIND === 'fitb') {
+    if (STEP_KIND === 'fitb' || STEP_KIND === 'flag') {
       const fitbInput = document.getElementById('fitb-input');
       if (fitbInput) fitbInput.disabled = true;
     }
 
-    showFeedback(isCorrect, isCorrect ? 'Correct!' : 'Not quite right.', isCorrect ? EXPLANATION : 'Review the hint and try again.');
+    showFeedback(isCorrect, isCorrect ? 'Correct!' : 'Not quite right.', isCorrect ? EXPLANATION_HTML : 'Review the hint and try again.');
 
     // Record progress & show continue on correct
     if (isCorrect && STEP_ID) {
@@ -418,7 +451,7 @@
       headingEl.className = isDark ? 'text-red-400' : 'text-red-700';
     }
 
-    msgEl.textContent = message;
+    msgEl.innerHTML = message;
   }
 
   // Spot-the-vulnerability: make code lines clickable

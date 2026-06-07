@@ -1,4 +1,7 @@
 import json
+import hashlib
+import html
+import re
 from functools import wraps
 
 from flask import (
@@ -118,9 +121,11 @@ def _parse_options(step):
     letters = "ABCDEFGHIJKLMNOP"
     out = []
     for i, opt in enumerate(raw):
+        text = opt.get("text", "")
         out.append({
             "id": opt.get("id", f"opt{i+1}"),
-            "text": opt.get("text", ""),
+            "text": text,
+            "html": _render_material(text),
             "label_letter": letters[i] if i < len(letters) else str(i+1),
         })
     return out
@@ -139,6 +144,157 @@ def _hints(step):
         return json.loads(step.hints)
     except (json.JSONDecodeError, TypeError):
         return []
+
+
+def _normalize_material(value):
+    if not value:
+        return ""
+    return str(value).replace("\\r\\n", "\n").replace("\\n", "\n")
+
+
+def _render_inline(text):
+    text = html.escape(text)
+    text = re.sub(r"`([^`]+)`", r"<code>\1</code>", text)
+    text = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", text)
+    text = re.sub(r"(?<!\*)\*([^*\n]+)\*(?!\*)", r"<em>\1</em>", text)
+    return text
+
+
+def _render_table(lines):
+    rows = []
+    for line in lines:
+        cells = [cell.strip() for cell in line.strip().strip("|").split("|")]
+        rows.append(cells)
+
+    header = rows[0]
+    body = rows[2:] if len(rows) > 2 else rows[1:]
+    table = ['<table class="w-full text-left border-collapse my-4 text-[14px]">']
+    table.append('<thead><tr class="border-b border-outline-variant">')
+    for cell in header:
+        table.append(f'<th class="py-2 pr-4 font-semibold text-on-surface">{_render_inline(cell)}</th>')
+    table.append("</tr></thead><tbody>")
+    for row in body:
+        table.append('<tr class="border-b border-outline-variant/50">')
+        for cell in row:
+            table.append(f'<td class="py-2 pr-4 text-on-surface-variant">{_render_inline(cell)}</td>')
+        table.append("</tr>")
+    table.append("</tbody></table>")
+    return "".join(table)
+
+
+def _render_material(value):
+    """Render the small markdown subset used by seeded lesson material."""
+    text = _normalize_material(value).strip()
+    if not text:
+        return Markup("")
+
+    blocks = []
+    paragraph = []
+    code_lines = []
+    table_lines = []
+    in_code = False
+    code_lang = ""
+
+    def flush_paragraph():
+        if paragraph:
+            joined = " ".join(line.strip() for line in paragraph if line.strip())
+            if joined:
+                blocks.append(f'<p class="mb-3 last:mb-0">{_render_inline(joined)}</p>')
+            paragraph.clear()
+
+    def flush_table():
+        if table_lines:
+            blocks.append(_render_table(table_lines))
+            table_lines.clear()
+
+    for raw_line in text.splitlines():
+        line = raw_line.rstrip()
+        stripped = line.strip()
+
+        if stripped.startswith("```"):
+            flush_paragraph()
+            flush_table()
+            if in_code:
+                code = html.escape("\n".join(code_lines))
+                lang_class = f" language-{html.escape(code_lang)}" if code_lang else ""
+                blocks.append(
+                    f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[21px]">'
+                    f'<code class="{lang_class}">{code}</code></pre>'
+                )
+                code_lines.clear()
+                code_lang = ""
+                in_code = False
+            else:
+                in_code = True
+                code_lang = stripped[3:].strip()
+            continue
+
+        if in_code:
+            code_lines.append(line)
+            continue
+
+        if not stripped:
+            flush_paragraph()
+            flush_table()
+            continue
+
+        if stripped == "---":
+            flush_paragraph()
+            flush_table()
+            blocks.append('<hr class="my-4 border-outline-variant">')
+            continue
+
+        if stripped.startswith("|") and stripped.endswith("|"):
+            flush_paragraph()
+            table_lines.append(stripped)
+            continue
+        flush_table()
+
+        heading = re.match(r"^(#{1,4})\s+(.+)$", stripped)
+        if heading:
+            flush_paragraph()
+            level = min(len(heading.group(1)) + 2, 6)
+            blocks.append(
+                f'<h{level} class="font-headline-sm text-[18px] font-semibold text-on-surface mt-5 mb-2">'
+                f'{_render_inline(heading.group(2))}</h{level}>'
+            )
+            continue
+
+        if stripped.startswith(">"):
+            flush_paragraph()
+            blocks.append(
+                f'<blockquote class="border-l-4 border-secondary pl-4 my-3 text-on-surface-variant italic">'
+                f'{_render_inline(stripped.lstrip("> ").strip())}</blockquote>'
+            )
+            continue
+
+        if re.match(r"^[-*]\s+", stripped):
+            flush_paragraph()
+            items = [stripped]
+            blocks.append(
+                f'<ul class="list-disc pl-5 my-3 space-y-1"><li>{_render_inline(re.sub(r"^[-*]\\s+", "", stripped))}</li></ul>'
+            )
+            continue
+
+        if re.match(r"^\d+\.\s+", stripped):
+            flush_paragraph()
+            blocks.append(
+                f'<ol class="list-decimal pl-5 my-3 space-y-1"><li>{_render_inline(re.sub(r"^\\d+\\.\\s+", "", stripped))}</li></ol>'
+            )
+            continue
+
+        paragraph.append(line)
+
+    flush_paragraph()
+    flush_table()
+    if in_code and code_lines:
+        code = html.escape("\n".join(code_lines))
+        blocks.append(
+            f'<pre class="editor-bg rounded-lg p-4 overflow-x-auto my-4 font-label-mono text-[13px] leading-[21px]">'
+            f'<code>{code}</code></pre>'
+        )
+
+    return Markup("\n".join(blocks))
 
 
 def _build_table_html(raw_json):
@@ -180,6 +336,7 @@ def _build_code_html(code_raw, language="sql"):
     """Build syntax-highlighted HTML from raw code, with clickable lines for 'spot' activities."""
     if not code_raw:
         return None, None
+    code_raw = _normalize_material(code_raw)
     lines = code_raw.strip().split('\n')
     html_lines = []
     for i, line in enumerate(lines, 1):
@@ -383,9 +540,15 @@ def lesson_view(lesson_id):
 
     # Prepare display data
     step_options = _parse_options(current_step) if current_step else []
-    correct_answer_json = json.dumps(_correct_answer(current_step)) if current_step else "null"
-    explanation_json = json.dumps(current_step.explanation if current_step else "")
-    hints_json = json.dumps(_hints(current_step) if current_step else [])
+    correct_answer_json = (
+        "null"
+        if not current_step or current_step.kind == "flag"
+        else json.dumps(_correct_answer(current_step))
+    )
+    explanation_html_json = json.dumps(str(_render_material(current_step.explanation if current_step else "")))
+    hints_html_json = json.dumps([str(_render_material(hint)) for hint in (_hints(current_step) if current_step else [])])
+    lesson_narrative_html = _render_material(lesson.narrative)
+    step_prompt_html = _render_material(current_step.prompt if current_step else "")
 
     # Code to display (prefer step-specific, fallback to lesson-level)
     display_code = None
@@ -393,7 +556,7 @@ def lesson_view(lesson_id):
     display_code_filename = None
     code_src = current_step if (current_step and current_step.code_snippet) else lesson
     if code_src and getattr(code_src, 'code_snippet', None):
-        lang = getattr(code_src, 'code_language', 'sql') or 'sql'
+        lang = getattr(code_src, 'code_language', None) or 'text'
         display_code, display_code_raw = _build_code_html(code_src.code_snippet, lang)
         display_code_filename = getattr(code_src, 'code_filename', None) or f"snippet.{lang}"
 
@@ -424,9 +587,11 @@ def lesson_view(lesson_id):
         step_number=step_number,
         total_steps=total_steps,
         step_options=step_options,
+        lesson_narrative_html=lesson_narrative_html,
+        step_prompt_html=step_prompt_html,
         correct_answer_json=correct_answer_json,
-        explanation_json=explanation_json,
-        hints_json=hints_json,
+        explanation_html_json=explanation_html_json,
+        hints_html_json=hints_html_json,
         display_code=display_code,
         display_code_raw=display_code_raw,
         display_code_filename=display_code_filename,
@@ -472,6 +637,35 @@ def api_complete_step():
         db.session.commit()
 
     return jsonify({"ok": True})
+
+
+@bp.route("/api/check-flag-step", methods=["POST"])
+@login_required
+def api_check_flag_step():
+    data = request.get_json(silent=True) or {}
+    step_id = data.get("step_id")
+    answer = data.get("answer", "")
+    if not step_id:
+        return jsonify({"ok": False, "error": "Missing step_id"}), 400
+
+    step = db.session.get(LessonStep, step_id)
+    if not step or step.kind != "flag":
+        return jsonify({"ok": False, "error": "Invalid flag step"}), 404
+
+    submitted_hash = hashlib.sha256(str(answer).strip().lower().encode()).hexdigest()
+    is_correct = submitted_hash == step.correct_answer
+    if is_correct:
+        existing = UserProgress.query.filter_by(user_id=g.user.id, step_id=step.id).first()
+        if not existing:
+            db.session.add(UserProgress(user_id=g.user.id, step_id=step.id))
+            db.session.commit()
+
+    message = step.explanation if is_correct else "The flag is not correct yet. Re-check the challenge output and submit the exact BYTESEC{...} value."
+    return jsonify({
+        "ok": True,
+        "correct": is_correct,
+        "message_html": str(_render_material(message)),
+    })
 
 
 @bp.route("/api/set-theme", methods=["POST"])

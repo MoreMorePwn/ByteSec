@@ -200,6 +200,33 @@
     .syntax-type { color: #4ec9b0; }
     .syntax-number { color: #b5cea8; }
 
+    /* Rendered lesson prose */
+    .prose-content p:last-child { margin-bottom: 0; }
+    .prose-content strong { font-weight: 700; color: inherit; }
+    .prose-content em { font-style: italic; }
+    .prose-content code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+      border: 1px solid #E5E7EB;
+      border-radius: 0.35rem;
+      padding: 0.1rem 0.35rem;
+      background-color: #eeeeee;
+      color: #1a1c1c;
+    }
+    .dark .prose-content code {
+      border-color: #3c4947;
+      background-color: #122131;
+      color: #d4e4fa;
+    }
+    .prose-content pre code {
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      background: transparent;
+      color: inherit;
+      font-size: inherit;
+    }
+
     /* Grid background for hero */
     .bg-grid-pattern {
       background-size: 40px 40px;

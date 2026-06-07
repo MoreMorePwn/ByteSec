@@ -12,4 +12,5 @@ dist/
 build/
 .pytest_cache/
 *.db
+!ctf_chall/**/*.db
 *.sqlite3

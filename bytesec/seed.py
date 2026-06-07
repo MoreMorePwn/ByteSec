@@ -34,7 +34,8 @@ ICONS = {
     4: "category",
     5: "bug_report",
     6: "shield",
-    7: "emoji_events"
+    7: "emoji_events",
+    8: "flag"
 }
 
 DESCRIPTIONS = {
@@ -44,7 +45,8 @@ DESCRIPTIONS = {
     4: "Classify injections into In-Band, Blind, and Out-of-Band. Master UNION-based and Boolean-based techniques.",
     5: "Extract database metadata, enumerate tables via information_schema, and understand second-order injection.",
     6: "Implement parameterized queries, input validation, least privilege, and WAF as defense-in-depth.",
-    7: "Analyze real SQL injection breaches (Heartland, Sony, TalkTalk) and prove your mastery in a comprehensive assessment."
+    7: "Analyze real SQL injection breaches (Heartland, Sony, TalkTalk) and prove your mastery in a comprehensive assessment.",
+    8: "Apply the SQL injection workflow against a local CTF challenge and submit the recovered flag."
 }
 
 def seed_database():
@@ -264,6 +266,49 @@ def seed_database():
     db.session.flush()
     db.session.add(LessonStep(lesson_id=l7_5.id, order_index=1, kind="fitb", title="THE GAUNTLET", prompt="", options=_opts(("A", "A) A WAF alone is sufficient protection"), ("B", "B) Input validation alone is sufficient protection"), ("C", "C) Parameterized queries alone are sufficient, but defense-in-depth is better"), ("D", "D) Using HTTPS prevents SQL injection")), correct_answer=_j(["C) Parameterized queries alone are sufficient, but defense-in-depth is better"]), explanation="Parameterized queries are the **only** technique that truly prevents SQL injection. However, combining them with input validation, least privilege, and WAF monitoring provides the strongest overall defense.", hints=_j([])))
 
+    # ── MODULE 08: CTF Challenge Lab ──────────────────────────────────
+    m8 = Module(order_index=8, title="CTF Challenge Lab: Baby SQLi", description=DESCRIPTIONS.get(8, ""), icon=ICONS.get(8, "flag"), difficulty="Advanced", estimated_minutes=30)
+    db.session.add(m8)
+    db.session.flush()
+    l8_1 = Lesson(
+        module_id=m8.id,
+        order_index=1,
+        title="Solve the Baby SQLi Challenge",
+        narrative=(
+            "**Objective**: Apply the SQL injection workflow from this course against a real local CTF service.\n\n"
+            "The challenge is packaged in `ctf_chall/baby_sqli`. Start it locally, bypass the login as `admin`, recover the flag, then submit it here.\n\n"
+            "**Ethical boundary**: Only test this local lab or systems where you have explicit permission."
+        ),
+        code_snippet=(
+            "cd ctf_chall/baby_sqli\n"
+            "docker compose up --build\n\n"
+            "# Then open:\n"
+            "http://127.0.0.1:8004\n\n"
+            "# Goal:\n"
+            "Log in as admin and read the BYTESEC{...} flag."
+        ),
+        code_language="bash",
+        table_data=None,
+    )
+    db.session.add(l8_1)
+    db.session.flush()
+    db.session.add(LessonStep(
+        lesson_id=l8_1.id,
+        order_index=1,
+        kind="flag",
+        title="SUBMIT THE FLAG",
+        prompt=(
+            "Submit the exact flag shown after you solve the local challenge.\n\n"
+            "Flag format: `BYTESEC{...}`"
+        ),
+        options=_j([]),
+        correct_answer="84f61f593ff27ff39777cfb98bf90598848c1bc9533e75bf8ee54b964b876ba9",
+        explanation="Flag accepted. You solved the CTF lab and completed the SQL injection learning path.",
+        hints=_j([
+            "The server escapes many symbols with backslashes before building the SQL query. Think about which SQL comment form survives that transformation.",
+            "The app hashes the password before comparison, so focus on changing the SQL logic around the username/password condition."
+        ]),
+    ))
+
     db.session.commit()
     print(f"Seeded {Module.query.count()} modules, {Lesson.query.count()} lessons, {LessonStep.query.count()} steps.")
-
