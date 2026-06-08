@@ -18,7 +18,7 @@ from markupsafe import Markup
 from sqlalchemy import func
 
 from . import db
-from .models import Lesson, LessonStep, Module, User, UserProgress
+from .models import CommunityChallenge, CommunityChallengeSolve, Lesson, LessonStep, Module, User, UserProgress
 
 
 bp = Blueprint("main", __name__)
@@ -912,6 +912,191 @@ def admin_docker_overview():
         "total_containers": total_containers,
         "total_stopped": total_containers - total_running,
     })
+
+
+# ── Community Challenges ──────────────────────────────────────────────
+
+
+@bp.route("/community")
+@login_required
+def community():
+    category = request.args.get("category", "")
+    difficulty = request.args.get("difficulty", "")
+    selected_status = "approved"
+
+    query = CommunityChallenge.query.filter_by(status="approved")
+    if category:
+        query = query.filter_by(category=category)
+    if difficulty:
+        query = query.filter_by(difficulty=difficulty)
+    challenges = query.order_by(CommunityChallenge.created_at.desc()).all()
+
+    # Mark which ones the current user solved
+    solved_ids = {
+        s.challenge_id for s in CommunityChallengeSolve.query.filter_by(user_id=g.user.id).all()
+    }
+    for ch in challenges:
+        ch.solved_by_user = ch.id in solved_ids
+
+    categories = (
+        db.session.query(CommunityChallenge.category)
+        .filter(CommunityChallenge.status == "approved")
+        .distinct()
+        .order_by(CommunityChallenge.category)
+        .all()
+    )
+
+    return render_template(
+        "community.html",
+        challenges=challenges,
+        categories=[c[0] for c in categories],
+        selected_category=category,
+        selected_difficulty=difficulty,
+    )
+
+
+@bp.route("/community/submit", methods=["GET", "POST"])
+@login_required
+def community_submit():
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        category = request.form.get("category", "").strip()
+        difficulty = request.form.get("difficulty", "medium").strip()
+        description = request.form.get("description", "").strip()
+        flag = request.form.get("flag", "").strip()
+        hint = request.form.get("hint", "").strip() or None
+        try:
+            points = int(request.form.get("points", 100))
+        except ValueError:
+            points = 100
+
+        if not title or not category or not description or not flag:
+            flash("Title, category, description, and flag are required.", "danger")
+            return render_template("community_submit.html")
+
+        challenge = CommunityChallenge(
+            title=title,
+            category=category,
+            difficulty=difficulty,
+            description=description,
+            flag=flag,
+            points=points,
+            hint=hint,
+            author_id=g.user.id,
+            status="pending",
+        )
+        db.session.add(challenge)
+        db.session.commit()
+        flash("Challenge submitted! An admin will review it shortly.", "success")
+        return redirect(url_for("main.community"))
+
+    return render_template("community_submit.html")
+
+
+@bp.route("/community/<int:challenge_id>")
+@login_required
+def community_challenge(challenge_id):
+    challenge = db.session.get(CommunityChallenge, challenge_id)
+    if challenge is None or challenge.status != "approved":
+        flash("Challenge not found.", "danger")
+        return redirect(url_for("main.community"))
+
+    solved = CommunityChallengeSolve.query.filter_by(
+        user_id=g.user.id, challenge_id=challenge.id
+    ).first() is not None
+
+    return render_template("community_challenge.html", challenge=challenge, solved=solved)
+
+
+@bp.route("/community/<int:challenge_id>/submit", methods=["POST"])
+@login_required
+def community_challenge_submit(challenge_id):
+    challenge = db.session.get(CommunityChallenge, challenge_id)
+    if challenge is None or challenge.status != "approved":
+        flash("Challenge not found.", "danger")
+        return redirect(url_for("main.community"))
+
+    # Check if already solved
+    existing = CommunityChallengeSolve.query.filter_by(
+        user_id=g.user.id, challenge_id=challenge.id
+    ).first()
+    if existing:
+        flash("You already solved this challenge!", "info")
+        return redirect(url_for("main.community_challenge", challenge_id=challenge.id))
+
+    submitted_flag = request.form.get("flag", "").strip()
+    if submitted_flag == challenge.flag:
+        solve = CommunityChallengeSolve(user_id=g.user.id, challenge_id=challenge.id)
+        db.session.add(solve)
+        db.session.commit()
+        flash("Correct flag! Challenge solved.", "success")
+    else:
+        flash("Incorrect flag. Try again!", "danger")
+
+    return redirect(url_for("main.community_challenge", challenge_id=challenge.id))
+
+
+# ── Admin Community ───────────────────────────────────────────────────
+
+
+@bp.route("/admin/community")
+@admin_required
+def admin_community():
+    status_filter = request.args.get("status", "")
+    query = CommunityChallenge.query
+
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+
+    challenges = query.order_by(CommunityChallenge.created_at.desc()).all()
+    total = CommunityChallenge.query.count()
+    pending_count = CommunityChallenge.query.filter_by(status="pending").count()
+    approved_count = CommunityChallenge.query.filter_by(status="approved").count()
+    rejected_count = CommunityChallenge.query.filter_by(status="rejected").count()
+
+    return render_template(
+        "admin_community.html",
+        challenges=challenges,
+        total=total,
+        pending_count=pending_count,
+        approved_count=approved_count,
+        rejected_count=rejected_count,
+        selected_status=status_filter,
+    )
+
+
+@bp.route("/admin/community/<int:challenge_id>/<action>", methods=["POST"])
+@admin_required
+def admin_community_review(challenge_id, action):
+    challenge = db.session.get(CommunityChallenge, challenge_id)
+    if challenge is None:
+        flash("Challenge not found.", "danger")
+        return redirect(url_for("main.admin_community"))
+
+    if action == "approve":
+        challenge.status = "approved"
+        challenge.reviewed_by = g.user.id
+        challenge.reviewed_at = utc_now()
+        flash(f"Challenge '{challenge.title}' approved!", "success")
+    elif action == "reject":
+        challenge.status = "rejected"
+        challenge.reviewed_by = g.user.id
+        challenge.reviewed_at = utc_now()
+        flash(f"Challenge '{challenge.title}' rejected.", "warning")
+    elif action == "delete":
+        db.session.delete(challenge)
+        flash(f"Challenge '{challenge.title}' deleted.", "info")
+    else:
+        flash("Unknown action.", "danger")
+        return redirect(url_for("main.admin_community"))
+
+    db.session.commit()
+    return redirect(url_for("main.admin_community"))
+
+
+def utc_now():
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc)
 
 
 @bp.route("/downloads/re-asm-xor-checker")

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Community Challenges — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-2">Community</p>
+      <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary mb-2 font-['Hanken_Grotesk']">Community Challenges</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+        Challenges created by the ByteSec community. Solve them, earn points, and climb the leaderboard.
+      </p>
+    </div>
+    <a href="{{ url_for('main.community_submit') }}"
+       class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity inline-flex items-center gap-2 shrink-0">
+      <span class="material-symbols-outlined text-[18px]">add</span> Submit Challenge
+    </a>
+  </header>
+
+  <!-- Filter / Search Bar -->
+  <div class="flex flex-wrap items-center gap-3">
+    <form method="get" class="flex flex-wrap items-center gap-3">
+      <select name="category" onchange="this.form.submit()"
+              class="bg-surface-container-lowest border border-border-muted text-primary font-label-mono text-[13px] px-3 py-2 rounded-lg outline-none focus:border-secondary">
+        <option value="">All Categories</option>
+        {% for cat in categories %}
+        <option value="{{ cat }}" {% if selected_category == cat %}selected{% endif %}>{{ cat|capitalize }}</option>
+        {% endfor %}
+      </select>
+      <select name="difficulty" onchange="this.form.submit()"
+              class="bg-surface-container-lowest border border-border-muted text-primary font-label-mono text-[13px] px-3 py-2 rounded-lg outline-none focus:border-secondary">
+        <option value="">All Difficulties</option>
+        <option value="easy" {% if selected_difficulty == 'easy' %}selected{% endif %}>Easy</option>
+        <option value="medium" {% if selected_difficulty == 'medium' %}selected{% endif %}>Medium</option>
+        <option value="hard" {% if selected_difficulty == 'hard' %}selected{% endif %}>Hard</option>
+      </select>
+    </form>
+    <span class="font-label-mono text-[12px] text-on-surface-variant ml-auto">{{ challenges|length }} challenge{% if challenges|length != 1 %}s{% endif %}</span>
+  </div>
+
+  <!-- Challenge Cards -->
+  {% if challenges %}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    {% for ch in challenges %}
+    <a href="{{ url_for('main.community_challenge', challenge_id=ch.id) }}"
+       class="bg-surface-container-lowest border border-border-muted rounded-xl overflow-hidden hover:border-secondary transition-colors group">
+      <div class="p-5 flex flex-col gap-3">
+        <!-- Top row: difficulty badge + points -->
+        <div class="flex items-center justify-between">
+          <span class="font-label-mono text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border
+            {% if ch.difficulty == 'easy' %}text-success-green border-success-green/30
+            {% elif ch.difficulty == 'hard' %}text-error border-error/30
+            {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
+            {{ ch.difficulty }}
+          </span>
+          <span class="font-label-mono text-[13px] text-secondary">{{ ch.points }} pts</span>
+        </div>
+        <!-- Title + category -->
+        <h2 class="font-headline-sm text-headline-sm text-primary font-['Hanken_Grotesk'] group-hover:text-secondary transition-colors">{{ ch.title }}</h2>
+        <div class="flex items-center gap-3 text-on-surface-variant">
+          <span class="font-label-mono text-[12px] bg-surface-container px-2 py-0.5 rounded">{{ ch.category }}</span>
+          <span class="font-label-mono text-[12px]">by {{ ch.author.username }}</span>
+        </div>
+        <!-- Description preview -->
+        <p class="font-body-md text-body-md text-on-surface-variant line-clamp-2">{{ ch.description[:200] }}{% if ch.description|length > 200 %}…{% endif %}</p>
+        <!-- Stats row -->
+        <div class="flex items-center gap-4 text-on-surface-variant font-label-mono text-[12px] mt-1">
+          <span>{{ ch.solves|length }} solve{% if ch.solves|length != 1 %}s{% endif %}</span>
+          {% if ch.solved_by_user %}
+          <span class="text-success-green flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">check_circle</span> Solved
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <!-- Empty state -->
+  <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-12 flex flex-col items-center gap-4 text-center">
+    <span class="material-symbols-outlined text-[48px] text-on-surface-variant opacity-40">flag</span>
+    <h3 class="font-headline-sm text-headline-sm text-primary">No Challenges Yet</h3>
+    <p class="font-body-md text-body-md text-on-surface-variant max-w-md">Be the first to submit a challenge for the community!</p>
+    <a href="{{ url_for('main.community_submit') }}"
+       class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity inline-flex items-center gap-2 mt-2">
+      <span class="material-symbols-outlined text-[18px]">add</span> Submit Challenge
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

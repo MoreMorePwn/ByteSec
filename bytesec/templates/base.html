@@ -353,6 +353,7 @@
           <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.dashboard') }}">Dashboard</a>
           <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.course') }}">Course</a>
           <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.leaderboard') }}">Leaderboard</a>
+          <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.community') }}">Community</a>
           {% if is_admin_user() %}
           <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-2 py-1 rounded" href="{{ url_for('main.admin_docker') }}">Admin</a>
           {% endif %}
@@ -404,7 +405,7 @@
     <div class="py-12 px-margin-mobile md:px-margin-desktop flex flex-col md:flex-row justify-between items-center max-w-[1200px] mx-auto gap-4">
       <div class="font-headline-md text-headline-md font-bold text-primary">ByteSec</div>
       <div class="flex flex-wrap justify-center gap-6">
-        <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="#">Community</a>
+        <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="{{ url_for('main.community') }}">Community</a>
         <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="#">Discord</a>
         <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="#">Terms of Service</a>
         <a class="font-label-mono text-label-mono text-on-surface-variant hover:text-secondary hover:underline decoration-secondary transition-colors" href="#">Help Center</a>
