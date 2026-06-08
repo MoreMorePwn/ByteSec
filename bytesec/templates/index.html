@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block title %}ByteSec — Interactive CTF Learning Platform{% endblock %}
-{% block meta_description %}ByteSec teaches CTF categories through guided lessons, instant feedback, progress tracking, and local CTF challenge practice.{% endblock %}
+{% block meta_description %}ByteSec teaches CTF categories through guided lessons, instant feedback, progress tracking, and CTF challenge practice.{% endblock %}
 {% block content %}
 <!-- Hero -->
 <section class="w-full relative overflow-hidden pt-16 pb-20 bg-grid-pattern">
@@ -12,7 +12,7 @@
     </div>
     <h1 class="font-display-lg text-display-lg text-primary mb-4 max-w-3xl">Learn CTF<br>By Doing.</h1>
     <p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl mx-auto mb-8">
-      ByteSec turns cybersecurity practice into guided learning: concept-first lessons, small interactive checks, instant feedback, progress tracking, and local CTF challenges across Web, Reverse Engineering, Pwn, Forensics, and Cryptography.
+      ByteSec turns cybersecurity practice into guided learning: concept-first lessons, small interactive checks, instant feedback, progress tracking, and CTF challenges across Web, Reverse Engineering, Pwn, Forensics, and Cryptography.
     </p>
     <div class="flex flex-wrap gap-4 justify-center">
       {% if g.user %}
@@ -58,7 +58,7 @@
   <div class="mb-8">
     <h2 class="font-headline-md text-headline-md text-primary mb-2">CTF Track Roadmap</h2>
     <p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
-      ByteSec is designed as a multi-category learning platform. Web Exploitation is live first; the same guided lesson and lab model is intended for Reverse Engineering, Pwn, Forensics, and Cryptography.
+      ByteSec is designed as a multi-category learning platform. Web Exploitation, Reverse Engineering, and Cryptography are live first; the same guided lesson and lab model is intended for Pwn and Forensics.
     </p>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -82,32 +82,38 @@
   <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-8">
     <div>
       <span class="font-label-mono text-[12px] text-secondary uppercase tracking-wider">Available Now</span>
-      <h2 class="font-headline-md text-headline-md text-primary mt-1 mb-2">Web Exploitation: SQL Injection Path</h2>
-      <p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">The current live track starts with SQL fundamentals and builds toward exploitation techniques, prevention, and real-world case analysis.</p>
+      <h2 class="font-headline-md text-headline-md text-primary mt-1 mb-2">Live Course Pathways</h2>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">Web Exploitation, Reverse Engineering, and Cryptography are separate courses. Each pathway has its own lessons, module sequence, and progress.</p>
     </div>
     {% if g.user %}
     <a href="{{ url_for('main.course') }}" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity items-center gap-2">
-      Open Path <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+      Open Courses <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
     </a>
     {% endif %}
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
-    {% for module in modules %}
+    {% for track in course_tracks %}
     <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-6 hover:shadow-md transition-shadow duration-200 flex flex-col group">
       <div class="flex items-center gap-3 mb-4">
         <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
-          <span class="material-symbols-outlined text-on-surface-variant">{{ module.icon }}</span>
+          <span class="material-symbols-outlined text-on-surface-variant">{{ track.icon }}</span>
         </div>
         <div>
-          <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Module {{ module.order_index }}</p>
-          <p class="font-label-mono text-[12px] text-secondary">{{ module.difficulty }}</p>
+          <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">{{ track.label }}</p>
+          <p class="font-label-mono text-[12px] text-secondary">Live Course</p>
         </div>
       </div>
-      <h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-primary mb-2 font-['Hanken_Grotesk']">{{ module.title }}</h3>
-      <p class="font-body-md text-[14px] text-on-surface-variant mb-4 line-clamp-2 flex-grow">{{ module.description }}</p>
+      <h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-primary mb-2 font-['Hanken_Grotesk']">{{ track.title }}</h3>
+      <p class="font-body-md text-[14px] text-on-surface-variant mb-4 line-clamp-2 flex-grow">{{ track.description }}</p>
       <div class="flex items-center justify-between mt-auto pt-4 border-t border-border-muted">
-        <span class="font-label-mono text-[12px] text-on-surface-variant">{{ module.lessons|length }} lessons • {{ module.estimated_minutes }} min</span>
+        <span class="font-label-mono text-[12px] text-on-surface-variant">{{ track.modules|length }} modules • {{ track.lesson_count }} lessons</span>
+        {% if g.user %}
+        <a href="{{ url_for('main.course', track_key=track.key) }}" class="font-label-mono text-[12px] text-secondary hover:underline flex items-center gap-1">
+          Open <span class="material-symbols-outlined text-[16px]">arrow_forward</span>
+        </a>
+        {% else %}
         <span class="material-symbols-outlined text-on-surface-variant group-hover:text-secondary transition-colors text-[18px]">arrow_forward</span>
+        {% endif %}
       </div>
     </div>
     {% endfor %}

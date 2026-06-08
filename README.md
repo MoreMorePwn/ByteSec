@@ -1,14 +1,17 @@
 # ByteSec
 
-ByteSec is an interactive CTF learning platform. The first live track is Web Exploitation through SQL injection, and the app is structured to later add Reverse Engineering, Pwn, Forensics, and Cryptography tracks with the same lesson, activity, progress, Docker lab, and flag-submission model.
+ByteSec is an interactive CTF learning platform. The first live tracks are Web Exploitation through SQL injection, Reverse Engineering through x86-64 assembly, and Cryptography through CryptoBook-inspired core lessons. The app is structured to later add Pwn and Forensics tracks with the same lesson, activity, progress, lab, and flag-submission model.
 
 ## Features
 
 - Flask web app with login, registration, dashboard, course view, lesson view, leaderboard, and admin Docker controls.
 - SQL injection curriculum loaded from markdown files in `modules/sqli`.
+- Reverse engineering assembly curriculum loaded from markdown files in `modules/reverse-engineering-assembly`.
+- Cryptography curriculum loaded from markdown files in `modules/crypto`.
 - Markdown rendering for lesson prose, tables, code fences, links, lists, emphasis, and generated SVG diagram images.
 - Interactive activity types: multiple choice, predict the output, fill in the blank, spot the vulnerable line, and flag submission.
-- Local EzSQLi CTF challenge packaged with Docker Compose.
+- EzSQLi CTF challenge packaged with Docker Compose.
+- XOR flag-checker reverse engineering challenge.
 - User progress tracking in SQLite.
 - Service helper script to run the Flask app and CTF challenge together.
 
@@ -23,10 +26,14 @@ ByteSec/
     routes.py                    Views, APIs, renderers, admin Docker actions
     seed.py                      Markdown parser and database seeding
     templates/                   Jinja templates
-  modules/sqli/                  Markdown curriculum source
+  modules/sqli/                  SQL injection markdown curriculum source
+  modules/reverse-engineering-assembly/
+                                  Reverse engineering assembly markdown curriculum source
+  modules/crypto/                Cryptography markdown curriculum source
   ctf_chall/ezsqli/              Dockerized EzSQLi challenge
+  ctf_chall/re_asm_xor_checker/  XOR flag-checker challenge
   scripts/dev-services.sh        Web + CTF service runner
-  instance/bytesec.db            Local SQLite database, created at runtime
+  instance/bytesec.db            SQLite database, created at runtime
 ```
 
 ## Requirements
@@ -34,6 +41,7 @@ ByteSec/
 - Python dependencies from `requirements.txt`.
 - A Python virtual environment.
 - Docker and Docker Compose for the EzSQLi challenge.
+- GCC and Make for rebuilding the XOR checker challenge.
 
 Install Python dependencies:
 
@@ -130,6 +138,30 @@ modules/sqli/07-real-world-cases-final-challenge.md
 
 The app adds module 8 separately as the EzSQLi CTF flag-submission lab.
 
+Reverse engineering assembly modules are parsed from:
+
+```text
+modules/reverse-engineering-assembly/09-assembly-foundations.md
+modules/reverse-engineering-assembly/10-stack-calls-and-parameters.md
+modules/reverse-engineering-assembly/11-control-flow-memory-and-xor.md
+modules/reverse-engineering-assembly/12-reversing-flag-checker-workflow.md
+```
+
+`modules/reverse-engineering-assembly/00-course-overview.md` documents the curriculum shape and is not seeded as an app module.
+
+The app adds module 13 separately as the XOR Flag Checker flag-submission lab.
+
+Cryptography modules are parsed from:
+
+```text
+modules/crypto/14-crypto-fundamentals.md
+modules/crypto/15-number-theory.md
+modules/crypto/16-asymmetric-cryptography.md
+modules/crypto/17-symmetric-cryptography.md
+```
+
+`modules/crypto/00-course-overview.md` documents the curriculum shape and is not seeded as an app module.
+
 ## Markdown Parsing Rules
 
 The parser in `bytesec/seed.py` reads each module markdown file and creates:
@@ -148,9 +180,9 @@ Supported activity types:
 
 Unsupported classroom-only activity types such as drag/drop, build-query, and free-form fix-code activities are skipped instead of being shown as placeholder tasks.
 
-## CTF Challenge
+## CTF Challenges
 
-The active local challenge lives in:
+The active SQL injection challenge lives in:
 
 ```text
 ctf_chall/ezsqli/
@@ -170,13 +202,28 @@ docker compose down
 
 The admin dashboard exposes these same CTF container controls from the web UI.
 
+The reverse engineering challenge lives in:
+
+```text
+ctf_chall/re_asm_xor_checker/
+```
+
+Build and run it directly:
+
+```bash
+cd ctf_chall/re_asm_xor_checker
+make
+./xor_checker
+```
+
 ## Verification
 
-Basic local checks:
+Basic checks:
 
 ```bash
 python -m compileall -q app.py bytesec
 flask --app app refresh-course
+make -C ctf_chall/re_asm_xor_checker
 ./scripts/dev-services.sh status
 ```
 
@@ -189,7 +236,7 @@ curl -fsSI http://127.0.0.1:8004/ | head -1
 
 ## Notes For Future Tracks
 
-Keep future Reverse Engineering, Pwn, Forensics, and Cryptography tracks in the same shape:
+Keep future Pwn and Forensics tracks in the same shape:
 
 - Markdown lessons for concept content.
 - Dockerized CTF challenges for hands-on practice.

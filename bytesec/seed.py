@@ -1,4 +1,4 @@
-"""Seed ByteSec content from the markdown curriculum under modules/sqli."""
+"""Seed ByteSec content from markdown curricula under modules/."""
 
 import json
 import re
@@ -9,9 +9,14 @@ from .models import Lesson, LessonStep, Module, User, UserProgress
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-SQLI_MODULE_DIR = ROOT_DIR / "modules" / "sqli"
-CTF_CHALLENGE_URL = "http://127.0.0.1:8004"
-CTF_FLAG_HASH = "84f61f593ff27ff39777cfb98bf90598848c1bc9533e75bf8ee54b964b876ba9"
+CURRICULUM_ROOT = ROOT_DIR / "modules"
+SQLI_MODULE_DIR = CURRICULUM_ROOT / "sqli"
+RE_ASM_MODULE_DIR = CURRICULUM_ROOT / "reverse-engineering-assembly"
+CRYPTO_MODULE_DIR = CURRICULUM_ROOT / "crypto"
+SQLI_CTF_CHALLENGE_URL = "http://127.0.0.1:8004"
+SQLI_CTF_FLAG_HASH = "84f61f593ff27ff39777cfb98bf90598848c1bc9533e75bf8ee54b964b876ba9"
+RE_ASM_CTF_FLAG_HASH = "57f7e67a47b26bc59fab7e5f4807ffeba2edce17ce39540e6395caf4ef9d1a2a"
+CRYPTO_RSA_CTF_FLAG_HASH = "cc50860a061bc2af278112f0ebc8f347e27bf97a12c792e66082b68010de036a"
 
 
 def _j(obj):
@@ -38,6 +43,16 @@ ICONS = {
     6: "shield",
     7: "emoji_events",
     8: "flag",
+    9: "memory",
+    10: "account_tree",
+    11: "data_object",
+    12: "travel_explore",
+    13: "flag",
+    14: "vpn_key",
+    15: "functions",
+    16: "key",
+    17: "lock",
+    18: "flag",
 }
 
 
@@ -50,11 +65,21 @@ DESCRIPTIONS = {
     6: "Apply parameterized queries, validation, least privilege, and defense-in-depth against SQL injection.",
     7: "Analyze real breaches and complete the final SQL injection assessment.",
     8: "Solve the local EzSQLi CTF challenge and submit the recovered flag.",
+    9: "Read x86-64 registers, operands, comparisons, and common compiler idioms used in reverse engineering.",
+    10: "Trace stack behavior, calls, returns, and Linux x86-64 function argument registers.",
+    11: "Follow branch logic, byte loops, memory operands, and XOR-encoded data checks.",
+    12: "Use static triage and byte-level reasoning to reverse a small flag checker workflow.",
+    13: "Recover and submit the flag from a local XOR flag-checker binary.",
+    14: "Read cryptographic notation, compute GCDs and residues, and distinguish correctness from security.",
+    15: "Use primes, factorization, totients, modular exponents, and hard-problem intuition.",
+    16: "Trace public-key ideas through RSA, Diffie-Hellman, and elliptic-curve style groups.",
+    17: "Reason about shared-key encryption, one-time pads, XOR reuse, AES blocks, and modes.",
+    18: "Recover a flag from a textbook RSA low-exponent challenge.",
 }
 
 
 LESSON_RE = re.compile(r"^###\s+(\d+)\.(\d+)\s+[-\u2013\u2014]\s+(.+?)\s*$", re.MULTILINE)
-ACTIVITY_RE = re.compile(r"^####\s+(.+?Activity.+?)\s*$", re.MULTILINE)
+ACTIVITY_RE = re.compile(r"^####\s+(.*?Activity.+?)\s*$", re.MULTILINE)
 FIELD_RE = re.compile(r"^\*\*(.+?)\*\*:\s*(.*)$")
 CODE_RE = re.compile(r"```([A-Za-z0-9_-]*)\n(.*?)\n```", re.DOTALL)
 OPTION_RE = re.compile(r"^-\s*([A-Z])\)\s*(.+?)\s*$")
@@ -75,17 +100,33 @@ def _plain(value):
 
 
 def _module_files():
-    return [
-        path
-        for path in sorted(SQLI_MODULE_DIR.glob("[0-9][0-9]-*.md"))
-        if not path.name.startswith("00-")
-    ]
+    files = []
+    for module_dir in (SQLI_MODULE_DIR, RE_ASM_MODULE_DIR, CRYPTO_MODULE_DIR):
+        if not module_dir.exists():
+            continue
+        files.extend(
+            path
+            for path in module_dir.glob("[0-9][0-9]-*.md")
+            if not path.name.startswith("00-")
+        )
+    return sorted(files, key=_module_file_sort_key)
+
+
+def _module_file_sort_key(path):
+    match = re.match(r"^([0-9]{2})-", path.name)
+    order = int(match.group(1)) if match else 999
+    return order, str(path)
+
+
+def _expected_module_count():
+    ctf_count = 3
+    return len(_module_files()) + ctf_count
 
 
 def _module_meta(text, fallback_order):
     heading = re.search(r"^#\s+Module\s+(\d+):\s+(.+?)\s*$", text, re.MULTILINE)
     order = int(heading.group(1)) if heading else fallback_order
-    title = heading.group(2).strip() if heading else f"SQLi Module {fallback_order}"
+    title = heading.group(2).strip() if heading else f"Learning Module {fallback_order}"
 
     difficulty = "Beginner"
     difficulty_match = re.search(r"\b(Beginner|Intermediate|Advanced)\b", text)
@@ -373,7 +414,7 @@ def _seed_markdown_module(path, fallback_order):
             db.session.delete(lesson)
 
 
-def _seed_ctf_module():
+def _seed_sqli_ctf_module():
     module = Module(
         order_index=8,
         title="CTF Challenge Lab: EzSQLi",
@@ -391,7 +432,7 @@ def _seed_ctf_module():
         title="Get the Flag",
         narrative=(
             "## Get Flag\n\n"
-            f"Open the local challenge at [{CTF_CHALLENGE_URL}]({CTF_CHALLENGE_URL}).\n\n"
+            f"Open the local challenge at [{SQLI_CTF_CHALLENGE_URL}]({SQLI_CTF_CHALLENGE_URL}).\n\n"
             "Explore the EzSQLi endpoints, recover the `BYTESEC{...}` flag, and submit it here.\n\n"
             "**Scope**: Only test this local lab or systems where you have explicit permission."
         ),
@@ -408,11 +449,114 @@ def _seed_ctf_module():
         title="SUBMIT THE FLAG",
         prompt="Submit the exact `BYTESEC{...}` flag shown by the challenge.",
         options=_j([]),
-        correct_answer=CTF_FLAG_HASH,
+        correct_answer=SQLI_CTF_FLAG_HASH,
         explanation="Flag accepted. You solved the EzSQLi challenge.",
         hints=_j([
             "Look at how request parameters are forwarded into the helper object.",
             "A debug path can be influenced before the admin debug check runs.",
+        ]),
+    ))
+
+
+def _seed_re_asm_ctf_module():
+    module = Module(
+        order_index=13,
+        title="CTF Challenge Lab: XOR Flag Checker",
+        description=DESCRIPTIONS[13],
+        icon=ICONS[13],
+        difficulty="Beginner",
+        estimated_minutes=20,
+    )
+    db.session.add(module)
+    db.session.flush()
+
+    lesson = Lesson(
+        module_id=module.id,
+        order_index=1,
+        title="Recover the XOR Flag",
+        narrative=(
+            "## Recover the XOR Flag\n\n"
+            "Download the challenge archive from [Download XOR checker](/downloads/re-asm-xor-checker).\n\n"
+            "The archive contains a Linux x86-64 checker binary and a short README.\n\n"
+            "After extracting it, run and inspect the checker:\n\n"
+            "```bash\n"
+            "chmod +x xor_checker\n"
+            "./xor_checker\n"
+            "strings -a ./xor_checker\n"
+            "objdump -d -M intel ./xor_checker | less\n"
+            "```\n\n"
+            "Recover the `BYTESEC{16 hex characters}` flag and submit it here."
+        ),
+        code_snippet=None,
+        code_language=None,
+        table_data=None,
+    )
+    db.session.add(lesson)
+    db.session.flush()
+    db.session.add(LessonStep(
+        lesson_id=lesson.id,
+        order_index=1,
+        kind="flag",
+        title="SUBMIT THE XOR FLAG",
+        prompt="Submit the exact `BYTESEC{16 hex characters}` flag recovered from the checker.",
+        options=_j([]),
+        correct_answer=RE_ASM_CTF_FLAG_HASH,
+        explanation="Flag accepted. You solved the XOR checker challenge.",
+        hints=_j([
+            "Start with `strings` to find user-facing messages and confirm the expected format.",
+            "Disassemble `check_flag` and look for the repeating XOR key and encoded byte array.",
+            "XOR is reversible: original_byte = encoded_byte ^ key_byte.",
+        ]),
+    ))
+
+
+def _seed_crypto_rsa_ctf_module():
+    module = Module(
+        order_index=18,
+        title="CTF Challenge Lab: RSA Starter",
+        description=DESCRIPTIONS[18],
+        icon=ICONS[18],
+        difficulty="Intermediate",
+        estimated_minutes=25,
+    )
+    db.session.add(module)
+    db.session.flush()
+
+    lesson = Lesson(
+        module_id=module.id,
+        order_index=1,
+        title="Recover the RSA Flag",
+        narrative=(
+            "## Recover the RSA Flag\n\n"
+            "Download the challenge archive from [Download RSA challenge](/downloads/crypto-rsa-starter).\n\n"
+            "The archive contains the public RSA values and ciphertext. Inspect the parameters and recover the `BYTESEC{...}` flag.\n\n"
+            "Useful Python operations:\n\n"
+            "```python\n"
+            "pow(m, e, n)\n"
+            "int.to_bytes(length, 'big')\n"
+            "int.from_bytes(data, 'big')\n"
+            "```\n\n"
+            "Focus on whether textbook RSA actually wrapped around the modulus."
+        ),
+        code_snippet=None,
+        code_language=None,
+        table_data=None,
+    )
+    db.session.add(lesson)
+    db.session.flush()
+    db.session.add(LessonStep(
+        lesson_id=lesson.id,
+        order_index=1,
+        kind="flag",
+        title="SUBMIT THE RSA FLAG",
+        prompt="Submit the exact `BYTESEC{...}` flag recovered from the RSA challenge.",
+        options=_j([]),
+        correct_answer=CRYPTO_RSA_CTF_FLAG_HASH,
+        explanation="Flag accepted. You solved the RSA starter challenge.",
+        hints=_j([
+            "The public exponent is very small.",
+            "Check whether the plaintext power is smaller than the modulus.",
+            "If `c = m^3` without modular wraparound, recover `m` with an integer cube root.",
         ]),
     ))
 
@@ -423,7 +567,9 @@ def _seed_course_content():
 
     for fallback_order, path in enumerate(_module_files(), 1):
         _seed_markdown_module(path, fallback_order)
-    _seed_ctf_module()
+    _seed_sqli_ctf_module()
+    _seed_re_asm_ctf_module()
+    _seed_crypto_rsa_ctf_module()
 
 
 def _ensure_demo_user():
@@ -455,7 +601,7 @@ def seed_database():
 
 
 def _course_is_stale():
-    if Module.query.count() != 8:
+    if Module.query.count() != _expected_module_count():
         return True
     leaked_ctf = (
         Lesson.query
@@ -468,7 +614,13 @@ def _course_is_stale():
         )
         .first()
     )
-    return leaked_ctf is not None
+    if leaked_ctf is not None:
+        return True
+    missing_re = Module.query.filter_by(title="CTF Challenge Lab: XOR Flag Checker").first()
+    if missing_re is None:
+        return True
+    missing_crypto = Module.query.filter_by(title="CTF Challenge Lab: RSA Starter").first()
+    return missing_crypto is None
 
 
 def ensure_database():
