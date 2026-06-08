@@ -1,16 +1,18 @@
 import base64
+import io
 import json
 import hashlib
 import html
 import os
 import re
 import subprocess
+import zipfile
 from functools import wraps
 from pathlib import Path
 
 from flask import (
     Blueprint, g, flash, jsonify, redirect, render_template,
-    request, session, url_for,
+    request, send_file, session, url_for,
 )
 from markupsafe import Markup
 from sqlalchemy import func
@@ -22,6 +24,73 @@ from .models import Lesson, LessonStep, Module, User, UserProgress
 bp = Blueprint("main", __name__)
 ROOT_DIR = Path(__file__).resolve().parents[1]
 CTF_DIR = ROOT_DIR / "ctf_chall" / "ezsqli"
+XOR_CTF_DIR = ROOT_DIR / "ctf_chall" / "re_asm_xor_checker"
+PWN_CTF_DIR = ROOT_DIR / "ctf_chall" / "ret2win"
+
+CTF_LABS = [
+    {
+        "key": "ezsqli",
+        "name": "EzSQLi Docker Lab",
+        "description": "Web Exploitation challenge service",
+        "path": CTF_DIR,
+        "endpoint": os.environ.get("BYTESEC_CTF_URL", "http://127.0.0.1:8004"),
+    },
+    {
+        "key": "ret2win",
+        "name": "Ret2win Docker Lab",
+        "description": "Pwn challenge service",
+        "path": PWN_CTF_DIR,
+        "endpoint": os.environ.get("BYTESEC_PWN_CTF_ENDPOINT", "nc 127.0.0.1 9001"),
+    },
+]
+
+COURSE_TRACKS = [
+    {
+        "key": "web",
+        "label": "[WEB]",
+        "title": "Web Exploitation: SQL Injection",
+        "short_title": "Web Exploitation",
+        "description": "SQL fundamentals, injection mechanics, exploitation techniques, defensive patterns, real-world cases, and the EzSQLi lab.",
+        "icon": "language",
+        "order_start": 1,
+        "order_end": 8,
+    },
+    {
+        "key": "reverse",
+        "label": "[REV]",
+        "title": "Reverse Engineering: x86-64 Assembly",
+        "short_title": "Reverse Engineering",
+        "description": "Registers, stack frames, calls, branch logic, memory operands, XOR encoding, static triage, and the XOR flag-checker lab.",
+        "icon": "memory",
+        "order_start": 9,
+        "order_end": 13,
+    },
+    {
+        "key": "crypto",
+        "label": "[CRYPTO]",
+        "title": "Cryptography: CryptoBook Core",
+        "short_title": "Cryptography",
+        "description": "Fundamentals, number theory, asymmetric cryptography, and symmetric cryptography adapted into guided ByteSec lessons.",
+        "icon": "vpn_key",
+        "order_start": 14,
+        "order_end": 18,
+    },
+    {
+        "key": "pwn",
+        "label": "[PWN]",
+        "title": "Pwn: Stack Exploitation",
+        "short_title": "Pwn",
+        "description": "Process memory, stack frames, buffer overflows, return-address control, exploit scripting, mitigations, and a ret2win Docker lab.",
+        "icon": "terminal",
+        "order_start": 19,
+        "order_end": 23,
+    },
+]
+
+RSA_CHALLENGE_N = 1050042634739472048527415083734141614623526794604292789934035929043944753840232886771262298879903328617034311167949696362901721533840465932367411227174743302792364017856573114095054665590548643385179579641709628757228698065267663737
+RSA_CHALLENGE_E = 3
+RSA_CHALLENGE_C = 72240295003014461054855741550584414831200556784223014880653253099947072198594653539608891757481870490299217523710665832953564908965164440080453331341426135368723683931085590986597
+PWN_RET2WIN_FLAG_HASH = "8e7a8ab5ef6c8d0ffd605d16b6112704d0e493070046d4b382895fa722965587"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -92,6 +161,61 @@ def _module_progress(user_id):
     return result
 
 
+def _first_lesson(modules):
+    for mod in modules:
+        if mod.lessons:
+            return mod.lessons[0]
+    return None
+
+
+def _next_lesson(modules, user_id):
+    if not user_id:
+        return _first_lesson(modules)
+    for mod in modules:
+        for les in mod.lessons:
+            step_ids = [step.id for step in les.steps]
+            if not step_ids:
+                return les
+            done = UserProgress.query.filter(
+                UserProgress.user_id == user_id,
+                UserProgress.step_id.in_(step_ids),
+            ).count()
+            if done < len(step_ids):
+                return les
+    return _first_lesson(modules)
+
+
+def _course_tracks(modules, mod_progress=None, user_id=None):
+    tracks = []
+    for definition in COURSE_TRACKS:
+        course_modules = [
+            module for module in modules
+            if definition["order_start"] <= module.order_index <= definition["order_end"]
+        ]
+        done = 0
+        total = 0
+        if mod_progress:
+            for module in course_modules:
+                progress = mod_progress.get(module.id, {"done": 0, "total": 0})
+                done += progress["done"]
+                total += progress["total"]
+        pct = round(done / total * 100, 1) if total else 0
+        track = {
+            **definition,
+            "modules": course_modules,
+            "lesson_count": sum(len(module.lessons) for module in course_modules),
+            "activity_count": total or sum(len(lesson.steps) for module in course_modules for lesson in module.lessons),
+            "progress_done": done,
+            "progress_total": total,
+            "progress_pct": pct,
+            "first_lesson": _first_lesson(course_modules),
+            "next_lesson": _next_lesson(course_modules, user_id),
+        }
+        if course_modules:
+            tracks.append(track)
+    return tracks
+
+
 def _overall_pct(user_id):
     if not user_id:
         return 0
@@ -111,37 +235,43 @@ def _course_stats():
 
 
 def _learning_tracks():
-    # Dynamic tracks from actual module categories in DB
-    categories_in_use = set()
-    for m in Module.query.with_entities(Module.category).distinct():
-        if m.category:
-            categories_in_use.add(m.category)
-
-    track_defs = [
-        ("Web Exploitation", "web", "language",
-         "Browser, HTTP, database, and access-control flaws taught from concept to controlled lab practice."),
-        ("Reverse Engineering", "rev", "memory",
-         "Static and dynamic analysis workflows for understanding compiled programs and hidden logic."),
-        ("Pwn", "pwn", "terminal",
-         "Binary exploitation fundamentals, process memory, stack behavior, and dockerized practice targets."),
-        ("Forensics", "forensics", "travel_explore",
-         "Evidence-driven investigation across files, logs, packets, images, and challenge artifacts."),
-        ("Cryptography", "crypto", "vpn_key",
-         "Encoding, classical crypto, implementation mistakes, and practical reasoning through guided puzzles."),
+    return [
+        {
+            "title": "Web Exploitation",
+            "description": "Browser, HTTP, database, and access-control flaws taught from concept to controlled lab practice.",
+            "icon": "language",
+            "status": "Live",
+            "status_class": "bg-secondary-container text-on-secondary-container",
+        },
+        {
+            "title": "Reverse Engineering",
+            "description": "Static and dynamic analysis workflows for understanding compiled programs and hidden logic.",
+            "icon": "memory",
+            "status": "Live",
+            "status_class": "bg-secondary-container text-on-secondary-container",
+        },
+        {
+            "title": "Pwn",
+            "description": "Binary exploitation fundamentals, process memory, stack behavior, and dockerized practice targets.",
+            "icon": "terminal",
+            "status": "Live",
+            "status_class": "bg-secondary-container text-on-secondary-container",
+        },
+        {
+            "title": "Forensics",
+            "description": "Evidence-driven investigation across files, logs, packets, images, and challenge artifacts.",
+            "icon": "travel_explore",
+            "status": "Planned",
+            "status_class": "bg-surface-container text-on-surface-variant",
+        },
+        {
+            "title": "Cryptography",
+            "description": "Encoding, classical crypto, implementation mistakes, and practical reasoning through guided puzzles.",
+            "icon": "vpn_key",
+            "status": "Live",
+            "status_class": "bg-secondary-container text-on-secondary-container",
+        },
     ]
-    result = []
-    for title, cat_id, icon, desc in track_defs:
-        has_modules = cat_id in categories_in_use
-        result.append({
-            "title": title,
-            "category": cat_id,
-            "description": desc,
-            "icon": icon,
-            "status": "Live" if has_modules else "Planned",
-            "status_class": "bg-secondary-container text-on-secondary-container" if has_modules
-                           else "bg-surface-container text-on-surface-variant",
-        })
-    return result
 
 
 def _parse_options(step):
@@ -184,7 +314,7 @@ def _normalize_material(value):
 def _render_inline(text):
     text = html.escape(text)
     text = re.sub(
-        r"\[([^\]]+)\]\((https?://[^)]+)\)",
+        r"\[([^\]]+)\]\(((?:https?://|/)[^)]+)\)",
         r'<a class="text-secondary hover:underline" href="\2" target="_blank" rel="noopener noreferrer">\1</a>',
         text,
     )
@@ -474,6 +604,21 @@ def _highlight_line(line, language):
         keywords = r'\b(public|private|static|void|class|return|if|else|new|String|int|boolean|import)\b'
         line = re.sub(keywords, r'<span class="syntax-keyword">\1</span>', line)
         line = re.sub(r'(&quot;.*?&quot;)', r'<span class="syntax-string">\1</span>', line)
+    elif language in ("c", "h"):
+        if line.lstrip().startswith("//"):
+            return f'<span class="syntax-comment">{line}</span>'
+        keywords = r'\b(static|const|unsigned|char|int|size_t|return|if|else|for|while|void|include|define)\b'
+        line = re.sub(keywords, r'<span class="syntax-keyword">\1</span>', line)
+        line = re.sub(r'(&quot;.*?&quot;)', r'<span class="syntax-string">\1</span>', line)
+        line = re.sub(r'\b([a-zA-Z_]\w*)\s*\(', r'<span class="syntax-function">\1</span>(', line)
+    elif language in ("asm", "nasm", "x86asm"):
+        stripped = line.lstrip()
+        if stripped.startswith(";") or stripped.startswith("#"):
+            return f'<span class="syntax-comment">{line}</span>'
+        mnemonics = r'\b(mov|movzx|lea|xor|add|sub|cmp|test|je|jne|jmp|call|ret|push|pop|inc|dec|sete)\b'
+        registers = r'\b(rax|eax|ax|al|rbx|ebx|rcx|ecx|rdx|edx|rsi|esi|rdi|edi|rsp|esp|rbp|ebp|rip|r8|r9|r10|r11|r12|r13|r14|r15|dil)\b'
+        line = re.sub(mnemonics, r'<span class="syntax-keyword">\1</span>', line, flags=re.IGNORECASE)
+        line = re.sub(registers, r'<span class="syntax-function">\1</span>', line, flags=re.IGNORECASE)
     return line
 
 
@@ -481,12 +626,15 @@ def _highlight_line(line, language):
 
 @bp.route("/")
 def index():
-    modules = Module.query.filter_by(category="web").order_by(Module.order_index).all()
+    modules = Module.query.order_by(Module.order_index).all()
+    mod_progress = _module_progress(g.user.id if g.user else None)
+    course_tracks = _course_tracks(modules, mod_progress, g.user.id if g.user else None)
     user_count = User.query.count()
     tracks = _learning_tracks()
     return render_template(
         "index.html",
         modules=modules,
+        course_tracks=course_tracks,
         tracks=tracks,
         track_count=len(tracks),
         user_count=user_count,
@@ -552,82 +700,48 @@ def dashboard():
     modules = Module.query.order_by(Module.order_index).all()
     mod_progress = _module_progress(g.user.id)
     overall_pct = _overall_pct(g.user.id)
-
-    # Build in-progress and completed lists
-    in_progress = []
-    completed_modules = []
-    for mod in modules:
-        mp = mod_progress[mod.id]
-        if mp["pct"] >= 100:
-            completed_modules.append({"module": mod, "pct": mp["pct"]})
-        else:
-            # Find next incomplete lesson
-            next_lesson = None
-            for les in mod.lessons:
-                step_ids = [s.id for s in les.steps]
-                if step_ids:
-                    done = UserProgress.query.filter(
-                        UserProgress.user_id == g.user.id,
-                        UserProgress.step_id.in_(step_ids),
-                    ).count()
-                    if done < len(step_ids):
-                        next_lesson = les
-                        break
-                else:
-                    next_lesson = les
-                    break
-            if next_lesson is None and mod.lessons:
-                next_lesson = mod.lessons[0]
-            if mp["pct"] > 0 or not in_progress:
-                in_progress.append({"module": mod, "pct": mp["pct"], "next_lesson": next_lesson})
+    course_tracks = _course_tracks(modules, mod_progress, g.user.id)
 
     return render_template(
         "dashboard.html",
-        modules=modules,
-        in_progress=in_progress[:3],
-        completed_modules=completed_modules,
+        course_tracks=course_tracks,
+        mod_progress=mod_progress,
         overall_pct=overall_pct,
         module_count=len(modules),
     )
 
 
 @bp.route("/course")
+@bp.route("/course/<track_key>")
 @login_required
-def course():
-    category = request.args.get("cat", "web")
-    query = Module.query.order_by(Module.order_index)
-    if category:
-        query = query.filter(Module.category == category)
-    modules = query.all()
-
-    # Get all categories with module counts for the tab bar
-    all_cats = (
-        db.session.query(Module.category, db.func.count(Module.id))
-        .group_by(Module.category)
-        .order_by(db.func.count(Module.id).desc())
-        .all()
-    )
-
+def course(track_key=None):
+    modules = Module.query.order_by(Module.order_index).all()
     mod_progress = _module_progress(g.user.id)
     overall_pct = _overall_pct(g.user.id)
-    first_lesson = Lesson.query.join(Module).order_by(Module.order_index, Lesson.order_index).first()
+    course_tracks = _course_tracks(modules, mod_progress, g.user.id)
+    selected_course = None
+    if track_key:
+        selected_course = next((track for track in course_tracks if track["key"] == track_key), None)
+        if selected_course is None:
+            flash("Unknown course.", "warning")
+            return redirect(url_for("main.course"))
+    visible_courses = [selected_course] if selected_course else course_tracks
 
     return render_template(
         "course.html",
-        modules=modules,
-        categories=all_cats,
-        current_category=category,
+        course_tracks=course_tracks,
+        visible_courses=visible_courses,
+        selected_course=selected_course,
         mod_progress=mod_progress,
         overall_pct=overall_pct,
-        first_lesson=first_lesson,
     )
 
 
-def _docker_compose(args, timeout=45):
+def _docker_compose_for(lab, args, timeout=45):
     try:
         result = subprocess.run(
             ["docker", "compose", *args],
-            cwd=CTF_DIR,
+            cwd=lab["path"],
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -642,6 +756,16 @@ def _docker_compose(args, timeout=45):
     return {"ok": result.returncode == 0, "output": output or "Command completed."}
 
 
+def _docker_compose_all(args, timeout=45):
+    ok = True
+    output = []
+    for lab in CTF_LABS:
+        result = _docker_compose_for(lab, args, timeout=timeout)
+        ok = ok and result["ok"]
+        output.append(f"== {lab['name']} ==\n{result['output']}")
+    return {"ok": ok, "output": "\n\n".join(output)}
+
+
 @bp.route("/admin/docker", methods=["GET", "POST"])
 @admin_required
 def admin_docker():
@@ -651,26 +775,233 @@ def admin_docker():
         commands = {
             "start": ["up", "-d", "--build"],
             "stop": ["down"],
-            "restart": ["restart"],
+            "restart": ["up", "-d", "--build", "--force-recreate"],
         }
         if action in commands:
-            action_result = _docker_compose(commands[action], timeout=90)
+            action_result = _docker_compose_all(commands[action], timeout=120)
             flash(
-                f"Docker {action} {'completed' if action_result['ok'] else 'failed'}.",
+                f"Docker lab {action} {'completed' if action_result['ok'] else 'failed'}.",
                 "success" if action_result["ok"] else "danger",
             )
         else:
             flash("Unknown Docker action.", "danger")
 
-    status = _docker_compose(["ps"], timeout=20)
-    logs = _docker_compose(["logs", "--tail=80"], timeout=20)
+    status = _docker_compose_all(["ps"], timeout=30)
+    logs = _docker_compose_all(["logs", "--tail=80"], timeout=30)
     return render_template(
         "admin_docker.html",
-        ctf_path="ctf_chall/ezsqli",
-        ctf_url=os.environ.get("BYTESEC_CTF_URL", "http://127.0.0.1:8004"),
+        ctf_labs=CTF_LABS,
         status=status,
         logs=logs,
         action_result=action_result,
+    )
+
+
+@bp.route("/downloads/re-asm-xor-checker")
+@login_required
+def download_re_asm_xor_checker():
+    binary_path = XOR_CTF_DIR / "xor_checker"
+    if not binary_path.exists():
+        build = subprocess.run(
+            ["make"],
+            cwd=XOR_CTF_DIR,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+        if build.returncode != 0 or not binary_path.exists():
+            return (
+                "The XOR checker artifact is not available yet. "
+                "Ask the instructor to rebuild the challenge artifact."
+            ), 503
+
+    readme = (
+        "ByteSec Reverse Engineering: XOR Flag Checker\n"
+        "\n"
+        "Target: recover a flag in the format BYTESEC{16_hex_characters}.\n"
+        "\n"
+        "Suggested workflow:\n"
+        "  file ./xor_checker\n"
+        "  strings -a ./xor_checker\n"
+        "  objdump -d -M intel ./xor_checker | less\n"
+        "  ./xor_checker BYTESEC{0000000000000000}\n"
+        "\n"
+        "Submit the recovered flag in the ByteSec lesson page.\n"
+    )
+
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        info = zipfile.ZipInfo("xor_checker")
+        info.external_attr = 0o755 << 16
+        info.compress_type = zipfile.ZIP_DEFLATED
+        zf.writestr(info, binary_path.read_bytes())
+        zf.writestr("README.txt", readme)
+    archive.seek(0)
+
+    return send_file(
+        archive,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="bytesec-re-asm-xor-checker.zip",
+    )
+
+
+@bp.route("/downloads/crypto-rsa-starter")
+@login_required
+def download_crypto_rsa_starter():
+    challenge = (
+        "ByteSec RSA Starter\n"
+        "\n"
+        "A message was encrypted with textbook RSA. Recover the plaintext flag.\n"
+        "\n"
+        f"n = {RSA_CHALLENGE_N}\n"
+        f"e = {RSA_CHALLENGE_E}\n"
+        f"c = {RSA_CHALLENGE_C}\n"
+    )
+    readme = (
+        "ByteSec Cryptography: RSA Starter\n"
+        "\n"
+        "Goal: recover the flag from challenge.txt and submit it in ByteSec.\n"
+        "\n"
+        "This is textbook RSA with a very small public exponent. Check whether the\n"
+        "encrypted message actually wrapped around the modulus. If it did not, the\n"
+        "ciphertext is just a small integer power of the plaintext.\n"
+        "\n"
+        "Suggested commands:\n"
+        "  python3 solve_helper.py\n"
+        "\n"
+        "You may edit the helper script or solve it another way.\n"
+    )
+    helper = (
+        "n = " + str(RSA_CHALLENGE_N) + "\n"
+        "e = " + str(RSA_CHALLENGE_E) + "\n"
+        "c = " + str(RSA_CHALLENGE_C) + "\n"
+        "\n"
+        "def iroot3(value):\n"
+        "    lo, hi = 0, 1\n"
+        "    while hi ** 3 <= value:\n"
+        "        hi *= 2\n"
+        "    while lo + 1 < hi:\n"
+        "        mid = (lo + hi) // 2\n"
+        "        if mid ** 3 <= value:\n"
+        "            lo = mid\n"
+        "        else:\n"
+        "            hi = mid\n"
+        "    return lo\n"
+        "\n"
+        "m = iroot3(c)\n"
+        "print('exact cube:', m ** 3 == c)\n"
+        "length = (m.bit_length() + 7) // 8\n"
+        "print(m.to_bytes(length, 'big'))\n"
+    )
+
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        zf.writestr("challenge.txt", challenge)
+        zf.writestr("README.txt", readme)
+        zf.writestr("solve_helper.py", helper)
+    archive.seek(0)
+
+    return send_file(
+        archive,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="bytesec-crypto-rsa-starter.zip",
+    )
+
+
+def _build_ret2win_binary():
+    binary_path = PWN_CTF_DIR / "ret2win"
+    if binary_path.exists():
+        return binary_path, None
+    build = subprocess.run(
+        ["make"],
+        cwd=PWN_CTF_DIR,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    if build.returncode != 0 or not binary_path.exists():
+        output = "\n".join(part for part in (build.stdout.strip(), build.stderr.strip()) if part)
+        return None, output or "Build failed."
+    return binary_path, None
+
+
+def _binary_symbol_address(binary_path, symbol):
+    try:
+        result = subprocess.run(
+            ["nm", "-n", str(binary_path)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[2] == symbol:
+            return int(parts[0], 16)
+    return None
+
+
+@bp.route("/downloads/pwn-ret2win")
+@login_required
+def download_pwn_ret2win():
+    binary_path, error = _build_ret2win_binary()
+    if error or binary_path is None:
+        return (
+            "The ret2win artifact is not available yet. "
+            "Ask the instructor to rebuild the challenge artifact."
+        ), 503
+
+    win_address = _binary_symbol_address(binary_path, "win")
+    win_line = f"WIN = 0x{win_address:x}" if win_address is not None else "WIN = 0x401176  # update with: nm -n ret2win | grep ' win'"
+    solve_template = (
+        "import struct\n"
+        "import sys\n"
+        "\n"
+        "# Offset for this training binary: 32-byte buffer + saved RBP.\n"
+        "OFFSET = 40\n"
+        f"{win_line}\n"
+        "\n"
+        "payload = b'A' * OFFSET + struct.pack('<Q', WIN)\n"
+        "sys.stdout.buffer.write(payload + b'\\n')\n"
+    )
+    readme = (
+        "ByteSec Pwn: Ret2win Starter\n"
+        "\n"
+        "Goal: redirect execution to the hidden win function and submit the flag.\n"
+        "\n"
+        "Suggested workflow:\n"
+        "  file ./ret2win\n"
+        "  checksec --file=./ret2win\n"
+        "  nm -n ./ret2win | grep ' win'\n"
+        "  python3 solve_template.py > payload.bin\n"
+        "  ./ret2win < payload.bin\n"
+        "\n"
+        "The Docker lab exposes the same target over TCP.\n"
+    )
+
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        info = zipfile.ZipInfo("ret2win")
+        info.external_attr = 0o755 << 16
+        info.compress_type = zipfile.ZIP_DEFLATED
+        zf.writestr(info, binary_path.read_bytes())
+        zf.writestr("README.txt", readme)
+        zf.writestr("solve_template.py", solve_template)
+    archive.seek(0)
+
+    return send_file(
+        archive,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="bytesec-pwn-ret2win.zip",
     )
 
 
@@ -679,6 +1010,20 @@ def admin_docker():
 def lesson_view(lesson_id):
     lesson = db.get_or_404(Lesson, lesson_id)
     all_modules = Module.query.order_by(Module.order_index).all()
+    course_tracks = _course_tracks(all_modules, _module_progress(g.user.id), g.user.id)
+    current_course = next(
+        (
+            track for track in course_tracks
+            if track["order_start"] <= lesson.module.order_index <= track["order_end"]
+        ),
+        None,
+    )
+    current_course_module_index = None
+    if current_course:
+        for index, module in enumerate(current_course["modules"], 1):
+            if module.id == lesson.module_id:
+                current_course_module_index = index
+                break
     overall_pct = _overall_pct(g.user.id)
     activity_count = LessonStep.query.count()
 
@@ -739,6 +1084,9 @@ def lesson_view(lesson_id):
         "lesson.html",
         lesson=lesson,
         all_modules=all_modules,
+        course_tracks=course_tracks,
+        current_course=current_course,
+        current_course_module_index=current_course_module_index,
         module_count=len(all_modules),
         activity_count=activity_count,
         overall_pct=overall_pct,

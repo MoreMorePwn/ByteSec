@@ -7,6 +7,7 @@ LOG_DIR="$ROOT_DIR/logs"
 WEB_PID_FILE="$RUN_DIR/bytesec-web.pid"
 WEB_LOG="$LOG_DIR/bytesec-web.log"
 CTF_DIR="$ROOT_DIR/ctf_chall/ezsqli"
+PWN_CTF_DIR="$ROOT_DIR/ctf_chall/ret2win"
 LEGACY_CTF_DIR="$ROOT_DIR/ctf_chall/baby_sqli"
 
 WEB_HOST="${BYTESEC_HOST:-0.0.0.0}"
@@ -14,6 +15,7 @@ WEB_PORT="${BYTESEC_PORT:-5000}"
 WEB_ACCESS_HOST="${BYTESEC_ACCESS_HOST:-127.0.0.1}"
 WEB_URL="http://${WEB_ACCESS_HOST}:${WEB_PORT}"
 CTF_URL="${BYTESEC_CTF_URL:-http://127.0.0.1:8004}"
+PWN_CTF_ENDPOINT="${BYTESEC_PWN_CTF_ENDPOINT:-nc 127.0.0.1 9001}"
 
 mkdir -p "$RUN_DIR" "$LOG_DIR"
 
@@ -48,11 +50,13 @@ start_ctf() {
     return 1
   fi
   (cd "$CTF_DIR" && docker compose up -d --build)
+  (cd "$PWN_CTF_DIR" && docker compose up -d --build)
 }
 
 stop_ctf() {
   if docker_ready; then
     (cd "$CTF_DIR" && docker compose down)
+    (cd "$PWN_CTF_DIR" && docker compose down)
     if [ -d "$LEGACY_CTF_DIR" ]; then
       (cd "$LEGACY_CTF_DIR" && docker compose down) >/dev/null 2>&1 || true
     fi
@@ -129,8 +133,11 @@ status_services() {
   fi
 
   if docker_ready; then
-    printf 'ctf: docker reachable, challenge target %s\n' "$CTF_URL"
+    printf 'ctf: docker reachable\n'
+    printf 'web ctf target: %s\n' "$CTF_URL"
     (cd "$CTF_DIR" && docker compose ps)
+    printf 'pwn ctf target: %s\n' "$PWN_CTF_ENDPOINT"
+    (cd "$PWN_CTF_DIR" && docker compose ps)
   else
     printf 'ctf: docker daemon not reachable\n'
   fi
@@ -144,9 +151,16 @@ show_logs() {
     printf 'No web log yet: %s\n' "$WEB_LOG"
   fi
 
-  printf '\n== CTF Docker logs ==\n'
+  printf '\n== EzSQLi Docker logs ==\n'
   if docker_ready; then
     (cd "$CTF_DIR" && docker compose logs --tail=80)
+  else
+    printf 'Docker daemon is not reachable.\n'
+  fi
+
+  printf '\n== Ret2win Docker logs ==\n'
+  if docker_ready; then
+    (cd "$PWN_CTF_DIR" && docker compose logs --tail=80)
   else
     printf 'Docker daemon is not reachable.\n'
   fi
@@ -165,6 +179,7 @@ start_all() {
     fi
   fi
   printf 'EzSQLi CTF: %s\n' "$CTF_URL"
+  printf 'Ret2win CTF: %s\n' "$PWN_CTF_ENDPOINT"
   if [ "$ctf_status" -ne 0 ]; then
     printf 'CTF Docker lab did not start because Docker is not reachable.\n' >&2
     return "$ctf_status"

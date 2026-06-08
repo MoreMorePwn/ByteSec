@@ -1,105 +1,148 @@
 {% extends 'base.html' %}
-{% block title %}ByteSec — Course{% endblock %}
+{% block title %}{% if selected_course %}{{ selected_course.title }}{% else %}Courses{% endif %} — ByteSec{% endblock %}
 {% block content %}
-<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-8">
-  <!-- Header -->
-  <div class="mb-8">
-    <h1 class="font-headline-md text-headline-md text-primary mb-2">Course</h1>
-    <p class="font-body-md text-body-md text-on-surface-variant">Pick a track and start learning.</p>
-  </div>
-
-  <!-- Category Tabs -->
-  <div class="flex flex-wrap gap-2 mb-8 border-b border-border-muted pb-4">
-    {% set cat_labels = {'web': 'Web Exploitation', 'rev': 'Reverse Engineering', 'pwn': 'Pwn', 'forensics': 'Forensics', 'crypto': 'Cryptography'} %}
-    {% for cat, count in categories %}
-    <a href="{{ url_for('main.course', cat=cat) }}"
-       class="px-5 py-2 rounded-full font-label-mono text-[13px] transition-colors
-              {% if cat == current_category %}
-              bg-primary text-on-primary
-              {% else %}
-              bg-surface-container text-on-surface-variant hover:text-primary hover:bg-surface-container-high border border-border-muted
-              {% endif %}">
-      {{ cat_labels.get(cat, cat|capitalize) }}
-      <span class="ml-1.5 opacity-70">({{ count }})</span>
+<!-- Hero -->
+<section class="w-full relative overflow-hidden pt-16 pb-12 border-b border-border-muted bg-grid-pattern">
+  <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background opacity-90"></div>
+  <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop relative z-10 flex flex-col items-center text-center">
+    <h1 class="font-display-lg text-display-lg text-primary mb-4">
+      {% if selected_course %}{{ selected_course.title }}{% else %}Courses{% endif %}
+    </h1>
+    <p class="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
+      {% if selected_course %}
+      Follow this course independently from the other ByteSec tracks. Progress, modules, and labs are scoped to this pathway.
+      {% else %}
+      Choose a course pathway. Web Exploitation, Reverse Engineering, Cryptography, and Pwn are separate tracks with their own lessons and progress.
+      {% endif %}
+    </p>
+    {% if selected_course %}
+    <a href="{{ url_for('main.course') }}" class="mt-6 bg-surface-container-lowest border border-border-muted text-primary font-label-mono text-label-mono px-5 py-2 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-2">
+      <span class="material-symbols-outlined text-[18px]">view_list</span>
+      All Courses
     </a>
-    {% endfor %}
+    {% endif %}
   </div>
+</section>
 
-  {% if modules %}
-  <!-- Progress Overview -->
-  {% if overall_pct is defined %}
-  <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5 mb-8">
-    <div class="flex items-center justify-between mb-3">
-      <span class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Track Progress</span>
-      <span class="font-label-mono text-[13px] text-primary">{{ "%.0f"|format(overall_pct) }}%</span>
-    </div>
-    <div class="w-full h-2 bg-surface-container-high rounded-full overflow-hidden">
-      <div class="h-full bg-primary rounded-full transition-all" style="width: {{ overall_pct }}%"></div>
-    </div>
-  </div>
-  {% endif %}
+<!-- Courses -->
+<section class="max-w-[1200px] w-full mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
+  {% for track in visible_courses %}
+  <div class="flex flex-col gap-6">
+    <article class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8 hover:shadow-md transition-shadow duration-300 flex flex-col {{ 'md:flex-row' if selected_course else '' }} gap-8 relative overflow-hidden group">
+      <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
-  <!-- Module Node Roadmap -->
-  <div class="space-y-4">
-    {% for module in modules %}
-    {% set mp = mod_progress.get(module.id, {"pct": 0, "completed": 0, "total": 0}) %}
-    {% set completed_lessons = module.lessons|selectattr("steps")|list %}
-    <div class="group bg-surface-container-lowest border border-border-muted rounded-lg p-6 hover:shadow-md transition-shadow duration-200 {% if loop.first %}glow-teal{% endif %}">
-      <div class="flex items-start gap-4">
-        <!-- Module Icon -->
-        <div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center shrink-0 {% if mp.pct == 100 %}border border-primary{% endif %}">
-          <span class="material-symbols-outlined {% if mp.pct == 100 %}text-primary{% else %}text-on-surface-variant{% endif %}">{{ module.icon }}</span>
+      <!-- Path Info -->
+      <div class="flex-1 flex flex-col items-start justify-center pr-4">
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          <span class="font-label-mono text-label-mono bg-surface-container py-1 px-2 rounded text-on-surface-variant border border-outline-variant">{{ track.label }}</span>
+          <span class="font-label-mono text-label-mono text-secondary flex items-center gap-1">
+            <span class="material-symbols-outlined" style="font-size:16px">{{ track.icon }}</span> Separate Course
+          </span>
         </div>
-        <!-- Module Info -->
-        <div class="flex-grow min-w-0">
-          <div class="flex items-center gap-2 mb-1">
-            <span class="font-label-mono text-[11px] text-primary uppercase tracking-wider">Module {{ module.order_index }}</span>
-            <span class="font-label-mono text-[10px] text-on-surface-variant bg-surface-container px-2 py-0.5 rounded-full">{{ module.difficulty }}</span>
+        <h2 class="font-headline-md text-headline-md text-primary mb-2">{{ track.title }}</h2>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-5">{{ track.description }}</p>
+
+        <div class="grid grid-cols-3 gap-3 w-full mb-6">
+          <div class="bg-surface-container rounded-lg border border-outline-variant p-3">
+            <p class="font-headline-sm text-[18px] text-primary">{{ track.modules|length }}</p>
+            <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Modules</p>
           </div>
-          <h3 class="font-headline-md text-[18px] font-semibold text-primary mb-1">{{ module.title }}</h3>
-          <p class="font-body-md text-[14px] text-on-surface-variant mb-4 line-clamp-2">{{ module.description }}</p>
-          <!-- Lessons List -->
-          <div class="space-y-1">
-            {% for lesson in module.lessons %}
-            {% set all_done = lesson.steps|length > 0 and lesson.steps|selectattr("id")|map(attribute="id")|select("in", mod_progress.get(module.id, {}).get("done_ids", []))|list|length == lesson.steps|length %}
-            <a href="{{ url_for('main.lesson_view', lesson_id=lesson.id) }}"
-               class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-surface-container transition-colors group/lesson">
-              <span class="material-symbols-outlined text-[16px] {% if all_done %}text-primary{% else %}text-on-surface-variant{% endif %}">
-                {% if all_done %}check_circle{% else %}radio_button_unchecked{% endif %}
-              </span>
-              <span class="font-body-md text-[14px] {% if all_done %}text-primary{% else %}text-on-surface{% endif %} truncate">
-                {{ lesson.order_index }}.{{ loop.index }} {{ lesson.title }}
-              </span>
-              <span class="ml-auto font-label-mono text-[11px] text-on-surface-variant">
-                {{ lesson.steps|length }} activities
-              </span>
-            </a>
-            {% endfor %}
+          <div class="bg-surface-container rounded-lg border border-outline-variant p-3">
+            <p class="font-headline-sm text-[18px] text-primary">{{ track.lesson_count }}</p>
+            <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Lessons</p>
           </div>
-          <!-- Module Progress -->
-          {% if mp.total > 0 %}
-          <div class="mt-4 pt-3 border-t border-border-muted">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="font-label-mono text-[11px] text-on-surface-variant">{{ mp.completed }}/{{ mp.total }} steps</span>
-              <span class="font-label-mono text-[11px] text-primary">{{ "%.0f"|format(mp.pct) }}%</span>
-            </div>
-            <div class="w-full h-1.5 bg-surface-container-high rounded-full overflow-hidden">
-              <div class="h-full bg-primary rounded-full transition-all" style="width: {{ mp.pct }}%"></div>
-            </div>
+          <div class="bg-surface-container rounded-lg border border-outline-variant p-3">
+            <p class="font-headline-sm text-[18px] text-primary">{{ "%.0f"|format(track.progress_pct) }}%</p>
+            <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Progress</p>
           </div>
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          {% if track.next_lesson %}
+          <a href="{{ url_for('main.lesson_view', lesson_id=track.next_lesson.id) }}" class="bg-primary-container text-on-primary font-label-mono text-label-mono py-2 px-6 rounded-full hover:opacity-90 transition-opacity active:scale-95 flex items-center gap-2">
+            {% if track.progress_pct > 0 %}Continue Course{% else %}Start Course{% endif %}
+            <span class="material-symbols-outlined" style="font-size:18px">arrow_forward</span>
+          </a>
+          {% endif %}
+          {% if not selected_course %}
+          <a href="{{ url_for('main.course', track_key=track.key) }}" class="bg-surface-container-lowest border border-border-muted hover:border-secondary hover:text-secondary text-primary font-label-mono text-label-mono px-5 py-2 rounded-full transition-colors flex items-center gap-2">
+            Open Syllabus
+            <span class="material-symbols-outlined text-[18px]">menu_book</span>
+          </a>
           {% endif %}
         </div>
       </div>
+
+      {% if selected_course %}
+      <!-- Node Visualizer -->
+      <div class="flex-[1.2] bg-surface rounded-lg border border-border-muted p-6 flex flex-col justify-center">
+        <h3 class="font-label-mono text-label-mono text-on-surface-variant mb-4 uppercase tracking-widest text-xs">Course Sequence</h3>
+        <div class="flex items-center relative py-4 overflow-x-auto">
+          {% for mod in track.modules %}
+          {% set progress = mod_progress[mod.id] %}
+          <div class="node-connector {{ 'completed' if progress.pct >= 100 else '' }} relative flex flex-col items-center group cursor-pointer z-10 w-12 {{ 'mr-8' if not loop.last else '' }} flex-shrink-0">
+            {% if progress.pct >= 100 %}
+            <div class="w-12 h-12 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
+              <span class="material-symbols-outlined font-bold">check</span>
+            </div>
+            <span class="absolute top-14 font-label-mono text-xs text-secondary whitespace-nowrap text-center opacity-80">{{ mod.title|truncate(10, True, '…') }}</span>
+            {% elif progress.pct > 0 %}
+            <div class="w-12 h-12 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container glow-teal transition-transform group-hover:scale-110">
+              <span class="material-symbols-outlined font-bold" style="font-variation-settings:'FILL' 1">terminal</span>
+            </div>
+            <span class="absolute top-14 font-label-mono text-xs text-primary font-bold whitespace-nowrap text-center">{{ mod.title|truncate(10, True, '…') }}</span>
+            {% else %}
+            <div class="w-12 h-12 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline opacity-60">
+              <span class="material-symbols-outlined">lock</span>
+            </div>
+            <span class="absolute top-14 font-label-mono text-xs text-on-surface-variant whitespace-nowrap text-center">{{ mod.title|truncate(10, True, '…') }}</span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </article>
+
+    <!-- Module List -->
+    {% if selected_course %}
+    <div class="flex flex-col gap-4">
+      {% for mod in track.modules %}
+      {% set progress = mod_progress[mod.id] %}
+      <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-6 flex flex-col sm:flex-row gap-6 items-start hover:shadow-sm transition-shadow">
+        <div class="w-full sm:w-16 h-16 bg-surface-container rounded-lg flex-shrink-0 flex items-center justify-center border border-border-muted">
+          <span class="material-symbols-outlined text-2xl text-on-surface-variant">{{ mod.icon }}</span>
+        </div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-label-mono text-[12px] uppercase tracking-wider text-secondary font-bold">Module {{ loop.index }}</span>
+            <span class="w-1 h-1 rounded-full bg-border-muted"></span>
+            <span class="font-label-mono text-[12px] text-on-surface-variant">{{ mod.difficulty }}</span>
+            <span class="w-1 h-1 rounded-full bg-border-muted"></span>
+            <span class="font-label-mono text-[12px] text-on-surface-variant">{{ mod.estimated_minutes }} min</span>
+          </div>
+          <h3 class="font-headline-md text-[18px] leading-[24px] font-semibold text-primary mb-1 font-['Hanken_Grotesk']">{{ mod.title }}</h3>
+          <p class="font-body-md text-[14px] text-on-surface-variant line-clamp-2 mb-3">{{ mod.description }}</p>
+          <div class="flex items-center gap-3">
+            <div class="h-1.5 flex-1 bg-surface-container rounded-full overflow-hidden">
+              <div class="h-full bg-secondary-container" style="width:{{ progress.pct }}%"></div>
+            </div>
+            <span class="font-label-mono text-[12px] text-on-surface-variant">{{ "%.0f"|format(progress.pct) }}%</span>
+          </div>
+        </div>
+        <div class="flex items-center self-center">
+          {% if mod.lessons %}
+          <a href="{{ url_for('main.lesson_view', lesson_id=mod.lessons[0].id) }}" class="bg-surface-container-lowest border border-border-muted hover:border-secondary hover:text-secondary text-primary font-label-mono text-label-mono px-5 py-2 rounded-full transition-colors text-sm flex items-center gap-1">
+            {% if progress.pct >= 100 %}Review{% elif progress.pct > 0 %}Continue{% else %}Start{% endif %}
+            <span class="material-symbols-outlined text-sm">arrow_forward</span>
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
+    {% endif %}
   </div>
-  {% else %}
-  <!-- Empty State -->
-  <div class="text-center py-16">
-    <span class="material-symbols-outlined text-[48px] text-on-surface-variant mb-4 block">school</span>
-    <h3 class="font-headline-md text-[20px] text-on-surface mb-2">No modules yet</h3>
-    <p class="font-body-md text-body-md text-on-surface-variant">This track doesn't have any modules yet. Check back later!</p>
-  </div>
-  {% endif %}
-</div>
+  {% endfor %}
+</section>
 {% endblock %}

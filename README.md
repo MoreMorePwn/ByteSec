@@ -1,14 +1,19 @@
 # ByteSec
 
-ByteSec is an interactive CTF learning platform. The first live track is Web Exploitation through SQL injection, and the app is structured to later add Reverse Engineering, Pwn, Forensics, and Cryptography tracks with the same lesson, activity, progress, Docker lab, and flag-submission model.
+ByteSec is an interactive CTF learning platform. The live tracks are Web Exploitation through SQL injection, Reverse Engineering through x86-64 assembly, Cryptography through CryptoBook-inspired core lessons, and Pwn through stack exploitation. The app is structured to later add Forensics with the same lesson, activity, progress, lab, and flag-submission model.
 
 ## Features
 
 - Flask web app with login, registration, dashboard, course view, lesson view, leaderboard, and admin Docker controls.
 - SQL injection curriculum loaded from markdown files in `modules/sqli`.
+- Reverse engineering assembly curriculum loaded from markdown files in `modules/reverse-engineering-assembly`.
+- Cryptography curriculum loaded from markdown files in `modules/crypto`.
+- Pwn curriculum loaded from markdown files in `modules/pwn`.
 - Markdown rendering for lesson prose, tables, code fences, links, lists, emphasis, and generated SVG diagram images.
 - Interactive activity types: multiple choice, predict the output, fill in the blank, spot the vulnerable line, and flag submission.
-- Local EzSQLi CTF challenge packaged with Docker Compose.
+- EzSQLi CTF challenge packaged with Docker Compose.
+- XOR flag-checker reverse engineering challenge.
+- Ret2win Pwn challenge packaged with Docker Compose.
 - User progress tracking in SQLite.
 - Service helper script to run the Flask app and CTF challenge together.
 
@@ -23,17 +28,24 @@ ByteSec/
     routes.py                    Views, APIs, renderers, admin Docker actions
     seed.py                      Markdown parser and database seeding
     templates/                   Jinja templates
-  modules/sqli/                  Markdown curriculum source
+  modules/sqli/                  SQL injection markdown curriculum source
+  modules/reverse-engineering-assembly/
+                                  Reverse engineering assembly markdown curriculum source
+  modules/crypto/                Cryptography markdown curriculum source
+  modules/pwn/                   Pwn markdown curriculum source
   ctf_chall/ezsqli/              Dockerized EzSQLi challenge
+  ctf_chall/re_asm_xor_checker/  XOR flag-checker challenge
+  ctf_chall/ret2win/             Dockerized ret2win challenge
   scripts/dev-services.sh        Web + CTF service runner
-  instance/bytesec.db            Local SQLite database, created at runtime
+  instance/bytesec.db            SQLite database, created at runtime
 ```
 
 ## Requirements
 
 - Python dependencies from `requirements.txt`.
 - A Python virtual environment.
-- Docker and Docker Compose for the EzSQLi challenge.
+- Docker and Docker Compose for the EzSQLi and ret2win challenges.
+- GCC and Make for rebuilding binary challenge artifacts.
 
 Install Python dependencies:
 
@@ -43,7 +55,7 @@ pip install -r requirements.txt
 
 ## Run The App And CTF
 
-Start both the Flask app and EzSQLi challenge:
+Start the Flask app and Docker challenge services:
 
 ```bash
 ./scripts/dev-services.sh start
@@ -62,6 +74,7 @@ Default URLs:
 
 - ByteSec web app: `http://127.0.0.1:5000`
 - EzSQLi challenge: `http://127.0.0.1:8004`
+- Ret2win challenge: `nc 127.0.0.1 9001`
 - Docker admin dashboard: `http://127.0.0.1:5000/admin/docker`
 
 When running from WSL and opening the site from Windows Chrome, use the WSL IP if localhost does not work:
@@ -74,6 +87,7 @@ Then open:
 
 - ByteSec: `http://<wsl-ip>:5000`
 - EzSQLi: `http://<wsl-ip>:8004`
+- Ret2win: `nc <wsl-ip> 9001`
 
 ## Accounts And Admin Access
 
@@ -130,6 +144,45 @@ modules/sqli/07-real-world-cases-final-challenge.md
 
 The app adds module 8 separately as the EzSQLi CTF flag-submission lab.
 
+Reverse engineering assembly modules are parsed from:
+
+```text
+modules/reverse-engineering-assembly/09-assembly-foundations.md
+modules/reverse-engineering-assembly/10-stack-calls-and-parameters.md
+modules/reverse-engineering-assembly/11-control-flow-memory-and-xor.md
+modules/reverse-engineering-assembly/12-reversing-flag-checker-workflow.md
+```
+
+`modules/reverse-engineering-assembly/00-course-overview.md` documents the curriculum shape and is not seeded as an app module.
+
+The app adds module 13 separately as the XOR Flag Checker flag-submission lab.
+
+Cryptography modules are parsed from:
+
+```text
+modules/crypto/14-crypto-fundamentals.md
+modules/crypto/15-number-theory.md
+modules/crypto/16-asymmetric-cryptography.md
+modules/crypto/17-symmetric-cryptography.md
+```
+
+`modules/crypto/00-course-overview.md` documents the curriculum shape and is not seeded as an app module.
+
+The app adds module 18 separately as the RSA Starter flag-submission lab.
+
+Pwn modules are parsed from:
+
+```text
+modules/pwn/19-pwn-foundations.md
+modules/pwn/20-stack-overflows-and-control-data.md
+modules/pwn/21-building-a-ret2win-exploit.md
+modules/pwn/22-mitigations-and-exploit-workflow.md
+```
+
+`modules/pwn/00-course-overview.md` documents the curriculum shape and is not seeded as an app module.
+
+The app adds module 23 separately as the Ret2win flag-submission lab.
+
 ## Markdown Parsing Rules
 
 The parser in `bytesec/seed.py` reads each module markdown file and creates:
@@ -148,9 +201,9 @@ Supported activity types:
 
 Unsupported classroom-only activity types such as drag/drop, build-query, and free-form fix-code activities are skipped instead of being shown as placeholder tasks.
 
-## CTF Challenge
+## CTF Challenges
 
-The active local challenge lives in:
+The active SQL injection challenge lives in:
 
 ```text
 ctf_chall/ezsqli/
@@ -168,15 +221,41 @@ docker compose logs --tail=80
 docker compose down
 ```
 
-The admin dashboard exposes these same CTF container controls from the web UI.
+The admin dashboard exposes Docker controls for the active CTF services from the web UI.
+
+The reverse engineering challenge lives in:
+
+```text
+ctf_chall/re_asm_xor_checker/
+```
+
+Build and run it directly:
+
+```bash
+cd ctf_chall/re_asm_xor_checker
+make
+./xor_checker
+```
+
+The ret2win challenge runs as a TCP service through Docker Compose:
+
+```bash
+cd ctf_chall/ret2win
+docker compose up -d --build
+docker compose ps
+nc 127.0.0.1 9001
+docker compose down
+```
 
 ## Verification
 
-Basic local checks:
+Basic checks:
 
 ```bash
 python -m compileall -q app.py bytesec
 flask --app app refresh-course
+make -C ctf_chall/re_asm_xor_checker
+make -C ctf_chall/ret2win
 ./scripts/dev-services.sh status
 ```
 
@@ -185,11 +264,12 @@ HTTP checks:
 ```bash
 curl -fsSI http://127.0.0.1:5000/ | head -1
 curl -fsSI http://127.0.0.1:8004/ | head -1
+printf 'test\n' | nc -w 2 127.0.0.1 9001
 ```
 
 ## Notes For Future Tracks
 
-Keep future Reverse Engineering, Pwn, Forensics, and Cryptography tracks in the same shape:
+Keep future Forensics tracks in the same shape:
 
 - Markdown lessons for concept content.
 - Dockerized CTF challenges for hands-on practice.

@@ -34,7 +34,7 @@ def create_app(test_config=None):
         from .seed import seed_database
 
         seed_database()
-        print("Database initialized with SQLi course data.")
+        print("Database initialized with ByteSec course data.")
 
     @app.cli.command("ensure-db")
     def ensure_db_command():

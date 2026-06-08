@@ -103,8 +103,8 @@ def visit_authenticated_sections(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/admin/docker", wait_until="networkidle")
     pause(page, 2.0)
 
-    for category in ("web", "rev", "crypto"):
-        page.goto(f"{base_url}/course?cat={category}", wait_until="networkidle")
+    for track_key in ("web", "reverse", "crypto", "pwn"):
+        page.goto(f"{base_url}/course/{track_key}", wait_until="networkidle")
         pause(page, 1.5)
         page.mouse.wheel(0, 900)
         pause(page, 0.8)
@@ -219,7 +219,7 @@ def main() -> int:
             login(page, base_url, args.username, args.password)
             visit_authenticated_sections(page, base_url)
             run_lesson_sequence(page, base_url, args.flag)
-            page.goto(f"{base_url}/course?cat=web", wait_until="networkidle")
+            page.goto(f"{base_url}/course/web", wait_until="networkidle")
             pause(page, 1.5)
             page.goto(f"{base_url}/dashboard", wait_until="networkidle")
             pause(page, 1.5)

@@ -7,23 +7,28 @@
       <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-2">Admin</p>
       <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary mb-2 font-['Hanken_Grotesk']">Docker Lab Control</h1>
       <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
-        Manage the local EzSQLi CTF container used by the final challenge module.
+        Manage the Docker challenge services used by ByteSec CTF modules.
       </p>
     </div>
-    <a href="{{ ctf_url }}" target="_blank" rel="noopener noreferrer" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity items-center gap-2">
-      Open CTF <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-    </a>
   </header>
 
-  <section class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    {% for lab in ctf_labs %}
     <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5">
-      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider mb-2">Challenge URL</p>
-      <p class="font-label-mono text-[14px] text-primary break-all">{{ ctf_url }}</p>
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider mb-2">{{ lab.description }}</p>
+          <p class="font-headline-sm text-headline-sm text-primary mb-2">{{ lab.name }}</p>
+          <p class="font-label-mono text-[14px] text-primary break-all">{{ lab.endpoint }}</p>
+        </div>
+        {% if lab.endpoint.startswith('http') %}
+        <a href="{{ lab.endpoint }}" target="_blank" rel="noopener noreferrer" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-4 py-2 rounded-full hover:opacity-90 transition-opacity items-center gap-2">
+          Open <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+        </a>
+        {% endif %}
+      </div>
     </div>
-    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5 lg:col-span-2">
-      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider mb-2">Challenge Path</p>
-      <p class="font-label-mono text-[14px] text-primary break-all">{{ ctf_path }}</p>
-    </div>
+    {% endfor %}
   </section>
 
   <section class="bg-surface-container-lowest border border-border-muted rounded-lg p-5">
