@@ -57,6 +57,20 @@
       </details>
       {% endif %}
 
+      <!-- File download -->
+      {% if challenge.file_name %}
+      <div class="border-t border-outline-variant pt-4">
+        <a href="{{ url_for('main.community_download', challenge_id=challenge.id) }}"
+           class="inline-flex items-center gap-2 bg-surface-container border border-border-muted text-primary font-label-mono text-[13px] px-4 py-2.5 rounded-lg hover:border-secondary hover:text-secondary transition-all">
+          <span class="material-symbols-outlined text-[18px]">download</span>
+          Download {{ challenge.file_name }}
+          {% if challenge.file_size %}
+          <span class="text-on-surface-variant font-body-md">({{ '{:.1f}'.format(challenge.file_size / 1024) }} KB)</span>
+          {% endif %}
+        </a>
+      </div>
+      {% endif %}
+
       <!-- Flag submission -->
       {% if not solved %}
       <div class="border-t border-outline-variant pt-6">

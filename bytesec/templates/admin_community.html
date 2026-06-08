@@ -96,6 +96,7 @@
             <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Points</th>
             <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Author</th>
             <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Status</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">File</th>
             <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
@@ -122,6 +123,16 @@
                 {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
                 {{ ch.status }}
               </span>
+            </td>
+            <td class="py-3 px-4">
+              {% if ch.file_name %}
+              <span class="font-label-mono text-[11px] text-on-surface-variant flex items-center gap-1" title="{{ ch.file_name }}">
+                <span class="material-symbols-outlined text-[14px]">attach_file</span>
+                {% if ch.file_size %}{{ '{:.0f}'.format(ch.file_size / 1024) }} KB{% endif %}
+              </span>
+              {% else %}
+              <span class="font-label-mono text-[11px] text-on-surface-variant/40">—</span>
+              {% endif %}
             </td>
             <td class="py-3 px-4">
               <div class="flex items-center gap-2">

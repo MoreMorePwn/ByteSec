@@ -99,6 +99,8 @@ class CommunityChallenge(db.Model):
     flag = db.Column(db.String(200), nullable=False)
     points = db.Column(db.Integer, nullable=False, default=100)
     hint = db.Column(db.Text, nullable=True)
+    file_name = db.Column(db.String(255), nullable=True)     # Original uploaded filename
+    file_size = db.Column(db.Integer, nullable=True)         # File size in bytes
     author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     status = db.Column(db.String(20), nullable=False, default="pending")  # pending / approved / rejected
     created_at = db.Column(db.DateTime(timezone=True), default=utc_now, nullable=False)

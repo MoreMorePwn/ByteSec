@@ -5,13 +5,14 @@ import hashlib
 import html
 import os
 import re
+import secrets
 import subprocess
 import zipfile
 from functools import wraps
 from pathlib import Path
 
 from flask import (
-    Blueprint, g, flash, jsonify, redirect, render_template,
+    Blueprint, current_app, g, flash, jsonify, redirect, render_template,
     request, send_file, session, url_for,
 )
 from markupsafe import Markup
@@ -987,10 +988,47 @@ def community_submit():
         )
         db.session.add(challenge)
         db.session.commit()
+
+        # Handle file upload (after commit so challenge.id exists)
+        uploaded_file = request.files.get("challenge_file")
+        if uploaded_file and uploaded_file.filename and uploaded_file.filename.strip():
+            original_name = uploaded_file.filename.strip()
+            upload_dir = ROOT_DIR / "instance" / "community_uploads"
+            upload_dir.mkdir(parents=True, exist_ok=True)
+            # Save as {challenge_id}_{random_hex}_{original_name}
+            safe_prefix = f"{challenge.id}_{secrets.token_hex(4)}_"
+            disk_name = safe_prefix + original_name
+            filepath = upload_dir / disk_name
+            uploaded_file.save(str(filepath))
+            challenge.file_name = original_name
+            challenge.file_size = filepath.stat().st_size
+            db.session.commit()
+
         flash("Challenge submitted! An admin will review it shortly.", "success")
         return redirect(url_for("main.community"))
 
     return render_template("community_submit.html")
+
+
+@bp.route("/community/<int:challenge_id>/download")
+@login_required
+def community_download(challenge_id):
+    challenge = db.session.get(CommunityChallenge, challenge_id)
+    if challenge is None or challenge.status != "approved":
+        flash("Challenge not found.", "danger")
+        return redirect(url_for("main.community"))
+    if not challenge.file_name:
+        flash("No file attached to this challenge.", "warning")
+        return redirect(url_for("main.community_challenge", challenge_id=challenge.id))
+
+    upload_dir = ROOT_DIR / "instance" / "community_uploads"
+    prefix = f"{challenge.id}_"
+    for f in upload_dir.iterdir():
+        if f.name.startswith(prefix):
+            return send_file(str(f), as_attachment=True, download_name=challenge.file_name)
+
+    flash("File not found on disk.", "danger")
+    return redirect(url_for("main.community_challenge", challenge_id=challenge.id))
 
 
 @bp.route("/community/<int:challenge_id>")

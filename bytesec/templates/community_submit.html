@@ -11,7 +11,7 @@
     </p>
   </header>
 
-  <form method="post" class="flex flex-col gap-6">
+  <form method="post" enctype="multipart/form-data" class="flex flex-col gap-6">
     <!-- Title -->
     <div class="flex flex-col gap-1.5">
       <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Title</label>
@@ -72,6 +72,13 @@
       <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Hint <span class="text-on-surface-variant/60 normal-case">(optional)</span></label>
       <textarea name="hint" rows="2" maxlength="1000" placeholder="A nudge in the right direction…"
                 class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50 resize-y"></textarea>
+    </div>
+
+    <!-- File upload -->
+    <div class="flex flex-col gap-1.5">
+      <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Challenge File <span class="text-on-surface-variant/60 normal-case">(optional — .zip, .tar.gz, .py, .txt, .pcap, etc.)</span></label>
+      <input type="file" name="challenge_file" accept=".zip,.tar.gz,.py,.txt,.pcap,.pdf,.png,.jpg,.csv,.json,.xml,.bin"
+             class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-on-primary file:font-label-mono file:text-[12px] file:cursor-pointer hover:file:opacity-90">
     </div>
 
     <!-- Submit -->
