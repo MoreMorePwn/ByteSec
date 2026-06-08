@@ -17,7 +17,7 @@
       </thead>
       <tbody class="font-body-md text-[14px]">
         {% for entry in ranking %}
-        <tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors {{ 'bg-secondary-container/10' if loop.index <= 3 else '' }}">
+        <tr class="border-b border-outline-variant/50 hover:bg-surface-container-low transition-colors {{ 'bg-secondary-container' if loop.index <= 3 else '' }}">
           <td class="py-3 px-6">
             {% if loop.index == 1 %}
             <span class="material-symbols-outlined text-amber-500 dark:text-amber-400 fill">emoji_events</span>

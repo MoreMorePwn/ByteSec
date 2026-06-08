@@ -12,7 +12,7 @@
         {% if current_course %}{{ current_course.modules|length }} Modules • {{ current_course.activity_count }} Activities{% else %}{{ module_count }} Modules • {{ activity_count }} Activities{% endif %}
       </div>
       <!-- Overall progress -->
-      <div class="mt-3 bg-surface-container rounded-lg p-2.5 border border-outline-variant/30">
+      <div class="mt-3 bg-surface-container rounded-lg p-2.5 border border-outline-variant">
         <div class="flex justify-between items-center mb-1">
           <span class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Progress</span>
           <span class="font-label-mono text-[11px] text-secondary">{{ "%.0f"|format(current_course.progress_pct if current_course else overall_pct) }}%</span>
