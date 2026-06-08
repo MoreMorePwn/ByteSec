@@ -36,6 +36,7 @@ class Module(db.Model):
     icon = db.Column(db.String(40), nullable=False, default="database")
     difficulty = db.Column(db.String(20), nullable=False, default="beginner")
     estimated_minutes = db.Column(db.Integer, nullable=False, default=15)
+    category = db.Column(db.String(20), nullable=False, default="web")
 
     lessons = db.relationship(
         "Lesson", back_populates="module", order_by="Lesson.order_index", cascade="all,delete"
