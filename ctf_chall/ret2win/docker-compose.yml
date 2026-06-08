@@ -1,0 +1,10 @@
+services:
+  ret2win:
+    build: ./
+    restart: always
+    environment:
+      BYTESEC_PWN_FLAG: BYTESEC{a18dc4f20b5e9a77}
+    ports:
+      - 9001:9001
+    security_opt:
+      - no-new-privileges:true
