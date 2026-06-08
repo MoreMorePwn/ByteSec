@@ -172,7 +172,20 @@
     /* MCQ interactive states */
     .mcq-option { transition: all 0.2s ease-in-out; cursor: pointer; }
     .mcq-option:hover { border-color: var(--primary, #000); }
-    .mcq-option.selected { border-color: var(--primary, #000); }
+    .mcq-option.selected {
+      border-color: var(--primary, #000) !important;
+      border-width: 2px;
+      background-color: rgba(0,0,0,0.05) !important;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.08);
+    }
+    /* Light mode: selected indicator → solid fill with white letter */
+    .mcq-option.selected .indicator {
+      border-color: var(--primary, #000) !important;
+      background-color: var(--primary, #000) !important;
+    }
+    .mcq-option.selected .indicator-label {
+      color: #ffffff !important;
+    }
     .mcq-option.correct {
       border-color: #29CC57 !important;
       background-color: rgba(41,204,87,0.08) !important;
@@ -181,8 +194,30 @@
       border-color: #ba1a1a !important;
       background-color: rgba(186,26,26,0.05) !important;
     }
-    .dark .mcq-option:hover { border-color: #4fdbc8; }
-    .dark .mcq-option.selected { border-color: #4fdbc8; background-color: rgba(79,219,200,0.08); }
+    .dark .mcq-option {
+      border-color: var(--outline-var);
+    }
+    .dark .mcq-option:hover {
+      border-color: #4fdbc8 !important;
+      background-color: rgba(79,219,200,0.06) !important;
+    }
+    .dark .mcq-option.selected {
+      border-color: #4fdbc8 !important;
+      border-width: 2px;
+      background-color: rgba(79,219,200,0.12) !important;
+      box-shadow: 0 0 16px rgba(79,219,200,0.2), 0 0 0 1px rgba(79,219,200,0.15) !important;
+    }
+    /* Dark mode: selected indicator → solid teal fill with dark letter */
+    .dark .mcq-option .indicator {
+      transition: all 0.2s ease;
+    }
+    .dark .mcq-option.selected .indicator {
+      border-color: #4fdbc8 !important;
+      background-color: #4fdbc8 !important;
+    }
+    .dark .mcq-option.selected .indicator-label {
+      color: #003731 !important;
+    }
 
     /* Code line click (spot the vulnerability) */
     .code-line { cursor: pointer; transition: background-color 0.2s, border-color 0.2s; border-left: 3px solid transparent; line-height: 16px; }
