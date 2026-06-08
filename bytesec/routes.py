@@ -766,19 +766,83 @@ def _docker_compose_all(args, timeout=45):
     return {"ok": ok, "output": "\n\n".join(output)}
 
 
+def _find_lab(lab_key):
+    """Find a lab dict by its key, or None."""
+    for lab in CTF_LABS:
+        if lab["key"] == lab_key:
+            return lab
+    return None
+
+
+def _parse_container_status(lab):
+    """Return a list of structured container dicts from docker compose ps."""
+    result = _docker_compose_for(lab, ["ps", "--format", "json", "-a"], timeout=15)
+    containers = []
+    if not result["ok"]:
+        return containers, result["output"]
+    for line in result["output"].splitlines():
+        line = line.strip()
+        if not line or not line.startswith("{"):
+            continue
+        try:
+            info = json.loads(line)
+            containers.append({
+                "name": info.get("Name", "unknown"),
+                "service": info.get("Service", ""),
+                "state": info.get("State", "unknown"),
+                "status": info.get("Status", ""),
+                "image": info.get("Image", ""),
+                "ports": info.get("Publishers") or info.get("Ports", ""),
+                "health": info.get("Health", ""),
+            })
+        except (json.JSONDecodeError, TypeError):
+            continue
+    return containers, ""
+
+
+def _lab_status_data(lab):
+    """Build full status payload for a single lab."""
+    containers, error = _parse_container_status(lab)
+    running = sum(1 for c in containers if c["state"] == "running")
+    total = len(containers)
+    if error and total == 0:
+        health = "error"
+    elif running == total and total > 0:
+        health = "healthy"
+    elif running > 0:
+        health = "degraded"
+    else:
+        health = "stopped"
+    return {
+        "key": lab["key"],
+        "name": lab["name"],
+        "description": lab["description"],
+        "endpoint": lab["endpoint"],
+        "containers": containers,
+        "running": running,
+        "total": total,
+        "health": health,
+        "error": error,
+    }
+
+
+# ── Docker admin page ────────────────────────────────────────────────
+
+_DOCKER_COMMANDS = {
+    "start": ["up", "-d", "--build"],
+    "stop": ["down"],
+    "restart": ["up", "-d", "--build", "--force-recreate"],
+}
+
+
 @bp.route("/admin/docker", methods=["GET", "POST"])
 @admin_required
 def admin_docker():
     action_result = None
     if request.method == "POST":
         action = request.form.get("action", "")
-        commands = {
-            "start": ["up", "-d", "--build"],
-            "stop": ["down"],
-            "restart": ["up", "-d", "--build", "--force-recreate"],
-        }
-        if action in commands:
-            action_result = _docker_compose_all(commands[action], timeout=120)
+        if action in _DOCKER_COMMANDS:
+            action_result = _docker_compose_all(_DOCKER_COMMANDS[action], timeout=120)
             flash(
                 f"Docker lab {action} {'completed' if action_result['ok'] else 'failed'}.",
                 "success" if action_result["ok"] else "danger",
@@ -786,15 +850,68 @@ def admin_docker():
         else:
             flash("Unknown Docker action.", "danger")
 
-    status = _docker_compose_all(["ps"], timeout=30)
-    logs = _docker_compose_all(["logs", "--tail=80"], timeout=30)
+    labs_data = [_lab_status_data(lab) for lab in CTF_LABS]
+    total_running = sum(ld["running"] for ld in labs_data)
+    total_containers = sum(ld["total"] for ld in labs_data)
+    total_stopped = total_containers - total_running
+
     return render_template(
         "admin_docker.html",
         ctf_labs=CTF_LABS,
-        status=status,
-        logs=logs,
+        labs_data=labs_data,
+        total_running=total_running,
+        total_stopped=total_stopped,
+        total_containers=total_containers,
         action_result=action_result,
     )
+
+
+@bp.route("/admin/docker/<lab_key>/action", methods=["POST"])
+@admin_required
+def admin_docker_lab_action(lab_key):
+    lab = _find_lab(lab_key)
+    if lab is None:
+        return jsonify({"ok": False, "error": "Unknown lab."}), 404
+    body = request.get_json(silent=True) or {}
+    action = body.get("action", "")
+    if action not in _DOCKER_COMMANDS:
+        return jsonify({"ok": False, "error": "Unknown action."}), 400
+    result = _docker_compose_for(lab, _DOCKER_COMMANDS[action], timeout=120)
+    return jsonify({"ok": result["ok"], "output": result["output"]})
+
+
+@bp.route("/admin/docker/<lab_key>/status")
+@admin_required
+def admin_docker_lab_status(lab_key):
+    lab = _find_lab(lab_key)
+    if lab is None:
+        return jsonify({"ok": False, "error": "Unknown lab."}), 404
+    return jsonify({"ok": True, **_lab_status_data(lab)})
+
+
+@bp.route("/admin/docker/<lab_key>/logs")
+@admin_required
+def admin_docker_lab_logs(lab_key):
+    lab = _find_lab(lab_key)
+    if lab is None:
+        return jsonify({"ok": False, "error": "Unknown lab."}), 404
+    result = _docker_compose_for(lab, ["logs", "--tail=100", "--no-color"], timeout=30)
+    return jsonify({"ok": result["ok"], "output": result["output"]})
+
+
+@bp.route("/admin/docker/overview")
+@admin_required
+def admin_docker_overview():
+    labs_data = [_lab_status_data(lab) for lab in CTF_LABS]
+    total_running = sum(ld["running"] for ld in labs_data)
+    total_containers = sum(ld["total"] for ld in labs_data)
+    return jsonify({
+        "ok": True,
+        "labs": labs_data,
+        "total_running": total_running,
+        "total_containers": total_containers,
+        "total_stopped": total_containers - total_running,
+    })
 
 
 @bp.route("/downloads/re-asm-xor-checker")
