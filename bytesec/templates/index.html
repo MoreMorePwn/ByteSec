@@ -63,7 +63,8 @@
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
     {% for track in tracks %}
-    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5 hover:shadow-md transition-shadow duration-200 flex flex-col">
+    <a href="{% if track.status == 'Live' %}{{ url_for('main.course', cat=track.category) }}{% else %}#{% endif %}"
+       class="block bg-surface-container-lowest border border-border-muted rounded-lg p-5 hover:shadow-md transition-shadow duration-200 flex flex-col {% if track.status == 'Live' %}hover:border-secondary{% endif %}">
       <div class="flex items-start justify-between gap-3 mb-4">
         <div class="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center">
           <span class="material-symbols-outlined text-on-surface-variant">{{ track.icon }}</span>
@@ -72,7 +73,7 @@
       </div>
       <h3 class="font-headline-md text-[17px] leading-[24px] font-semibold text-primary mb-2 font-['Hanken_Grotesk']">{{ track.title }}</h3>
       <p class="font-body-md text-[14px] text-on-surface-variant">{{ track.description }}</p>
-    </div>
+    </a>
     {% endfor %}
   </div>
 </section>
@@ -86,7 +87,7 @@
       <p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">The current live track starts with SQL fundamentals and builds toward exploitation techniques, prevention, and real-world case analysis.</p>
     </div>
     {% if g.user %}
-    <a href="{{ url_for('main.course') }}" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity items-center gap-2">
+    <a href="{{ url_for('main.course', cat='web') }}" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity items-center gap-2">
       Open Path <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
     </a>
     {% endif %}

@@ -9,7 +9,14 @@ from .models import Lesson, LessonStep, Module, User, UserProgress
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-SQLI_MODULE_DIR = ROOT_DIR / "modules" / "sqli"
+MODULES_DIR = ROOT_DIR / "modules"  # parent directory containing category subdirs
+MODULE_CATEGORIES = {
+    "sqli": "web",
+    "rev": "rev",
+    "crypto": "crypto",
+    "pwn": "pwn",
+    "forensics": "forensics",
+}
 CTF_CHALLENGE_URL = "http://127.0.0.1:8004"
 CTF_FLAG_HASH = "84f61f593ff27ff39777cfb98bf90598848c1bc9533e75bf8ee54b964b876ba9"
 
@@ -75,11 +82,16 @@ def _plain(value):
 
 
 def _module_files():
-    return [
-        path
-        for path in sorted(SQLI_MODULE_DIR.glob("[0-9][0-9]-*.md"))
-        if not path.name.startswith("00-")
-    ]
+    """Return list of (path, category) tuples for all module markdown files."""
+    files = []
+    for dirname, category in MODULE_CATEGORIES.items():
+        dirpath = MODULES_DIR / dirname
+        if not dirpath.is_dir():
+            continue
+        for path in sorted(dirpath.glob("[0-9][0-9]-*.md")):
+            if not path.name.startswith("00-"):
+                files.append((path, category))
+    return files
 
 
 def _module_meta(text, fallback_order):
@@ -331,9 +343,9 @@ def _activity_blocks(lesson_block):
     return material, activities
 
 
-def _seed_markdown_module(path, fallback_order):
+def _seed_markdown_module(path, category, order_index):
     text = path.read_text(encoding="utf-8")
-    order, title, difficulty, minutes = _module_meta(text, fallback_order)
+    order, title, difficulty, minutes = _module_meta(text, order_index)
     module = Module(
         order_index=order,
         title=title,
@@ -341,6 +353,7 @@ def _seed_markdown_module(path, fallback_order):
         icon=ICONS.get(order, "database"),
         difficulty=difficulty,
         estimated_minutes=minutes,
+        category=category,
     )
     db.session.add(module)
     db.session.flush()
@@ -375,12 +388,13 @@ def _seed_markdown_module(path, fallback_order):
 
 def _seed_ctf_module():
     module = Module(
-        order_index=8,
+        order_index=99,
         title="CTF Challenge Lab: EzSQLi",
         description=DESCRIPTIONS[8],
         icon=ICONS[8],
         difficulty="Advanced",
         estimated_minutes=30,
+        category="web",
     )
     db.session.add(module)
     db.session.flush()
@@ -421,8 +435,8 @@ def _seed_course_content():
     for model in (UserProgress, LessonStep, Lesson, Module):
         db.session.query(model).delete()
 
-    for fallback_order, path in enumerate(_module_files(), 1):
-        _seed_markdown_module(path, fallback_order)
+    for order_index, (path, category) in enumerate(_module_files(), 1):
+        _seed_markdown_module(path, category, order_index)
     _seed_ctf_module()
 
 
@@ -455,8 +469,9 @@ def seed_database():
 
 
 def _course_is_stale():
-    if Module.query.count() != 8:
+    if Module.query.count() == 0:
         return True
+    # Check if any unexpected content is present (legacy migration)
     leaked_ctf = (
         Lesson.query
         .join(Module)

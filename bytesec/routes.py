@@ -111,43 +111,37 @@ def _course_stats():
 
 
 def _learning_tracks():
-    return [
-        {
-            "title": "Web Exploitation",
-            "description": "Browser, HTTP, database, and access-control flaws taught from concept to controlled lab practice.",
-            "icon": "language",
-            "status": "Live",
-            "status_class": "bg-secondary-container text-on-secondary-container",
-        },
-        {
-            "title": "Reverse Engineering",
-            "description": "Static and dynamic analysis workflows for understanding compiled programs and hidden logic.",
-            "icon": "memory",
-            "status": "Planned",
-            "status_class": "bg-surface-container text-on-surface-variant",
-        },
-        {
-            "title": "Pwn",
-            "description": "Binary exploitation fundamentals, process memory, stack behavior, and dockerized practice targets.",
-            "icon": "terminal",
-            "status": "Planned",
-            "status_class": "bg-surface-container text-on-surface-variant",
-        },
-        {
-            "title": "Forensics",
-            "description": "Evidence-driven investigation across files, logs, packets, images, and challenge artifacts.",
-            "icon": "travel_explore",
-            "status": "Planned",
-            "status_class": "bg-surface-container text-on-surface-variant",
-        },
-        {
-            "title": "Cryptography",
-            "description": "Encoding, classical crypto, implementation mistakes, and practical reasoning through guided puzzles.",
-            "icon": "vpn_key",
-            "status": "Planned",
-            "status_class": "bg-surface-container text-on-surface-variant",
-        },
+    # Dynamic tracks from actual module categories in DB
+    categories_in_use = set()
+    for m in Module.query.with_entities(Module.category).distinct():
+        if m.category:
+            categories_in_use.add(m.category)
+
+    track_defs = [
+        ("Web Exploitation", "web", "language",
+         "Browser, HTTP, database, and access-control flaws taught from concept to controlled lab practice."),
+        ("Reverse Engineering", "rev", "memory",
+         "Static and dynamic analysis workflows for understanding compiled programs and hidden logic."),
+        ("Pwn", "pwn", "terminal",
+         "Binary exploitation fundamentals, process memory, stack behavior, and dockerized practice targets."),
+        ("Forensics", "forensics", "travel_explore",
+         "Evidence-driven investigation across files, logs, packets, images, and challenge artifacts."),
+        ("Cryptography", "crypto", "vpn_key",
+         "Encoding, classical crypto, implementation mistakes, and practical reasoning through guided puzzles."),
     ]
+    result = []
+    for title, cat_id, icon, desc in track_defs:
+        has_modules = cat_id in categories_in_use
+        result.append({
+            "title": title,
+            "category": cat_id,
+            "description": desc,
+            "icon": icon,
+            "status": "Live" if has_modules else "Planned",
+            "status_class": "bg-secondary-container text-on-secondary-container" if has_modules
+                           else "bg-surface-container text-on-surface-variant",
+        })
+    return result
 
 
 def _parse_options(step):
@@ -487,7 +481,7 @@ def _highlight_line(line, language):
 
 @bp.route("/")
 def index():
-    modules = Module.query.order_by(Module.order_index).all()
+    modules = Module.query.filter_by(category="web").order_by(Module.order_index).all()
     user_count = User.query.count()
     tracks = _learning_tracks()
     return render_template(
@@ -600,7 +594,20 @@ def dashboard():
 @bp.route("/course")
 @login_required
 def course():
-    modules = Module.query.order_by(Module.order_index).all()
+    category = request.args.get("cat", "web")
+    query = Module.query.order_by(Module.order_index)
+    if category:
+        query = query.filter(Module.category == category)
+    modules = query.all()
+
+    # Get all categories with module counts for the tab bar
+    all_cats = (
+        db.session.query(Module.category, db.func.count(Module.id))
+        .group_by(Module.category)
+        .order_by(db.func.count(Module.id).desc())
+        .all()
+    )
+
     mod_progress = _module_progress(g.user.id)
     overall_pct = _overall_pct(g.user.id)
     first_lesson = Lesson.query.join(Module).order_by(Module.order_index, Lesson.order_index).first()
@@ -608,6 +615,8 @@ def course():
     return render_template(
         "course.html",
         modules=modules,
+        categories=all_cats,
+        current_category=category,
         mod_progress=mod_progress,
         overall_pct=overall_pct,
         first_lesson=first_lesson,
