@@ -19,7 +19,7 @@ from markupsafe import Markup
 from sqlalchemy import func
 
 from . import db
-from .models import CommunityChallenge, CommunityChallengeSolve, Lesson, LessonStep, Module, User, UserProgress
+from .models import Article, CommunityChallenge, CommunityChallengeSolve, Lesson, LessonStep, Module, User, UserProgress
 
 
 bp = Blueprint("main", __name__)
@@ -1135,6 +1135,155 @@ def admin_community_review(challenge_id, action):
 def utc_now():
     from datetime import datetime, timezone
     return datetime.now(timezone.utc)
+
+
+# ── Articles ────────────────────────────────────────────────────────
+
+
+def _slugify(text):
+    """Create a URL-friendly slug from text."""
+    text = text.lower().strip()
+    text = re.sub(r"[^\w\s-]", "", text)
+    text = re.sub(r"[-\s]+", "-", text)
+    return text.strip("-")
+
+
+@bp.route("/articles")
+def articles():
+    """List published articles."""
+    articles = Article.query.filter_by(status="published").order_by(Article.published_at.desc()).all()
+    return render_template("articles.html", articles=articles)
+
+
+@bp.route("/articles/<slug>")
+def article_view(slug):
+    """View a single article."""
+    article = Article.query.filter_by(slug=slug).first_or_404()
+    if article.status != "published":
+        if not _is_admin_user() or g.user is None:
+            flash("Article not found.", "danger")
+            return redirect(url_for("main.articles"))
+    content_html = _render_material(article.content)
+    return render_template("article.html", article=article, content_html=content_html)
+
+
+@bp.route("/articles/new", methods=["GET", "POST"])
+@admin_required
+def article_new():
+    """Create a new article (admin only)."""
+    if request.method == "POST":
+        title = request.form.get("title", "").strip()
+        content = request.form.get("content", "").strip()
+        excerpt = request.form.get("excerpt", "").strip() or None
+        cover_image = request.form.get("cover_image", "").strip() or None
+        status = request.form.get("status", "draft").strip()
+
+        if not title or not content:
+            flash("Title and content are required.", "danger")
+            return render_template("article_form.html", article=None)
+
+        slug = _slugify(title)
+        existing = Article.query.filter_by(slug=slug).first()
+        if existing:
+            slug = f"{slug}-{secrets.token_hex(3)}"
+
+        article = Article(
+            title=title,
+            slug=slug,
+            content=content,
+            excerpt=excerpt,
+            cover_image=cover_image,
+            author_id=g.user.id,
+            status=status,
+            published_at=utc_now() if status == "published" else None,
+        )
+        db.session.add(article)
+        db.session.commit()
+        flash("Article created!", "success")
+        return redirect(url_for("main.article_view", slug=article.slug))
+
+    return render_template("article_form.html", article=None)
+
+
+@bp.route("/articles/<int:article_id>/edit", methods=["GET", "POST"])
+@admin_required
+def article_edit(article_id):
+    """Edit an article (admin only)."""
+    article = db.session.get(Article, article_id)
+    if article is None:
+        flash("Article not found.", "danger")
+        return redirect(url_for("main.admin_articles"))
+
+    if request.method == "POST":
+        article.title = request.form.get("title", "").strip()
+        article.content = request.form.get("content", "").strip()
+        article.excerpt = request.form.get("excerpt", "").strip() or None
+        article.cover_image = request.form.get("cover_image", "").strip() or None
+        new_status = request.form.get("status", "draft").strip()
+        if new_status == "published" and article.status != "published":
+            article.published_at = utc_now()
+        article.status = new_status
+        db.session.commit()
+        flash("Article updated!", "success")
+        return redirect(url_for("main.article_view", slug=article.slug))
+
+    return render_template("article_form.html", article=article)
+
+
+@bp.route("/articles/<int:article_id>/delete", methods=["POST"])
+@admin_required
+def article_delete(article_id):
+    """Delete an article (admin only)."""
+    article = db.session.get(Article, article_id)
+    if article is None:
+        flash("Article not found.", "danger")
+        return redirect(url_for("main.admin_articles"))
+    db.session.delete(article)
+    db.session.commit()
+    flash("Article deleted.", "info")
+    return redirect(url_for("main.admin_articles"))
+
+
+@bp.route("/articles/<int:article_id>/publish", methods=["POST"])
+@admin_required
+def article_toggle_publish(article_id):
+    """Toggle article draft/published status (admin only)."""
+    article = db.session.get(Article, article_id)
+    if article is None:
+        flash("Article not found.", "danger")
+        return redirect(url_for("main.admin_articles"))
+    if article.status == "published":
+        article.status = "draft"
+        article.published_at = None
+        flash("Article unpublished.", "info")
+    else:
+        article.status = "published"
+        article.published_at = utc_now()
+        flash("Article published!", "success")
+    db.session.commit()
+    return redirect(url_for("main.admin_articles"))
+
+
+@bp.route("/admin/articles")
+@admin_required
+def admin_articles():
+    """Admin article management."""
+    status_filter = request.args.get("status", "")
+    query = Article.query
+    if status_filter:
+        query = query.filter_by(status=status_filter)
+    articles = query.order_by(Article.created_at.desc()).all()
+    total = Article.query.count()
+    draft_count = Article.query.filter_by(status="draft").count()
+    published_count = Article.query.filter_by(status="published").count()
+    return render_template(
+        "admin_articles.html",
+        articles=articles,
+        total=total,
+        draft_count=draft_count,
+        published_count=published_count,
+        selected_status=status_filter,
+    )
 
 
 @bp.route("/downloads/re-asm-xor-checker")

@@ -125,3 +125,19 @@ class CommunityChallengeSolve(db.Model):
 
     user = db.relationship("User")
     challenge = db.relationship("CommunityChallenge", back_populates="solves")
+
+
+class Article(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(255), unique=True, nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    excerpt = db.Column(db.Text, nullable=True)
+    author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="draft")  # draft / published
+    cover_image = db.Column(db.String(500), nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    published_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    author = db.relationship("User", backref="articles")

@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}{{ article.title }} — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[900px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <!-- Back link -->
+  <a href="{{ url_for('main.articles') }}" class="font-label-mono text-[13px] text-secondary hover:underline inline-flex items-center gap-1">
+    <span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to Articles
+  </a>
+
+  <!-- Article Header -->
+  <header class="flex flex-col gap-4">
+    <div class="flex items-center gap-3 text-on-surface-variant font-label-mono text-[12px]">
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px]">person</span>
+        {{ article.author.username }}
+      </span>
+      {% if article.published_at %}
+      <span class="flex items-center gap-1">
+        <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+        {{ article.published_at.strftime('%b %d, %Y') }}
+      </span>
+      {% endif %}
+      {% if article.updated_at and article.updated_at != article.published_at %}
+      <span class="flex items-center gap-1 text-on-surface-variant/60">
+        <span class="material-symbols-outlined text-[14px]">edit</span>
+        Updated {{ article.updated_at.strftime('%b %d, %Y') }}
+      </span>
+      {% endif %}
+    </div>
+    <h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary font-['Hanken_Grotesk']">
+      {{ article.title }}
+    </h1>
+    {% if article.excerpt %}
+    <p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">{{ article.excerpt }}</p>
+    {% endif %}
+  </header>
+
+  <!-- Cover image -->
+  {% if article.cover_image %}
+  <div class="rounded-xl overflow-hidden border border-border-muted">
+    <img src="{{ article.cover_image }}" alt="{{ article.title }}" class="w-full object-cover max-h-[400px]">
+  </div>
+  {% endif %}
+
+  <!-- Article Content -->
+  <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-10">
+    <div class="prose-content max-w-none">
+      {{ content_html }}
+    </div>
+  </div>
+
+  <!-- Footer nav -->
+  <div class="flex items-center justify-between">
+    <a href="{{ url_for('main.articles') }}" class="font-label-mono text-[13px] text-secondary hover:underline inline-flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span> All Articles
+    </a>
+    {% if is_admin_user() %}
+    <div class="flex items-center gap-3">
+      <a href="{{ url_for('main.article_edit', article_id=article.id) }}"
+         class="font-label-mono text-[13px] text-on-surface-variant hover:text-primary inline-flex items-center gap-1 transition-colors">
+        <span class="material-symbols-outlined text-[16px]">edit</span> Edit
+      </a>
+      <form method="post" action="{{ url_for('main.article_toggle_publish', article_id=article.id) }}" class="inline">
+        <button type="submit"
+                class="font-label-mono text-[13px] {% if article.status == 'published' %}text-yellow-500{% else %}text-success-green{% endif %} hover:underline inline-flex items-center gap-1 transition-colors">
+          <span class="material-symbols-outlined text-[16px]">
+            {% if article.status == 'published' %}visibility_off{% else %}publish{% endif %}
+          </span>
+          {% if article.status == 'published' %}Unpublish{% else %}Publish{% endif %}
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
