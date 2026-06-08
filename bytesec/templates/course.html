@@ -80,18 +80,18 @@
         <div class="flex items-center relative py-1 overflow-x-auto">
           {% for mod in track.modules %}
           {% set progress = mod_progress[mod.id] %}
-          <div class="node-connector {{ 'completed' if progress.pct >= 100 else '' }} relative flex flex-col items-center group cursor-pointer z-10 w-9 {{ 'mr-2' if not loop.last else '' }} flex-shrink-0" title="{{ mod.title }}">
+          <div class="node-connector {{ 'completed' if progress.pct >= 100 else '' }} relative flex flex-col items-center group cursor-pointer z-10 w-9 sm:w-10 lg:w-12 {{ 'mr-2 sm:mr-3 lg:mr-4' if not loop.last else '' }} flex-shrink-0" title="{{ mod.title }}">
             {% if progress.pct >= 100 %}
-            <div class="w-9 h-9 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
-              <span class="material-symbols-outlined font-bold" style="font-size:16px">check</span>
+            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
+              <span class="material-symbols-outlined font-bold text-[16px] sm:text-[18px] lg:text-[22px]">check</span>
             </div>
             {% elif progress.pct > 0 %}
-            <div class="w-9 h-9 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container transition-transform group-hover:scale-110">
-              <span class="material-symbols-outlined font-bold" style="font-size:16px;font-variation-settings:'FILL' 1">terminal</span>
+            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container transition-transform group-hover:scale-110">
+              <span class="material-symbols-outlined font-bold text-[16px] sm:text-[18px] lg:text-[22px]" style="font-variation-settings:'FILL' 1">terminal</span>
             </div>
             {% else %}
-            <div class="w-9 h-9 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline">
-              <span class="material-symbols-outlined" style="font-size:16px">lock</span>
+            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline">
+              <span class="material-symbols-outlined text-[16px] sm:text-[18px] lg:text-[22px]">lock</span>
             </div>
             {% endif %}
           </div>
