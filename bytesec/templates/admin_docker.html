@@ -14,6 +14,22 @@
     </div>
   </header>
 
+  <!-- Admin Tabs -->
+  <nav class="flex gap-2 border-b border-outline-variant pb-0">
+    <a href="{{ url_for('main.admin_docker') }}"
+       class="font-label-mono text-[13px] px-4 py-2.5 border-b-2 border-secondary text-secondary font-semibold -mb-px">
+      Docker Labs
+    </a>
+    <a href="{{ url_for('main.admin_community') }}"
+       class="font-label-mono text-[13px] px-4 py-2.5 border-b-2 border-transparent text-on-surface-variant hover:text-primary transition-colors -mb-px">
+      Community Challenges
+    </a>
+    <a href="{{ url_for('main.admin_articles') }}"
+       class="font-label-mono text-[13px] px-4 py-2.5 border-b-2 border-transparent text-on-surface-variant hover:text-primary transition-colors -mb-px">
+      Articles
+    </a>
+  </nav>
+
   <!-- ── Overall Summary Bar ── -->
   <section class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 flex flex-col gap-5">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
@@ -46,10 +62,10 @@
         <button name="action" value="start" class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">play_arrow</span> Start All
         </button>
-        <button name="action" value="restart" class="bg-surface-container border border-outline-variant text-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-2">
+        <button name="action" value="restart" class="bg-surface-container-lowest border border-border-muted text-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">restart_alt</span> Restart All
         </button>
-        <button name="action" value="stop" class="bg-surface-container border border-outline-variant text-error font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-80 transition-opacity flex items-center gap-2">
+        <button name="action" value="stop" class="bg-surface-container-lowest border border-border-muted text-error font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-80 transition-opacity flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">stop</span> Stop All
         </button>
       </form>
@@ -97,17 +113,17 @@
         </div>
         <div class="flex items-center gap-2">
           {% if ld.endpoint.startswith('http') %}
-          <a href="{{ ld.endpoint }}" target="_blank" rel="noopener noreferrer" class="bg-surface-container border border-outline-variant text-primary font-label-mono text-[12px] px-4 py-2 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1.5">
+          <a href="{{ ld.endpoint }}" target="_blank" rel="noopener noreferrer" class="bg-surface-container-lowest border border-border-muted text-primary font-label-mono text-[12px] px-4 py-2 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1.5">
             <span class="material-symbols-outlined text-[16px]">open_in_new</span> Open
           </a>
           {% endif %}
           <button onclick="performLabAction('{{ ld.key }}', 'start')" class="bg-primary text-on-primary font-label-mono text-[12px] px-4 py-2 rounded-full hover:opacity-90 transition-opacity flex items-center gap-1.5" id="btn-start-{{ ld.key }}">
             <span class="material-symbols-outlined text-[16px]">play_arrow</span> Start
           </button>
-          <button onclick="performLabAction('{{ ld.key }}', 'restart')" class="bg-surface-container border border-outline-variant text-primary font-label-mono text-[12px] px-4 py-2 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1.5" id="btn-restart-{{ ld.key }}">
+          <button onclick="performLabAction('{{ ld.key }}', 'restart')" class="bg-surface-container-lowest border border-border-muted text-primary font-label-mono text-[12px] px-4 py-2 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1.5" id="btn-restart-{{ ld.key }}">
             <span class="material-symbols-outlined text-[16px]">restart_alt</span> Restart
           </button>
-          <button onclick="performLabAction('{{ ld.key }}', 'stop')" class="bg-surface-container border border-outline-variant text-error font-label-mono text-[12px] px-4 py-2 rounded-full hover:opacity-80 transition-opacity flex items-center gap-1.5" id="btn-stop-{{ ld.key }}">
+          <button onclick="performLabAction('{{ ld.key }}', 'stop')" class="bg-surface-container-lowest border border-border-muted text-error font-label-mono text-[12px] px-4 py-2 rounded-full hover:opacity-80 transition-opacity flex items-center gap-1.5" id="btn-stop-{{ ld.key }}">
             <span class="material-symbols-outlined text-[16px]">stop</span> Stop
           </button>
         </div>

@@ -88,3 +88,56 @@ class UserProgress(db.Model):
 
     user = db.relationship("User", back_populates="progress")
     step = db.relationship("LessonStep", back_populates="progress")
+
+
+class CommunityChallenge(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    category = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    difficulty = db.Column(db.String(20), nullable=False, default="medium")
+    flag = db.Column(db.String(200), nullable=False)
+    points = db.Column(db.Integer, nullable=False, default=100)
+    hint = db.Column(db.Text, nullable=True)
+    file_name = db.Column(db.String(255), nullable=True)     # Original uploaded filename
+    file_size = db.Column(db.Integer, nullable=True)         # File size in bytes
+    author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="pending")  # pending / approved / rejected
+    created_at = db.Column(db.DateTime(timezone=True), default=utc_now, nullable=False)
+    reviewed_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    reviewed_at = db.Column(db.DateTime(timezone=True), nullable=True)
+    review_notes = db.Column(db.Text, nullable=True)
+
+    author = db.relationship("User", foreign_keys=[author_id], backref="challenges")
+    reviewer = db.relationship("User", foreign_keys=[reviewed_by])
+
+    # Unique constraint: one solve per user per challenge
+    solves = db.relationship("CommunityChallengeSolve", back_populates="challenge", cascade="all,delete")
+
+
+class CommunityChallengeSolve(db.Model):
+    __table_args__ = (db.UniqueConstraint("user_id", "challenge_id"),)
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    challenge_id = db.Column(db.Integer, db.ForeignKey("community_challenge.id"), nullable=False)
+    solved_at = db.Column(db.DateTime(timezone=True), default=utc_now, nullable=False)
+
+    user = db.relationship("User")
+    challenge = db.relationship("CommunityChallenge", back_populates="solves")
+
+
+class Article(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    slug = db.Column(db.String(255), unique=True, nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    excerpt = db.Column(db.Text, nullable=True)
+    author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    status = db.Column(db.String(20), nullable=False, default="draft")  # draft / published
+    cover_image = db.Column(db.String(500), nullable=True)
+    created_at = db.Column(db.DateTime(timezone=True), default=utc_now, nullable=False)
+    updated_at = db.Column(db.DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)
+    published_at = db.Column(db.DateTime(timezone=True), nullable=True)
+
+    author = db.relationship("User", backref="articles")

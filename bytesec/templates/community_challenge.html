@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}{{ challenge.title }} — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[900px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <!-- Back link -->
+  <a href="{{ url_for('main.community') }}" class="font-label-mono text-[13px] text-secondary hover:underline inline-flex items-center gap-1">
+    <span class="material-symbols-outlined text-[16px]">arrow_back</span> Back to Challenges
+  </a>
+
+  <!-- Main card -->
+  <div class="bg-surface-container-lowest border border-border-muted rounded-xl overflow-hidden">
+    <!-- Header -->
+    <div class="p-6 md:p-8 border-b border-outline-variant flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+      <div class="flex flex-col gap-2">
+        <div class="flex items-center gap-3">
+          <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-['Hanken_Grotesk']">{{ challenge.title }}</h1>
+          {% if solved %}
+          <span class="inline-flex items-center gap-1 font-label-mono text-[11px] uppercase tracking-wider px-2.5 py-1 rounded-full border bg-success-green/10 text-success-green border-success-green/20">
+            <span class="material-symbols-outlined text-[14px]">check_circle</span> Solved
+          </span>
+          {% endif %}
+        </div>
+        <div class="flex flex-wrap items-center gap-3 text-on-surface-variant font-label-mono text-[12px]">
+          <span class="bg-surface-container px-2 py-0.5 rounded">{{ challenge.category }}</span>
+          <span class="px-2 py-0.5 rounded border
+            {% if challenge.difficulty == 'easy' %}text-success-green border-success-green/30
+            {% elif challenge.difficulty == 'hard' %}text-error border-error/30
+            {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
+            {{ challenge.difficulty }}
+          </span>
+          <span>by {{ challenge.author.username }}</span>
+          <span>{{ challenge.solves|length }} solve{% if challenge.solves|length != 1 %}s{% endif %}</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 shrink-0">
+        <span class="font-headline-sm text-[28px] text-secondary font-['Hanken_Grotesk']">{{ challenge.points }}</span>
+        <span class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Points</span>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="p-6 md:p-8 flex flex-col gap-6">
+      <!-- Description -->
+      <div class="font-body-md text-body-md text-primary leading-relaxed whitespace-pre-wrap">{{ challenge.description }}</div>
+
+      <!-- Hint (only if available) -->
+      {% if challenge.hint %}
+      <details class="group">
+        <summary class="font-label-mono text-[12px] text-secondary hover:underline cursor-pointer inline-flex items-center gap-1 select-none">
+          <span class="material-symbols-outlined text-[16px] group-open:rotate-180 transition-transform">expand_more</span>
+          Need a hint?
+        </summary>
+        <div class="mt-2 bg-surface-container rounded-lg border border-outline-variant p-4 font-body-md text-body-md text-on-surface-variant">
+          {{ challenge.hint }}
+        </div>
+      </details>
+      {% endif %}
+
+      <!-- File download -->
+      {% if challenge.file_name %}
+      <div class="border-t border-outline-variant pt-4">
+        <a href="{{ url_for('main.community_download', challenge_id=challenge.id) }}"
+           class="inline-flex items-center gap-2 bg-surface-container border border-border-muted text-primary font-label-mono text-[13px] px-4 py-2.5 rounded-lg hover:border-secondary hover:text-secondary transition-all">
+          <span class="material-symbols-outlined text-[18px]">download</span>
+          Download {{ challenge.file_name }}
+          {% if challenge.file_size %}
+          <span class="text-on-surface-variant font-body-md">({{ '{:.1f}'.format(challenge.file_size / 1024) }} KB)</span>
+          {% endif %}
+        </a>
+      </div>
+      {% endif %}
+
+      <!-- Flag submission -->
+      {% if not solved %}
+      <div class="border-t border-outline-variant pt-6">
+        <form method="post" action="{{ url_for('main.community_challenge_submit', challenge_id=challenge.id) }}" class="flex flex-col gap-4">
+          <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Submit Flag</p>
+          <div class="flex flex-col sm:flex-row gap-3">
+            <input type="text" name="flag" required maxlength="200" placeholder="Enter the flag…"
+                   class="flex-1 bg-surface-container border border-outline-variant text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50">
+            <button type="submit"
+                    class="bg-primary text-on-primary font-label-mono text-label-mono px-6 py-3 rounded-full hover:opacity-90 transition-opacity shrink-0 inline-flex items-center gap-2">
+              <span class="material-symbols-outlined text-[18px]">flag</span> Submit
+            </button>
+          </div>
+        </form>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

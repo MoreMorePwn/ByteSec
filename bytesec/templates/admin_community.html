@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% block title %}Community Admin — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-2">Admin</p>
+      <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary mb-2 font-['Hanken_Grotesk']">Community Challenges</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+        Review and manage community-submitted challenges. Approve good ones, reject the rest.
+      </p>
+    </div>
+  </header>
+
+  <!-- Admin Tabs -->
+  <nav class="flex gap-2 border-b border-outline-variant pb-0">
+    <a href="{{ url_for('main.admin_docker') }}"
+       class="font-label-mono text-[13px] px-4 py-2.5 border-b-2 border-transparent text-on-surface-variant hover:text-primary transition-colors -mb-px">
+      Docker Labs
+    </a>
+    <a href="{{ url_for('main.admin_community') }}"
+       class="font-label-mono text-[13px] px-4 py-2.5 border-b-2 border-secondary text-secondary font-semibold -mb-px">
+      Community Challenges
+    </a>
+    <a href="{{ url_for('main.admin_articles') }}"
+       class="font-label-mono text-[13px] px-4 py-2.5 border-b-2 border-transparent text-on-surface-variant hover:text-primary transition-colors -mb-px">
+      Articles
+    </a>
+  </nav>
+
+  <!-- Stats -->
+  <div class="flex flex-wrap items-center gap-4">
+    <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+      <span class="material-symbols-outlined text-secondary text-[22px]">flag</span>
+      <div>
+        <p class="font-headline-sm text-[20px] text-primary leading-none">{{ total }}</p>
+        <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Total</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+      <span class="material-symbols-outlined text-[22px] text-yellow-500">pending</span>
+      <div>
+        <p class="font-headline-sm text-[20px] text-primary leading-none">{{ pending_count }}</p>
+        <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Pending</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+      <span class="material-symbols-outlined text-[22px]" style="color:#29CC57">check_circle</span>
+      <div>
+        <p class="font-headline-sm text-[20px] text-primary leading-none">{{ approved_count }}</p>
+        <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Approved</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+      <span class="material-symbols-outlined text-[22px] text-error">cancel</span>
+      <div>
+        <p class="font-headline-sm text-[20px] text-primary leading-none">{{ rejected_count }}</p>
+        <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Rejected</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="flex gap-2">
+    <a href="?status="
+       class="font-label-mono text-[12px] px-3 py-1.5 rounded-full border transition-colors
+       {% if not selected_status %}bg-primary text-on-primary border-primary{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-secondary hover:text-secondary{% endif %}">
+      All
+    </a>
+    <a href="?status=pending"
+       class="font-label-mono text-[12px] px-3 py-1.5 rounded-full border transition-colors
+       {% if selected_status == 'pending' %}bg-yellow-500/20 text-yellow-600 border-yellow-500/30{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-yellow-500 hover:text-yellow-500{% endif %}">
+      Pending
+    </a>
+    <a href="?status=approved"
+       class="font-label-mono text-[12px] px-3 py-1.5 rounded-full border transition-colors
+       {% if selected_status == 'approved' %}bg-success-green/20 text-success-green border-success-green/30{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-success-green hover:text-success-green{% endif %}">
+      Approved
+    </a>
+    <a href="?status=rejected"
+       class="font-label-mono text-[12px] px-3 py-1.5 rounded-full border transition-colors
+       {% if selected_status == 'rejected' %}bg-error/20 text-error border-error/30{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-error hover:text-error{% endif %}">
+      Rejected
+    </a>
+  </div>
+
+  <!-- Challenge Table -->
+  {% if challenges %}
+  <div class="bg-surface-container-lowest border border-border-muted rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-outline-variant">
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">ID</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Title</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Category</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Difficulty</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Points</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Author</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Status</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">File</th>
+            <th class="py-3 px-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ch in challenges %}
+          <tr class="border-b border-outline-variant/50 hover:bg-surface-container-low/50 transition-colors">
+            <td class="py-3 px-4 font-label-mono text-[13px] text-on-surface-variant">{{ ch.id }}</td>
+            <td class="py-3 px-4 font-label-mono text-[13px] text-primary font-medium">{{ ch.title }}</td>
+            <td class="py-3 px-4 font-label-mono text-[12px] text-on-surface-variant">{{ ch.category }}</td>
+            <td class="py-3 px-4">
+              <span class="font-label-mono text-[11px] uppercase px-2 py-0.5 rounded-full border
+                {% if ch.difficulty == 'easy' %}text-success-green border-success-green/30
+                {% elif ch.difficulty == 'hard' %}text-error border-error/30
+                {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
+                {{ ch.difficulty }}
+              </span>
+            </td>
+            <td class="py-3 px-4 font-label-mono text-[13px] text-secondary">{{ ch.points }}</td>
+            <td class="py-3 px-4 font-label-mono text-[12px] text-on-surface-variant">{{ ch.author.username }}</td>
+            <td class="py-3 px-4">
+              <span class="font-label-mono text-[11px] uppercase px-2 py-0.5 rounded-full border
+                {% if ch.status == 'approved' %}text-success-green border-success-green/30
+                {% elif ch.status == 'rejected' %}text-error border-error/30
+                {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
+                {{ ch.status }}
+              </span>
+            </td>
+            <td class="py-3 px-4">
+              {% if ch.file_name %}
+              <span class="font-label-mono text-[11px] text-on-surface-variant flex items-center gap-1" title="{{ ch.file_name }}">
+                <span class="material-symbols-outlined text-[14px]">attach_file</span>
+                {% if ch.file_size %}{{ '{:.0f}'.format(ch.file_size / 1024) }} KB{% endif %}
+              </span>
+              {% else %}
+              <span class="font-label-mono text-[11px] text-on-surface-variant/40">—</span>
+              {% endif %}
+            </td>
+            <td class="py-3 px-4">
+              <div class="flex items-center gap-2">
+                {% if ch.status != 'approved' %}
+                <form method="post" action="{{ url_for('main.admin_community_review', challenge_id=ch.id, action='approve') }}" class="inline">
+                  <button type="submit"
+                          class="bg-success-green/10 text-success-green border border-success-green/20 font-label-mono text-[11px] px-3 py-1.5 rounded-full hover:bg-success-green/20 transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">check</span> Approve
+                  </button>
+                </form>
+                {% endif %}
+                {% if ch.status != 'rejected' %}
+                <form method="post" action="{{ url_for('main.admin_community_review', challenge_id=ch.id, action='reject') }}" class="inline">
+                  <button type="submit"
+                          class="bg-error/10 text-error border border-error/20 font-label-mono text-[11px] px-3 py-1.5 rounded-full hover:bg-error/20 transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">close</span> Reject
+                  </button>
+                </form>
+                {% endif %}
+                <form method="post" action="{{ url_for('main.admin_community_review', challenge_id=ch.id, action='delete') }}"
+                      class="inline"
+                      onsubmit="return confirm('Delete this challenge permanently?')">
+                  <button type="submit"
+                          class="bg-surface-container text-on-surface-variant border border-outline-variant font-label-mono text-[11px] px-3 py-1.5 rounded-full hover:bg-error/10 hover:text-error hover:border-error/20 transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">delete</span>
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-12 flex flex-col items-center gap-4 text-center">
+    <span class="material-symbols-outlined text-[48px] text-on-surface-variant opacity-40">inbox</span>
+    <h3 class="font-headline-sm text-headline-sm text-primary">Nothing here</h3>
+    <p class="font-body-md text-body-md text-on-surface-variant">No challenges match the current filter.</p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

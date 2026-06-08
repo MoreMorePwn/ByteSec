@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}{% if article %}Edit {{ article.title }}{% else %}New Article{% endif %} — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[900px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <!-- Header -->
+  <header class="flex flex-col gap-2">
+    <a href="{{ url_for('main.admin_articles') }}" class="font-label-mono text-[13px] text-secondary hover:underline inline-flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span> Article Admin
+    </a>
+    <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-['Hanken_Grotesk']">
+      {% if article %}Edit Article{% else %}New Article{% endif %}
+    </h1>
+  </header>
+
+  <!-- Form -->
+  <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8">
+    <form method="post" class="flex flex-col gap-6">
+
+      <!-- Title -->
+      <div class="flex flex-col gap-2">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Title *</label>
+        <input type="text" name="title" required maxlength="200" value="{{ article.title if article else '' }}"
+               placeholder="Enter article title…"
+               class="w-full bg-surface-container border border-outline-variant text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50">
+      </div>
+
+      <!-- Excerpt -->
+      <div class="flex flex-col gap-2">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Excerpt (short summary)</label>
+        <textarea name="excerpt" rows="2" maxlength="500"
+                  placeholder="A brief summary shown in article cards…"
+                  class="w-full bg-surface-container border border-outline-variant text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50">{{ article.excerpt if article else '' }}</textarea>
+      </div>
+
+      <!-- Cover Image URL -->
+      <div class="flex flex-col gap-2">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Cover Image URL (optional)</label>
+        <input type="url" name="cover_image" maxlength="500" value="{{ article.cover_image if article else '' }}"
+               placeholder="https://example.com/image.jpg"
+               class="w-full bg-surface-container border border-outline-variant text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50">
+      </div>
+
+      <!-- Content -->
+      <div class="flex flex-col gap-2">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Content * (Markdown)</label>
+        <p class="font-label-mono text-[11px] text-on-surface-variant/60">
+          Supports: **bold**, *italic*, `inline code`, ```code blocks```, ## headings, > blockquotes, | tables |, - lists, [links](url), --- horizontal rules
+        </p>
+        <textarea name="content" required rows="20"
+                  placeholder="Write your article in Markdown…&#10;&#10;Use the same formatting as lesson narratives:&#10;- **bold** for emphasis&#10;- `code` for inline&#10;- ``` for blocks&#10;- ## for subheadings"
+                  class="w-full bg-surface-container border border-outline-variant text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50 font-label-mono text-[14px] leading-relaxed">{{ article.content if article else '' }}</textarea>
+      </div>
+
+      <!-- Status -->
+      <div class="flex flex-col gap-2">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Status</label>
+        <select name="status"
+                class="bg-surface-container border border-outline-variant text-primary font-label-mono text-[13px] px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors">
+          <option value="draft" {% if article and article.status == 'draft' %}selected{% endif %}>Draft</option>
+          <option value="published" {% if article and article.status == 'published' %}selected{% endif %}>Published</option>
+        </select>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center gap-4 pt-2">
+        <button type="submit"
+                class="bg-primary text-on-primary font-label-mono text-label-mono px-8 py-3 rounded-full hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">{% if article %}save{% else %}add_circle{% endif %}</span>
+          {% if article %}Save Changes{% else %}Create Article{% endif %}
+        </button>
+        <a href="{{ url_for('main.admin_articles') }}"
+           class="font-label-mono text-label-mono text-on-surface-variant px-6 py-3 rounded-full border border-outline-variant hover:border-secondary hover:text-secondary transition-all">
+          Cancel
+        </a>
+      </div>
+
+    </form>
+  </div>
+
+</div>
+{% endblock %}

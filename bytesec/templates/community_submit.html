@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% block title %}Submit Challenge — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[700px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <header>
+    <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-2">Community</p>
+    <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary mb-2 font-['Hanken_Grotesk']">Submit Challenge</h1>
+    <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+      Share your challenge with the ByteSec community. An admin will review and approve it.
+    </p>
+  </header>
+
+  <form method="post" enctype="multipart/form-data" class="flex flex-col gap-6">
+    <!-- Title -->
+    <div class="flex flex-col gap-1.5">
+      <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Title</label>
+      <input type="text" name="title" required maxlength="200" placeholder="e.g. Baby's First Buffer Overflow"
+             class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50">
+    </div>
+
+    <!-- Category + Difficulty row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Category</label>
+        <select name="category" required
+                class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors">
+          <option value="">Select category…</option>
+          <option value="web">Web Exploitation</option>
+          <option value="reverse">Reverse Engineering</option>
+          <option value="crypto">Cryptography</option>
+          <option value="pwn">Binary Exploitation</option>
+          <option value="forensics">Forensics</option>
+          <option value="osint">OSINT</option>
+          <option value="misc">Miscellaneous</option>
+        </select>
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Difficulty</label>
+        <select name="difficulty" required
+                class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Medium</option>
+          <option value="hard">Hard</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Points + Flag row -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="flex flex-col gap-1.5">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Points</label>
+        <input type="number" name="points" required min="10" max="500" value="100"
+               class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors">
+      </div>
+      <div class="flex flex-col gap-1.5">
+        <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Flag</label>
+        <input type="text" name="flag" required maxlength="200" placeholder="e.g. BYTECSEC{...}"
+               class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50">
+      </div>
+    </div>
+
+    <!-- Description -->
+    <div class="flex flex-col gap-1.5">
+      <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Description</label>
+      <textarea name="description" required rows="6" maxlength="5000" placeholder="Describe the challenge, what to look for, any context…"
+                class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50 resize-y"></textarea>
+    </div>
+
+    <!-- Hint (optional) -->
+    <div class="flex flex-col gap-1.5">
+      <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Hint <span class="text-on-surface-variant/60 normal-case">(optional)</span></label>
+      <textarea name="hint" rows="2" maxlength="1000" placeholder="A nudge in the right direction…"
+                class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors placeholder:text-on-surface-variant/50 resize-y"></textarea>
+    </div>
+
+    <!-- File upload -->
+    <div class="flex flex-col gap-1.5">
+      <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Challenge File <span class="text-on-surface-variant/60 normal-case">(optional — .zip, .tar.gz, .py, .txt, .pcap, etc.)</span></label>
+      <input type="file" name="challenge_file" accept=".zip,.tar.gz,.py,.txt,.pcap,.pdf,.png,.jpg,.csv,.json,.xml,.bin"
+             class="bg-surface-container-lowest border border-border-muted text-primary font-body-md text-body-md px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors file:mr-3 file:py-1.5 file:px-3 file:rounded-full file:border-0 file:bg-primary file:text-on-primary file:font-label-mono file:text-[12px] file:cursor-pointer hover:file:opacity-90">
+    </div>
+
+    <!-- Submit -->
+    <div class="flex items-center gap-3 pt-2">
+      <button type="submit"
+              class="bg-primary text-on-primary font-label-mono text-label-mono px-6 py-3 rounded-full hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">send</span> Submit for Review
+      </button>
+      <a href="{{ url_for('main.community') }}"
+         class="font-label-mono text-label-mono text-on-surface-variant hover:text-primary transition-colors px-4 py-3">
+        Cancel
+      </a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

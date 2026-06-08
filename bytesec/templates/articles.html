@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% block title %}Articles — ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-2">ByteSec Blog</p>
+      <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary mb-2 font-['Hanken_Grotesk']">Articles</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+        Tutorials, writeups, and deep dives from the ByteSec team.
+      </p>
+    </div>
+    {% if is_admin_user() %}
+    <a href="{{ url_for('main.article_new') }}"
+       class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity inline-flex items-center gap-2 shrink-0">
+      <span class="material-symbols-outlined text-[18px]">add</span> New Article
+    </a>
+    {% endif %}
+  </header>
+
+  <!-- Article Grid -->
+  {% if articles %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+    {% for article in articles %}
+    <a href="{{ url_for('main.article_view', slug=article.slug) }}"
+       class="bg-surface-container-lowest border border-border-muted rounded-xl overflow-hidden hover:border-secondary hover:shadow-md transition-all group flex flex-col">
+      <!-- Cover image or placeholder -->
+      {% if article.cover_image %}
+      <div class="h-44 bg-surface-container overflow-hidden">
+        <img src="{{ article.cover_image }}" alt="{{ article.title }}"
+             class="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300">
+      </div>
+      {% else %}
+      <div class="h-44 bg-surface-container flex items-center justify-center">
+        <span class="material-symbols-outlined text-[48px] text-on-surface-variant opacity-30">article</span>
+      </div>
+      {% endif %}
+      <!-- Content -->
+      <div class="p-5 flex flex-col gap-2 flex-grow">
+        <h2 class="font-headline-sm text-headline-sm text-primary font-['Hanken_Grotesk'] group-hover:text-secondary transition-colors line-clamp-2">
+          {{ article.title }}
+        </h2>
+        {% if article.excerpt %}
+        <p class="font-body-md text-[14px] text-on-surface-variant line-clamp-3 flex-grow">{{ article.excerpt }}</p>
+        {% endif %}
+        <div class="flex items-center gap-3 text-on-surface-variant font-label-mono text-[11px] mt-auto pt-3">
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">person</span>
+            {{ article.author.username }}
+          </span>
+          {% if article.published_at %}
+          <span class="flex items-center gap-1">
+            <span class="material-symbols-outlined text-[14px]">calendar_today</span>
+            {{ article.published_at.strftime('%b %d, %Y') }}
+          </span>
+          {% endif %}
+        </div>
+      </div>
+    </a>
+    {% endfor %}
+  </div>
+  {% else %}
+  <!-- Empty state -->
+  <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-12 flex flex-col items-center gap-4 text-center">
+    <span class="material-symbols-outlined text-[48px] text-on-surface-variant opacity-40">menu_book</span>
+    <h3 class="font-headline-sm text-headline-sm text-primary">No Articles Yet</h3>
+    <p class="font-body-md text-body-md text-on-surface-variant max-w-md">
+      Articles and tutorials will appear here once published by the ByteSec team.
+    </p>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

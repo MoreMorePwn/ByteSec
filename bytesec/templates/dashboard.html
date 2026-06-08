@@ -34,10 +34,10 @@
       <div class="bg-surface-container-lowest border border-border-muted rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
         <div class="h-32 bg-surface-container relative w-full overflow-hidden flex items-center justify-center">
           <span class="material-symbols-outlined text-5xl text-on-surface-variant opacity-40">{{ track.icon }}</span>
-          <div class="absolute top-3 left-3 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded font-label-mono text-[12px] text-primary border border-border-muted">
+          <div class="absolute top-3 left-3 bg-surface-container-lowest backdrop-blur-sm px-2 py-1 rounded font-label-mono text-[12px] text-primary border border-border-muted">
             {{ track.label }} {{ track.modules|length }} modules
           </div>
-          <div class="absolute top-3 right-3 bg-surface-container-lowest/90 backdrop-blur-sm px-2 py-1 rounded font-label-mono text-[12px] text-secondary border border-border-muted">
+          <div class="absolute top-3 right-3 bg-surface-container-lowest backdrop-blur-sm px-2 py-1 rounded font-label-mono text-[12px] text-secondary border border-border-muted">
             {{ "%.0f"|format(track.progress_pct) }}%
           </div>
         </div>
@@ -63,8 +63,8 @@
                 {% if track.progress_pct >= 100 %}Completed{% elif track.progress_pct > 0 %}In Progress{% else %}Not Started{% endif %}
               </span>
             </div>
-            <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden mb-6">
-              <div class="h-full bg-secondary-container" style="width:{{ track.progress_pct }}%"></div>
+            <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mb-6">
+              <div class="h-full bg-primary" style="width:{{ track.progress_pct }}%"></div>
             </div>
             <div class="flex flex-col sm:flex-row gap-3">
               {% if track.next_lesson %}
