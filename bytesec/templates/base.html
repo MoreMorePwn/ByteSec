@@ -137,6 +137,8 @@
     }
     .dark body,
     .dark .bg-background     { background-color: var(--bg) !important; }
+    .dark .to-background     { --tw-gradient-to: var(--bg) !important; }
+    .dark .from-background   { --tw-gradient-from: var(--bg) !important; --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, rgba(0,0,0,0)) !important; }
     .dark .bg-surface        { background-color: var(--surface) !important; }
     .dark .bg-surface-container-low   { background-color: var(--surface-low) !important; }
     .dark .bg-surface-container       { background-color: var(--surface-cont) !important; }
@@ -160,6 +162,14 @@
       color: var(--on-primary) !important;
     }
     .dark .text-error { color: var(--error) !important; }
+
+    /* Dark mode hover overrides (Tailwind generates separate classes for hover:) */
+    .dark .hover\:bg-surface-container-low:hover { background-color: var(--surface-cont) !important; }
+    .dark .hover\:bg-surface-container-low\/50:hover { background-color: var(--surface-cont) !important; opacity: 0.5; }
+    .dark .hover\:bg-surface-container:hover { background-color: var(--surface-cont) !important; }
+    .dark .hover\:bg-primary:hover { background-color: var(--primary) !important; }
+    .dark .hover\:bg-error\/10:hover { background-color: color-mix(in srgb, var(--error) 10%, transparent) !important; }
+    .dark .hover\:bg-error\/20:hover { background-color: color-mix(in srgb, var(--error) 20%, transparent) !important; }
 
     /* Dark mode border overrides for consistency */
     .dark .border-secondary { border-color: var(--primary) !important; }
@@ -317,7 +327,7 @@
       position: absolute;
       top: 50%;
       left: 100%;
-      width: 2rem;
+      width: 0.625rem;
       height: 2px;
       background-color: #E5E7EB;
       transform: translateY(-50%);

@@ -32,7 +32,7 @@
       <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
       <!-- Path Info -->
-      <div class="flex-1 flex flex-col items-start justify-center pr-4">
+      <div class="min-w-0 flex-1 flex flex-col items-start justify-center pr-4">
         <div class="flex flex-wrap items-center gap-2 mb-3">
           <span class="font-label-mono text-label-mono bg-surface-container py-1 px-2 rounded text-on-surface-variant border border-outline-variant">{{ track.label }}</span>
           <span class="font-label-mono text-label-mono text-secondary flex items-center gap-1">
@@ -75,27 +75,24 @@
 
       {% if selected_course %}
       <!-- Node Visualizer -->
-      <div class="flex-[1.2] bg-surface rounded-lg border border-border-muted p-6 flex flex-col justify-center">
-        <h3 class="font-label-mono text-label-mono text-on-surface-variant mb-4 uppercase tracking-widest text-xs">Course Sequence</h3>
-        <div class="flex items-center relative py-4 overflow-x-auto">
+      <div class="min-w-0 flex-1 bg-surface rounded-lg border border-border-muted p-4 flex flex-col">
+        <h3 class="font-label-mono text-label-mono text-on-surface-variant mb-2 uppercase tracking-widest text-xs">Course Sequence</h3>
+        <div class="flex items-center relative py-1 overflow-x-auto">
           {% for mod in track.modules %}
           {% set progress = mod_progress[mod.id] %}
-          <div class="node-connector {{ 'completed' if progress.pct >= 100 else '' }} relative flex flex-col items-center group cursor-pointer z-10 w-12 {{ 'mr-8' if not loop.last else '' }} flex-shrink-0">
+          <div class="node-connector {{ 'completed' if progress.pct >= 100 else '' }} relative flex flex-col items-center group cursor-pointer z-10 w-9 sm:w-10 lg:w-12 {{ 'mr-2 sm:mr-3 lg:mr-4' if not loop.last else '' }} flex-shrink-0" title="{{ mod.title }}">
             {% if progress.pct >= 100 %}
-            <div class="w-12 h-12 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
-              <span class="material-symbols-outlined font-bold">check</span>
+            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
+              <span class="material-symbols-outlined font-bold text-[16px] sm:text-[18px] lg:text-[22px]">check</span>
             </div>
-            <span class="absolute top-14 font-label-mono text-xs text-secondary whitespace-nowrap text-center opacity-80">{{ mod.title|truncate(10, True, '…') }}</span>
             {% elif progress.pct > 0 %}
-            <div class="w-12 h-12 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container glow-teal transition-transform group-hover:scale-110">
-              <span class="material-symbols-outlined font-bold" style="font-variation-settings:'FILL' 1">terminal</span>
+            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container transition-transform group-hover:scale-110">
+              <span class="material-symbols-outlined font-bold text-[16px] sm:text-[18px] lg:text-[22px]" style="font-variation-settings:'FILL' 1">terminal</span>
             </div>
-            <span class="absolute top-14 font-label-mono text-xs text-primary font-bold whitespace-nowrap text-center">{{ mod.title|truncate(10, True, '…') }}</span>
             {% else %}
-            <div class="w-12 h-12 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline opacity-60">
-              <span class="material-symbols-outlined">lock</span>
+            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline">
+              <span class="material-symbols-outlined text-[16px] sm:text-[18px] lg:text-[22px]">lock</span>
             </div>
-            <span class="absolute top-14 font-label-mono text-xs text-on-surface-variant whitespace-nowrap text-center">{{ mod.title|truncate(10, True, '…') }}</span>
             {% endif %}
           </div>
           {% endfor %}
