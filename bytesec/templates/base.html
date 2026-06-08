@@ -164,6 +164,35 @@
     /* Dark mode border overrides for consistency */
     .dark .border-secondary { border-color: var(--primary) !important; }
     .dark .text-on-primary-container { color: var(--on-primary) !important; }
+    .dark .text-outline-variant { color: var(--outline) !important; }
+
+    /* Dark mode MCQ correct/incorrect states */
+    .dark .mcq-option.correct {
+      border-color: #4ec9b0 !important;
+      background-color: rgba(79,219,200,0.08) !important;
+    }
+    .dark .mcq-option.incorrect {
+      border-color: #ffb4ab !important;
+      background-color: rgba(255,180,171,0.08) !important;
+    }
+
+    /* Dark mode overrides for JS-added indicator classes */
+    .dark .bg-green-100 { background-color: rgba(79,219,200,0.18) !important; }
+    .dark .bg-red-100 { background-color: rgba(255,180,171,0.18) !important; }
+    .dark .text-green-600 { color: #4ec9b0 !important; }
+    .dark .text-red-600 { color: #ffb4ab !important; }
+    .dark .border-green-500 { border-color: #4ec9b0 !important; }
+    .dark .border-red-400 { border-color: #ffb4ab !important; }
+
+    /* Dark mode flash warning & info (was missing) */
+    .dark .flash.warning { background: rgba(245,158,11,0.1); color: #fbbf24; border-color: rgba(245,158,11,0.2); }
+    .dark .flash.info { background: rgba(29,78,216,0.1); color: #60a5fa; border-color: rgba(29,78,216,0.2); }
+
+    /* Dark mode hint box (amber → dark amber) */
+    .dark .bg-amber-50 { background-color: rgba(245,158,11,0.08) !important; }
+    .dark .border-amber-200 { border-color: rgba(245,158,11,0.2) !important; }
+    .dark .text-amber-600 { color: #fbbf24 !important; }
+    .dark .text-amber-800 { color: #fcd34d !important; }
 
     /* ── Shared styles ── */
     .material-symbols-outlined {

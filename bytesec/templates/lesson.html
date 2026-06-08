@@ -18,7 +18,7 @@
           <span class="font-label-mono text-[11px] text-secondary">{{ "%.0f"|format(current_course.progress_pct if current_course else overall_pct) }}%</span>
         </div>
         <div class="h-1 bg-surface-container-highest rounded-full overflow-hidden">
-          <div class="h-full bg-secondary-container transition-all" style="width:{{ current_course.progress_pct if current_course else overall_pct }}%"></div>
+          <div class="h-full bg-primary transition-all" style="width:{{ current_course.progress_pct if current_course else overall_pct }}%"></div>
         </div>
       </div>
     </div>
@@ -132,8 +132,8 @@
         <div class="mb-6">
           <div class="flex items-center gap-2 mb-2">
             <span class="font-label-mono text-[12px] text-on-surface-variant">Step {{ step_number }} of {{ total_steps }}</span>
-            <div class="flex-1 h-1 bg-surface-container rounded-full overflow-hidden">
-              <div class="h-full bg-secondary-container transition-all" id="step-progress" style="width:{{ (step_number / total_steps * 100)|round }}%"></div>
+            <div class="flex-1 h-1 bg-surface-container-highest rounded-full overflow-hidden">
+              <div class="h-full bg-primary transition-all" id="step-progress" style="width:{{ (step_number / total_steps * 100)|round }}%"></div>
             </div>
           </div>
           <h2 class="font-headline-md text-headline-md text-on-surface font-['Hanken_Grotesk']">{{ current_step.title }}</h2>

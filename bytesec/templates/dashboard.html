@@ -63,8 +63,8 @@
                 {% if track.progress_pct >= 100 %}Completed{% elif track.progress_pct > 0 %}In Progress{% else %}Not Started{% endif %}
               </span>
             </div>
-            <div class="h-2 w-full bg-surface-container rounded-full overflow-hidden mb-6">
-              <div class="h-full bg-secondary-container" style="width:{{ track.progress_pct }}%"></div>
+            <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mb-6">
+              <div class="h-full bg-primary" style="width:{{ track.progress_pct }}%"></div>
             </div>
             <div class="flex flex-col sm:flex-row gap-3">
               {% if track.next_lesson %}
