@@ -58,7 +58,7 @@
   <div class="mb-8">
     <h2 class="font-headline-md text-headline-md text-primary mb-2">CTF Track Roadmap</h2>
     <p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">
-      ByteSec is designed as a multi-category learning platform. Web Exploitation, Reverse Engineering, and Cryptography are live first; the same guided lesson and lab model is intended for Pwn and Forensics.
+      ByteSec is designed as a multi-category learning platform. Web Exploitation, Reverse Engineering, Cryptography, and Pwn are live now; the same guided lesson and lab model is intended for Forensics.
     </p>
   </div>
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -83,7 +83,7 @@
     <div>
       <span class="font-label-mono text-[12px] text-secondary uppercase tracking-wider">Available Now</span>
       <h2 class="font-headline-md text-headline-md text-primary mt-1 mb-2">Live Course Pathways</h2>
-      <p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">Web Exploitation, Reverse Engineering, and Cryptography are separate courses. Each pathway has its own lessons, module sequence, and progress.</p>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-3xl">Web Exploitation, Reverse Engineering, Cryptography, and Pwn are separate courses. Each pathway has its own lessons, module sequence, and progress.</p>
     </div>
     {% if g.user %}
     <a href="{{ url_for('main.course') }}" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-6 py-2.5 rounded-full hover:opacity-90 transition-opacity items-center gap-2">
@@ -91,7 +91,7 @@
     </a>
     {% endif %}
   </div>
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-gutter">
     {% for track in course_tracks %}
     <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-6 hover:shadow-md transition-shadow duration-200 flex flex-col group">
       <div class="flex items-center gap-3 mb-4">

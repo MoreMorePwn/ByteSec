@@ -13,10 +13,13 @@ CURRICULUM_ROOT = ROOT_DIR / "modules"
 SQLI_MODULE_DIR = CURRICULUM_ROOT / "sqli"
 RE_ASM_MODULE_DIR = CURRICULUM_ROOT / "reverse-engineering-assembly"
 CRYPTO_MODULE_DIR = CURRICULUM_ROOT / "crypto"
+PWN_MODULE_DIR = CURRICULUM_ROOT / "pwn"
 SQLI_CTF_CHALLENGE_URL = "http://127.0.0.1:8004"
+PWN_RET2WIN_ENDPOINT = "nc 127.0.0.1 9001"
 SQLI_CTF_FLAG_HASH = "84f61f593ff27ff39777cfb98bf90598848c1bc9533e75bf8ee54b964b876ba9"
 RE_ASM_CTF_FLAG_HASH = "57f7e67a47b26bc59fab7e5f4807ffeba2edce17ce39540e6395caf4ef9d1a2a"
 CRYPTO_RSA_CTF_FLAG_HASH = "cc50860a061bc2af278112f0ebc8f347e27bf97a12c792e66082b68010de036a"
+PWN_RET2WIN_CTF_FLAG_HASH = "8e7a8ab5ef6c8d0ffd605d16b6112704d0e493070046d4b382895fa722965587"
 
 
 def _j(obj):
@@ -53,6 +56,11 @@ ICONS = {
     16: "key",
     17: "lock",
     18: "flag",
+    19: "memory",
+    20: "stacked_line_chart",
+    21: "terminal",
+    22: "shield",
+    23: "flag",
 }
 
 
@@ -75,6 +83,11 @@ DESCRIPTIONS = {
     16: "Trace public-key ideas through RSA, Diffie-Hellman, and elliptic-curve style groups.",
     17: "Reason about shared-key encryption, one-time pads, XOR reuse, AES blocks, and modes.",
     18: "Recover a flag from a textbook RSA low-exponent challenge.",
+    19: "Connect registers, virtual memory, stack frames, and return addresses to binary exploitation.",
+    20: "Explain stack buffer overflows, crash behavior, endianness, and offset discovery.",
+    21: "Build a ret2win exploit payload from a known offset and a fixed function address.",
+    22: "Reason about stack canaries, NX, PIE, ASLR, RELRO, leaks, and ROP follow-up paths.",
+    23: "Exploit a containerized ret2win service and submit the recovered flag.",
 }
 
 
@@ -101,7 +114,7 @@ def _plain(value):
 
 def _module_files():
     files = []
-    for module_dir in (SQLI_MODULE_DIR, RE_ASM_MODULE_DIR, CRYPTO_MODULE_DIR):
+    for module_dir in (SQLI_MODULE_DIR, RE_ASM_MODULE_DIR, CRYPTO_MODULE_DIR, PWN_MODULE_DIR):
         if not module_dir.exists():
             continue
         files.extend(
@@ -119,7 +132,7 @@ def _module_file_sort_key(path):
 
 
 def _expected_module_count():
-    ctf_count = 3
+    ctf_count = 4
     return len(_module_files()) + ctf_count
 
 
@@ -432,9 +445,9 @@ def _seed_sqli_ctf_module():
         title="Get the Flag",
         narrative=(
             "## Get Flag\n\n"
-            f"Open the local challenge at [{SQLI_CTF_CHALLENGE_URL}]({SQLI_CTF_CHALLENGE_URL}).\n\n"
+            f"Open the challenge at [{SQLI_CTF_CHALLENGE_URL}]({SQLI_CTF_CHALLENGE_URL}).\n\n"
             "Explore the EzSQLi endpoints, recover the `BYTESEC{...}` flag, and submit it here.\n\n"
-            "**Scope**: Only test this local lab or systems where you have explicit permission."
+            "**Scope**: Only test this lab or systems where you have explicit permission."
         ),
         code_snippet=None,
         code_language=None,
@@ -561,6 +574,57 @@ def _seed_crypto_rsa_ctf_module():
     ))
 
 
+def _seed_pwn_ret2win_ctf_module():
+    module = Module(
+        order_index=23,
+        title="CTF Challenge Lab: Ret2win",
+        description=DESCRIPTIONS[23],
+        icon=ICONS[23],
+        difficulty="Beginner",
+        estimated_minutes=25,
+    )
+    db.session.add(module)
+    db.session.flush()
+
+    lesson = Lesson(
+        module_id=module.id,
+        order_index=1,
+        title="Exploit the Ret2win Service",
+        narrative=(
+            "## Exploit the Ret2win Service\n\n"
+            "Download the challenge archive from [Download ret2win challenge](/downloads/pwn-ret2win).\n\n"
+            "The archive contains a Linux x86-64 target binary, a README, and a small payload template.\n\n"
+            "The same challenge is exposed through the Docker lab endpoint:\n\n"
+            "```bash\n"
+            f"{PWN_RET2WIN_ENDPOINT}\n"
+            "```\n\n"
+            "Use the training workflow from this course: confirm the mitigations, find the `win` function address, "
+            "fill the buffer up to the saved return address, then place the `win` address in little-endian form.\n\n"
+            "Recover the `BYTESEC{...}` flag from the service and submit it here."
+        ),
+        code_snippet=None,
+        code_language=None,
+        table_data=None,
+    )
+    db.session.add(lesson)
+    db.session.flush()
+    db.session.add(LessonStep(
+        lesson_id=lesson.id,
+        order_index=1,
+        kind="flag",
+        title="SUBMIT THE RET2WIN FLAG",
+        prompt="Submit the exact `BYTESEC{...}` flag printed by the ret2win service.",
+        options=_j([]),
+        correct_answer=PWN_RET2WIN_CTF_FLAG_HASH,
+        explanation="Flag accepted. You redirected control flow to the win function.",
+        hints=_j([
+            "The binary is intentionally compiled without PIE and without a stack canary.",
+            "The saved return address is reached after the 32-byte buffer and saved RBP.",
+            "Use little-endian packing for the target function address.",
+        ]),
+    ))
+
+
 def _seed_course_content():
     for model in (UserProgress, LessonStep, Lesson, Module):
         db.session.query(model).delete()
@@ -570,6 +634,7 @@ def _seed_course_content():
     _seed_sqli_ctf_module()
     _seed_re_asm_ctf_module()
     _seed_crypto_rsa_ctf_module()
+    _seed_pwn_ret2win_ctf_module()
 
 
 def _ensure_demo_user():
@@ -620,7 +685,10 @@ def _course_is_stale():
     if missing_re is None:
         return True
     missing_crypto = Module.query.filter_by(title="CTF Challenge Lab: RSA Starter").first()
-    return missing_crypto is None
+    if missing_crypto is None:
+        return True
+    missing_pwn = Module.query.filter_by(title="CTF Challenge Lab: Ret2win").first()
+    return missing_pwn is None
 
 
 def ensure_database():

