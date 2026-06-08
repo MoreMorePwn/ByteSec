@@ -2,66 +2,443 @@
 {% block title %}Docker Admin — ByteSec{% endblock %}
 {% block content %}
 <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <!-- Header -->
   <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
     <div>
       <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-2">Admin</p>
       <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary mb-2 font-['Hanken_Grotesk']">Docker Lab Control</h1>
       <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
-        Manage the Docker challenge services used by ByteSec CTF modules.
+        Manage the Docker challenge services used by ByteSec CTF modules. Control each lab individually or all at once.
       </p>
     </div>
   </header>
 
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    {% for lab in ctf_labs %}
-    <div class="bg-surface-container-lowest border border-border-muted rounded-lg p-5">
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider mb-2">{{ lab.description }}</p>
-          <p class="font-headline-sm text-headline-sm text-primary mb-2">{{ lab.name }}</p>
-          <p class="font-label-mono text-[14px] text-primary break-all">{{ lab.endpoint }}</p>
+  <!-- ── Overall Summary Bar ── -->
+  <section class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 flex flex-col gap-5">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
+      <!-- Stats -->
+      <div class="flex flex-wrap items-center gap-4">
+        <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+          <span class="material-symbols-outlined text-secondary text-[22px]">deployed_code</span>
+          <div>
+            <p id="stat-total" class="font-headline-sm text-[20px] text-primary leading-none">{{ total_containers }}</p>
+            <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Total</p>
+          </div>
         </div>
-        {% if lab.endpoint.startswith('http') %}
-        <a href="{{ lab.endpoint }}" target="_blank" rel="noopener noreferrer" class="inline-flex bg-primary text-on-primary font-label-mono text-label-mono px-4 py-2 rounded-full hover:opacity-90 transition-opacity items-center gap-2">
-          Open <span class="material-symbols-outlined text-[18px]">open_in_new</span>
-        </a>
-        {% endif %}
+        <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+          <span class="material-symbols-outlined text-[22px]" style="color:#29CC57">check_circle</span>
+          <div>
+            <p id="stat-running" class="font-headline-sm text-[20px] text-primary leading-none">{{ total_running }}</p>
+            <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Running</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+          <span class="material-symbols-outlined text-[22px] text-error">cancel</span>
+          <div>
+            <p id="stat-stopped" class="font-headline-sm text-[20px] text-primary leading-none">{{ total_stopped }}</p>
+            <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Stopped</p>
+          </div>
+        </div>
       </div>
+      <!-- Bulk Controls -->
+      <form method="post" class="flex flex-wrap gap-3" id="bulk-form">
+        <button name="action" value="start" class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">play_arrow</span> Start All
+        </button>
+        <button name="action" value="restart" class="bg-surface-container border border-outline-variant text-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">restart_alt</span> Restart All
+        </button>
+        <button name="action" value="stop" class="bg-surface-container border border-outline-variant text-error font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-80 transition-opacity flex items-center gap-2">
+          <span class="material-symbols-outlined text-[18px]">stop</span> Stop All
+        </button>
+      </form>
     </div>
-    {% endfor %}
-  </section>
-
-  <section class="bg-surface-container-lowest border border-border-muted rounded-lg p-5">
-    <h2 class="font-headline-md text-headline-md text-primary mb-4">Controls</h2>
-    <form method="post" class="flex flex-wrap gap-3">
-      <button name="action" value="start" class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px]">play_arrow</span> Start
-      </button>
-      <button name="action" value="restart" class="bg-surface-container border border-outline-variant text-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px]">restart_alt</span> Restart
-      </button>
-      <button name="action" value="stop" class="bg-surface-container border border-outline-variant text-error font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-80 transition-opacity flex items-center gap-2">
-        <span class="material-symbols-outlined text-[18px]">stop</span> Stop
-      </button>
-    </form>
     {% if action_result %}
-    <pre class="editor-bg rounded-lg p-4 overflow-x-auto mt-4 font-label-mono text-[13px] leading-[16px]">{{ action_result.output }}</pre>
+    <div class="border-t border-outline-variant pt-4">
+      <p class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider mb-2">Bulk Action Output</p>
+      <pre class="editor-bg rounded-lg p-4 overflow-x-auto font-label-mono text-[13px] leading-[16px] max-h-[200px]">{{ action_result.output }}</pre>
+    </div>
     {% endif %}
   </section>
 
-  <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-    <div class="bg-surface-container-lowest border border-border-muted rounded-lg overflow-hidden">
-      <div class="px-5 py-3 border-b border-outline-variant bg-surface-container-high">
-        <h2 class="font-headline-sm text-headline-sm text-primary">Status</h2>
+  <!-- ── Per-Lab Cards ── -->
+  <section class="flex flex-col gap-6">
+    {% for ld in labs_data %}
+    <article class="bg-surface-container-lowest border border-border-muted rounded-xl overflow-hidden" id="lab-card-{{ ld.key }}">
+
+      <!-- Card Header -->
+      <div class="px-6 py-5 border-b border-outline-variant flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-12 h-12 rounded-lg bg-surface-container flex items-center justify-center border border-border-muted">
+            <span class="material-symbols-outlined text-[24px] text-on-surface-variant">
+              {% if ld.key == 'ezsqli' %}language{% else %}terminal{% endif %}
+            </span>
+          </div>
+          <div>
+            <div class="flex items-center gap-3 mb-0.5">
+              <h2 class="font-headline-sm text-headline-sm text-primary font-['Hanken_Grotesk']">{{ ld.name }}</h2>
+              <!-- Status Badge -->
+              <span id="badge-{{ ld.key }}" class="inline-flex items-center gap-1 font-label-mono text-[11px] uppercase tracking-wider px-2.5 py-1 rounded-full border
+                {% if ld.health == 'healthy' %}bg-success-green/10 text-success-green border-success-green/20
+                {% elif ld.health == 'degraded' %}bg-yellow-500/10 text-yellow-600 border-yellow-500/20
+                {% elif ld.health == 'error' %}bg-error/10 text-error border-error/20
+                {% else %}bg-surface-container text-on-surface-variant border-outline-variant{% endif %}">
+                <span class="w-2 h-2 rounded-full
+                  {% if ld.health == 'healthy' %}bg-success-green
+                  {% elif ld.health == 'degraded' %}bg-yellow-500
+                  {% elif ld.health == 'error' %}bg-error
+                  {% else %}bg-on-surface-variant{% endif %}"></span>
+                {{ ld.health|upper }}
+              </span>
+            </div>
+            <p class="font-label-mono text-[13px] text-on-surface-variant">{{ ld.description }} · <span class="text-secondary">{{ ld.endpoint }}</span></p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          {% if ld.endpoint.startswith('http') %}
+          <a href="{{ ld.endpoint }}" target="_blank" rel="noopener noreferrer" class="bg-surface-container border border-outline-variant text-primary font-label-mono text-[12px] px-4 py-2 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px]">open_in_new</span> Open
+          </a>
+          {% endif %}
+          <button onclick="performLabAction('{{ ld.key }}', 'start')" class="bg-primary text-on-primary font-label-mono text-[12px] px-4 py-2 rounded-full hover:opacity-90 transition-opacity flex items-center gap-1.5" id="btn-start-{{ ld.key }}">
+            <span class="material-symbols-outlined text-[16px]">play_arrow</span> Start
+          </button>
+          <button onclick="performLabAction('{{ ld.key }}', 'restart')" class="bg-surface-container border border-outline-variant text-primary font-label-mono text-[12px] px-4 py-2 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1.5" id="btn-restart-{{ ld.key }}">
+            <span class="material-symbols-outlined text-[16px]">restart_alt</span> Restart
+          </button>
+          <button onclick="performLabAction('{{ ld.key }}', 'stop')" class="bg-surface-container border border-outline-variant text-error font-label-mono text-[12px] px-4 py-2 rounded-full hover:opacity-80 transition-opacity flex items-center gap-1.5" id="btn-stop-{{ ld.key }}">
+            <span class="material-symbols-outlined text-[16px]">stop</span> Stop
+          </button>
+        </div>
       </div>
-      <pre class="editor-bg p-4 overflow-x-auto font-label-mono text-[13px] leading-[16px] min-h-[180px]">{{ status.output }}</pre>
-    </div>
-    <div class="bg-surface-container-lowest border border-border-muted rounded-lg overflow-hidden">
-      <div class="px-5 py-3 border-b border-outline-variant bg-surface-container-high">
-        <h2 class="font-headline-sm text-headline-sm text-primary">Recent Logs</h2>
+
+      <!-- Card Body: Metrics + Logs side by side -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-outline-variant">
+
+        <!-- Container Details / Metrics -->
+        <div class="p-6 flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-widest">Containers</h3>
+            <button onclick="refreshLabStatus('{{ ld.key }}')" class="font-label-mono text-[12px] text-secondary hover:underline flex items-center gap-1" id="refresh-status-{{ ld.key }}">
+              <span class="material-symbols-outlined text-[16px]">refresh</span> Refresh
+            </button>
+          </div>
+
+          <div id="containers-{{ ld.key }}">
+            {% if ld.containers %}
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-outline-variant">
+                    <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Service</th>
+                    <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">State</th>
+                    <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Status</th>
+                    <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Image</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for c in ld.containers %}
+                  <tr class="border-b border-outline-variant/50">
+                    <td class="py-2.5 pr-4 font-label-mono text-[13px] text-primary">{{ c.service or c.name }}</td>
+                    <td class="py-2.5 pr-4">
+                      <span class="inline-flex items-center gap-1.5 font-label-mono text-[12px] {% if c.state == 'running' %}text-success-green{% elif c.state == 'exited' %}text-error{% else %}text-on-surface-variant{% endif %}">
+                        <span class="w-1.5 h-1.5 rounded-full {% if c.state == 'running' %}bg-success-green{% elif c.state == 'exited' %}bg-error{% else %}bg-on-surface-variant{% endif %}"></span>
+                        {{ c.state }}
+                      </span>
+                    </td>
+                    <td class="py-2.5 pr-4 font-label-mono text-[12px] text-on-surface-variant">{{ c.status }}</td>
+                    <td class="py-2.5 pr-4 font-label-mono text-[12px] text-on-surface-variant">{{ c.image }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% elif ld.error %}
+            <div class="flex items-start gap-3 bg-error/5 border border-error/20 rounded-lg p-4">
+              <span class="material-symbols-outlined text-error text-[20px] mt-0.5">warning</span>
+              <pre class="font-label-mono text-[12px] text-error whitespace-pre-wrap">{{ ld.error }}</pre>
+            </div>
+            {% else %}
+            <div class="flex items-center gap-3 bg-surface-container rounded-lg p-4 border border-outline-variant">
+              <span class="material-symbols-outlined text-on-surface-variant text-[20px]">info</span>
+              <p class="font-label-mono text-[13px] text-on-surface-variant">No containers found. Start this lab to create them.</p>
+            </div>
+            {% endif %}
+          </div>
+
+          <!-- Action output for this lab -->
+          <div id="action-output-{{ ld.key }}" class="hidden">
+            <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mb-2">Action Output</p>
+            <pre id="action-pre-{{ ld.key }}" class="editor-bg rounded-lg p-4 overflow-x-auto font-label-mono text-[13px] leading-[16px] max-h-[160px]"></pre>
+          </div>
+        </div>
+
+        <!-- Logs Panel -->
+        <div class="p-6 flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-widest">Logs</h3>
+            <button onclick="fetchLabLogs('{{ ld.key }}')" class="font-label-mono text-[12px] text-secondary hover:underline flex items-center gap-1" id="refresh-logs-{{ ld.key }}">
+              <span class="material-symbols-outlined text-[16px]">refresh</span> Refresh
+            </button>
+          </div>
+          <div class="relative">
+            <pre id="logs-{{ ld.key }}" class="editor-bg rounded-lg p-4 overflow-x-auto overflow-y-auto font-label-mono text-[13px] leading-[16px] min-h-[120px] max-h-[320px]">Click "Refresh" to load logs…</pre>
+          </div>
+        </div>
+
       </div>
-      <pre class="editor-bg p-4 overflow-x-auto font-label-mono text-[13px] leading-[16px] min-h-[180px]">{{ logs.output }}</pre>
-    </div>
+    </article>
+    {% endfor %}
   </section>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function() {
+  'use strict';
+
+  function setLoading(buttonId, loading) {
+    var btn = document.getElementById(buttonId);
+    if (!btn) return;
+    if (loading) {
+      btn.setAttribute('disabled', 'true');
+      btn.style.opacity = '0.5';
+      btn.style.pointerEvents = 'none';
+    } else {
+      btn.removeAttribute('disabled');
+      btn.style.opacity = '';
+      btn.style.pointerEvents = '';
+    }
+  }
+
+  function escapeText(text) {
+    var div = document.createElement('div');
+    div.textContent = text;
+    return div.textContent;
+  }
+
+  window.performLabAction = function(labKey, action) {
+    var btnId = 'btn-' + action + '-' + labKey;
+    setLoading(btnId, true);
+
+    var outputDiv = document.getElementById('action-output-' + labKey);
+    var outputPre = document.getElementById('action-pre-' + labKey);
+    outputDiv.classList.remove('hidden');
+    outputPre.textContent = 'Running ' + action + '…';
+
+    fetch('/admin/docker/' + encodeURIComponent(labKey) + '/action', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({action: action})
+    })
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      outputPre.textContent = data.output || (data.ok ? 'Done.' : 'Failed.');
+      refreshLabStatus(labKey);
+    })
+    .catch(function(err) {
+      outputPre.textContent = 'Request failed: ' + err.message;
+    })
+    .finally(function() {
+      setLoading(btnId, false);
+    });
+  };
+
+  window.refreshLabStatus = function(labKey) {
+    var refreshBtn = document.getElementById('refresh-status-' + labKey);
+    if (refreshBtn) refreshBtn.textContent = 'Loading…';
+
+    fetch('/admin/docker/' + encodeURIComponent(labKey) + '/status')
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      updateLabCard(labKey, data);
+      refreshOverviewStats();
+    })
+    .catch(function() {})
+    .finally(function() {
+      if (refreshBtn) {
+        refreshBtn.replaceChildren();
+        var icon = document.createElement('span');
+        icon.className = 'material-symbols-outlined text-[16px]';
+        icon.textContent = 'refresh';
+        refreshBtn.appendChild(icon);
+        refreshBtn.appendChild(document.createTextNode(' Refresh'));
+      }
+    });
+  };
+
+  function updateLabCard(labKey, data) {
+    // Update status badge
+    var badge = document.getElementById('badge-' + labKey);
+    if (badge) {
+      badge.replaceChildren();
+      var dot = document.createElement('span');
+      dot.className = 'w-2 h-2 rounded-full';
+      if (data.health === 'healthy') {
+        badge.className = 'inline-flex items-center gap-1 font-label-mono text-[11px] uppercase tracking-wider px-2.5 py-1 rounded-full border bg-success-green/10 text-success-green border-success-green/20';
+        dot.classList.add('bg-success-green');
+      } else if (data.health === 'degraded') {
+        badge.className = 'inline-flex items-center gap-1 font-label-mono text-[11px] uppercase tracking-wider px-2.5 py-1 rounded-full border bg-yellow-500/10 text-yellow-600 border-yellow-500/20';
+        dot.classList.add('bg-yellow-500');
+      } else if (data.health === 'error') {
+        badge.className = 'inline-flex items-center gap-1 font-label-mono text-[11px] uppercase tracking-wider px-2.5 py-1 rounded-full border bg-error/10 text-error border-error/20';
+        dot.classList.add('bg-error');
+      } else {
+        badge.className = 'inline-flex items-center gap-1 font-label-mono text-[11px] uppercase tracking-wider px-2.5 py-1 rounded-full border bg-surface-container text-on-surface-variant border-outline-variant';
+        dot.classList.add('bg-on-surface-variant');
+      }
+      badge.appendChild(dot);
+      badge.appendChild(document.createTextNode(' ' + data.health.toUpperCase()));
+    }
+
+    // Update containers table
+    var containersDiv = document.getElementById('containers-' + labKey);
+    if (!containersDiv) return;
+
+    containersDiv.replaceChildren();
+
+    if (data.containers && data.containers.length > 0) {
+      var wrapper = document.createElement('div');
+      wrapper.className = 'overflow-x-auto';
+      var table = document.createElement('table');
+      table.className = 'w-full text-left border-collapse';
+
+      // thead
+      var thead = document.createElement('thead');
+      var headRow = document.createElement('tr');
+      headRow.className = 'border-b border-outline-variant';
+      var headers = ['Service', 'State', 'Status', 'Image'];
+      for (var h = 0; h < headers.length; h++) {
+        var th = document.createElement('th');
+        th.className = 'py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider';
+        th.textContent = headers[h];
+        headRow.appendChild(th);
+      }
+      thead.appendChild(headRow);
+      table.appendChild(thead);
+
+      // tbody
+      var tbody = document.createElement('tbody');
+      for (var i = 0; i < data.containers.length; i++) {
+        var c = data.containers[i];
+        var tr = document.createElement('tr');
+        tr.className = 'border-b border-outline-variant/50';
+
+        var tdService = document.createElement('td');
+        tdService.className = 'py-2.5 pr-4 font-label-mono text-[13px] text-primary';
+        tdService.textContent = c.service || c.name;
+        tr.appendChild(tdService);
+
+        var tdState = document.createElement('td');
+        tdState.className = 'py-2.5 pr-4';
+        var stateSpan = document.createElement('span');
+        stateSpan.className = 'inline-flex items-center gap-1.5 font-label-mono text-[12px]';
+        var stateDot = document.createElement('span');
+        stateDot.className = 'w-1.5 h-1.5 rounded-full';
+        if (c.state === 'running') {
+          stateSpan.classList.add('text-success-green');
+          stateDot.classList.add('bg-success-green');
+        } else if (c.state === 'exited') {
+          stateSpan.classList.add('text-error');
+          stateDot.classList.add('bg-error');
+        } else {
+          stateSpan.classList.add('text-on-surface-variant');
+          stateDot.classList.add('bg-on-surface-variant');
+        }
+        stateSpan.appendChild(stateDot);
+        stateSpan.appendChild(document.createTextNode(' ' + c.state));
+        tdState.appendChild(stateSpan);
+        tr.appendChild(tdState);
+
+        var tdStatus = document.createElement('td');
+        tdStatus.className = 'py-2.5 pr-4 font-label-mono text-[12px] text-on-surface-variant';
+        tdStatus.textContent = c.status;
+        tr.appendChild(tdStatus);
+
+        var tdImage = document.createElement('td');
+        tdImage.className = 'py-2.5 pr-4 font-label-mono text-[12px] text-on-surface-variant';
+        tdImage.textContent = c.image;
+        tr.appendChild(tdImage);
+
+        tbody.appendChild(tr);
+      }
+      table.appendChild(tbody);
+      wrapper.appendChild(table);
+      containersDiv.appendChild(wrapper);
+    } else if (data.error) {
+      var errDiv = document.createElement('div');
+      errDiv.className = 'flex items-start gap-3 bg-error/5 border border-error/20 rounded-lg p-4';
+      var errIcon = document.createElement('span');
+      errIcon.className = 'material-symbols-outlined text-error text-[20px] mt-0.5';
+      errIcon.textContent = 'warning';
+      var errPre = document.createElement('pre');
+      errPre.className = 'font-label-mono text-[12px] text-error whitespace-pre-wrap';
+      errPre.textContent = data.error;
+      errDiv.appendChild(errIcon);
+      errDiv.appendChild(errPre);
+      containersDiv.appendChild(errDiv);
+    } else {
+      var infoDiv = document.createElement('div');
+      infoDiv.className = 'flex items-center gap-3 bg-surface-container rounded-lg p-4 border border-outline-variant';
+      var infoIcon = document.createElement('span');
+      infoIcon.className = 'material-symbols-outlined text-on-surface-variant text-[20px]';
+      infoIcon.textContent = 'info';
+      var infoP = document.createElement('p');
+      infoP.className = 'font-label-mono text-[13px] text-on-surface-variant';
+      infoP.textContent = 'No containers found. Start this lab to create them.';
+      infoDiv.appendChild(infoIcon);
+      infoDiv.appendChild(infoP);
+      containersDiv.appendChild(infoDiv);
+    }
+  }
+
+  function refreshOverviewStats() {
+    fetch('/admin/docker/overview')
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      var el;
+      el = document.getElementById('stat-total');
+      if (el) el.textContent = data.total_containers;
+      el = document.getElementById('stat-running');
+      if (el) el.textContent = data.total_running;
+      el = document.getElementById('stat-stopped');
+      if (el) el.textContent = data.total_stopped;
+    })
+    .catch(function() {});
+  }
+
+  window.fetchLabLogs = function(labKey) {
+    var logsPre = document.getElementById('logs-' + labKey);
+    var refreshBtn = document.getElementById('refresh-logs-' + labKey);
+    if (logsPre) logsPre.textContent = 'Loading logs…';
+    if (refreshBtn) refreshBtn.textContent = 'Loading…';
+
+    fetch('/admin/docker/' + encodeURIComponent(labKey) + '/logs')
+    .then(function(resp) { return resp.json(); })
+    .then(function(data) {
+      if (logsPre) {
+        logsPre.textContent = data.output || 'No logs available.';
+        logsPre.scrollTop = logsPre.scrollHeight;
+      }
+    })
+    .catch(function(err) {
+      if (logsPre) logsPre.textContent = 'Failed to fetch logs: ' + err.message;
+    })
+    .finally(function() {
+      if (refreshBtn) {
+        refreshBtn.replaceChildren();
+        var icon = document.createElement('span');
+        icon.className = 'material-symbols-outlined text-[16px]';
+        icon.textContent = 'refresh';
+        refreshBtn.appendChild(icon);
+        refreshBtn.appendChild(document.createTextNode(' Refresh'));
+      }
+    });
+  };
+
+})();
+</script>
 {% endblock %}

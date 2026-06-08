@@ -29,6 +29,10 @@ def create_app(test_config=None):
 
     app.register_blueprint(bp)
 
+    with app.app_context():
+        from .seed import ensure_database
+        ensure_database()
+
     @app.cli.command("init-db")
     def init_db_command():
         from .seed import seed_database
