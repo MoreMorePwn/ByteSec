@@ -373,18 +373,6 @@
       100% { text-shadow: 3px 0 #ff0066, -3px 0 #4fdbc8; transform: translate(0); opacity: 1; }
     }
 
-    /* ── Swup Page Transitions ── */
-    html.is-animating #swup {
-      opacity: 0;
-      transform: translateY(-8px) translateZ(0);
-      pointer-events: none;
-    }
-    #swup {
-      will-change: opacity, transform;
-      contain: layout style paint;
-      backface-visibility: hidden;
-      transition: opacity 0.28s ease, transform 0.28s ease;
-    }
   </style>
 </head>
 <body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col">
@@ -470,7 +458,7 @@
   </nav>
 
   <!-- ── Main Content ── -->
-  <main class="flex-grow pt-16" id="swup">
+  <main class="flex-grow pt-16">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop pt-4">
@@ -481,7 +469,6 @@
       {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
-    {% block scripts %}{% endblock %}
   </main>
 
   <!-- ── Footer ── -->
@@ -552,21 +539,7 @@
     });
   </script>
 
-  <!-- Swup: SPA-style page transitions -->
-  <script type="module">
-    import Swup from 'https://cdn.jsdelivr.net/npm/swup@4/+esm';
-    import SwupScriptsPlugin from 'https://cdn.jsdelivr.net/npm/@swup/scripts-plugin@2/+esm';
-
-    const swup = new Swup({
-      plugins: [
-        new SwupScriptsPlugin({
-          head: false,
-          body: true
-        })
-      ],
-      animateHistoryBrowsing: true,
-    });
-  </script>
+  {% block scripts %}{% endblock %}
 
 </body>
 </html>
