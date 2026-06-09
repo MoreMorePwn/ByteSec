@@ -375,30 +375,34 @@
     }
 
     /* ── View Transitions ── */
-    @keyframes vt-slide-out {
-      from { opacity: 1; transform: translateX(0); }
-      to   { opacity: 0.3; transform: translateX(-20px); }
+    @view-transition {
+      navigation: auto;
     }
-    @keyframes vt-slide-in {
-      from { opacity: 0.3; transform: translateX(20px); }
-      to   { opacity: 1; transform: translateX(0); }
+    ::view-transition-old(root) {
+      animation: 350ms ease-in both vt-fade-out;
     }
-    ::view-transition-old(main-content) {
-      animation: 200ms ease-in both vt-slide-out;
+    ::view-transition-new(root) {
+      animation: 400ms ease-out both vt-fade-in;
     }
-    ::view-transition-new(main-content) {
-      animation: 250ms ease-out both vt-slide-in;
+    @keyframes vt-fade-out {
+      to { opacity: 0; transform: scale(0.97); }
     }
-    ::view-transition-old(nav-bar),
-    ::view-transition-new(nav-bar) {
-      animation: none;
+    @keyframes vt-fade-in {
+      from { opacity: 0; transform: scale(1.03); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    /* Fallback: page load animation for browsers without View Transitions */
+    @supports not (view-transition-name: root) {
+      main {
+        animation: vt-fade-in 400ms ease-out both;
+      }
     }
   </style>
 </head>
 <body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col">
 
   <!-- ── Top Navigation Bar ── -->
-  <nav class="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant" style="view-transition-name:nav-bar">
+  <nav class="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant">
     <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto h-16">
       <div class="flex items-center gap-8">
         <a class="font-headline-md text-headline-md font-bold text-primary" href="{{ url_for('main.index') }}">ByteSec</a>
@@ -478,7 +482,7 @@
   </nav>
 
   <!-- ── Main Content ── -->
-  <main class="flex-grow pt-16" style="view-transition-name:main-content">
+  <main class="flex-grow pt-16">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop pt-4">
