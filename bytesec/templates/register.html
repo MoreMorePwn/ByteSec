@@ -2,8 +2,10 @@
 {% block title %}Create Account — ByteSec{% endblock %}
 {% block footer %}{% endblock %}
 {% block content %}
-<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-margin-mobile bg-grid-pattern relative">
+<div class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-margin-mobile bg-grid-pattern relative overflow-hidden">
   <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background opacity-90"></div>
+  <!-- Matrix Rain Canvas -->
+  <canvas id="matrix-canvas" class="absolute inset-0 w-full h-full opacity-[0.08] dark:opacity-[0.12] pointer-events-none"></canvas>
   <div class="relative z-10 w-full max-w-md">
     <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-8 shadow-sm">
       <div class="flex justify-center mb-6">
@@ -51,4 +53,46 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Matrix Rain — ByteSec
+(function(){
+  const canvas = document.getElementById('matrix-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  let W, H, cols = [], fontSize = 14;
+  const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
+
+  function resize() {
+    const parent = canvas.parentElement;
+    W = canvas.width = parent.offsetWidth;
+    H = canvas.height = parent.offsetHeight;
+    cols = Array(Math.ceil(W / fontSize)).fill(1);
+  }
+
+  function draw() {
+    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#0f0';
+    ctx.font = fontSize + 'px monospace';
+
+    for (let i = 0; i < cols.length; i++) {
+      const char = chars[Math.floor(Math.random() * chars.length)];
+      const x = i * fontSize;
+      const y = cols[i] * fontSize;
+      ctx.fillText(char, x, y);
+      if (y > H && Math.random() > 0.975) cols[i] = 0;
+      ctx.fillStyle = y > H * 0.7 ? 'rgba(0,255,0,0.15)' : '#0f0';
+      cols[i]++;
+    }
+    requestAnimationFrame(draw);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  draw();
+})();
+</script>
 {% endblock %}
