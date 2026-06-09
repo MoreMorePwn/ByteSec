@@ -1,6 +1,29 @@
 {% extends 'base.html' %}
 {% block title %}Community Challenges — ByteSec{% endblock %}
 {% block content %}
+<style>
+  /* Staggered card entrance */
+  @keyframes card-enter {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-enter {
+    animation: card-enter 0.45s ease-out both;
+  }
+  /* Card hover glow — theme-aware via CSS var */
+  .card-glow {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .card-glow:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary, #006b58);
+    box-shadow: 0 8px 30px rgba(79, 219, 200, 0.15);
+  }
+  .dark .card-glow:hover {
+    box-shadow: 0 8px 30px rgba(79, 219, 200, 0.12), 0 0 60px rgba(79, 219, 200, 0.06);
+  }
+</style>
+
 <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
 
   <!-- Header -->
@@ -44,14 +67,15 @@
   <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
     {% for ch in challenges %}
     <a href="{{ url_for('main.community_challenge', challenge_id=ch.id) }}"
-       class="bg-surface-container-lowest border border-border-muted rounded-xl overflow-hidden hover:border-secondary transition-colors group">
+       class="bg-surface-container-lowest border border-border-muted rounded-xl overflow-hidden card-glow card-enter group"
+       style="animation-delay: {{ loop.index0 * 0.06 }}s">
       <div class="p-5 flex flex-col gap-3">
         <!-- Top row: difficulty badge + points -->
         <div class="flex items-center justify-between">
-          <span class="font-label-mono text-[11px] uppercase tracking-wider px-2 py-0.5 rounded-full border
-            {% if ch.difficulty == 'easy' %}text-success-green border-success-green/30
-            {% elif ch.difficulty == 'hard' %}text-error border-error/30
-            {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
+          <span class="font-label-mono text-[13px] uppercase tracking-wider px-3 py-1 rounded-full border
+            {% if ch.difficulty == 'easy' %}text-success-green border-success-green/40 bg-success-green/10
+            {% elif ch.difficulty == 'hard' %}text-error border-error/40 bg-error/10
+            {% else %}text-yellow-600 border-yellow-500/40 bg-yellow-500/10{% endif %}">
             {{ ch.difficulty }}
           </span>
           <span class="font-label-mono text-[13px] text-secondary">{{ ch.points }} pts</span>

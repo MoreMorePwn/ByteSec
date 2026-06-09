@@ -29,10 +29,10 @@
         </div>
         <div class="flex flex-wrap items-center gap-3 text-on-surface-variant font-label-mono text-[12px]">
           <span class="bg-surface-container px-2 py-0.5 rounded">{{ challenge.category }}</span>
-          <span class="px-2 py-0.5 rounded border
-            {% if challenge.difficulty == 'easy' %}text-success-green border-success-green/30
-            {% elif challenge.difficulty == 'hard' %}text-error border-error/30
-            {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
+          <span class="text-[13px] uppercase tracking-wider px-3 py-1 rounded-full border
+            {% if challenge.difficulty == 'easy' %}text-success-green border-success-green/40 bg-success-green/10
+            {% elif challenge.difficulty == 'hard' %}text-error border-error/40 bg-error/10
+            {% else %}text-yellow-600 border-yellow-500/40 bg-yellow-500/10{% endif %}">
             {{ challenge.difficulty }}
           </span>
           <span>by {{ challenge.author.username }}</span>
