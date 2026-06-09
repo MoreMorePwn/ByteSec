@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard — ByteSec{% endblock %}
 {% block content %}
-<canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none" style="opacity:0;z-index:0"></canvas>
+<canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none" style="opacity:0;z-index:0;will-change:opacity"></canvas>
 <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12 relative z-10">
   <!-- Header -->
   <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -165,8 +165,11 @@
     requestAnimationFrame(draw);
   }
 
-  resize();window.addEventListener('resize',resize);draw();
-  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  requestAnimationFrame(function(){
+    resize();window.addEventListener('resize',resize);
+    draw();
+    new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  });
 })();
 </script>
 {% endblock %}

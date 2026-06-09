@@ -376,12 +376,14 @@
     /* ── Swup Page Transitions ── */
     html.is-animating #swup {
       opacity: 0;
-      transform: translateY(-12px);
+      transform: translateY(-8px) translateZ(0);
       pointer-events: none;
     }
     #swup {
-      transition: opacity 0.35s cubic-bezier(.4,0,.2,1),
-                  transform 0.35s cubic-bezier(.4,0,.2,1);
+      will-change: opacity, transform;
+      contain: layout style paint;
+      backface-visibility: hidden;
+      transition: opacity 0.28s ease, transform 0.28s ease;
     }
   </style>
 </head>
