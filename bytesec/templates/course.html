@@ -77,26 +77,53 @@
     {% if selected_course %}
     <!-- Course Sequence - standalone -->
     <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8">
-      <h3 class="font-label-mono text-label-mono text-secondary mb-5 uppercase tracking-widest text-xs">Course Sequence</h3>
-      <div class="flex flex-wrap justify-center items-start gap-4 sm:gap-5 py-1">
+      <div class="flex items-center gap-3 mb-5">
+        <h3 class="font-label-mono text-label-mono text-secondary uppercase tracking-widest text-xs">Course Sequence</h3>
+        <span class="font-label-mono text-[11px] text-on-surface-variant">{{ track.modules|length }} modules</span>
+      </div>
+      <div class="flex flex-wrap justify-center sm:justify-start gap-3">
         {% for mod in track.modules %}
         {% set progress = mod_progress[mod.id] %}
-        <div class="flex flex-col items-center gap-1 group cursor-pointer" title="{{ mod.title }}">
-          {% if progress.pct >= 100 %}
-          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
-            <span class="material-symbols-outlined font-bold text-lg">check</span>
+        {% if mod.lessons %}
+        <a href="{{ url_for('main.lesson_view', lesson_id=mod.lessons[0].id) }}"
+           class="flex items-center gap-3 min-w-[200px] sm:min-w-[230px] px-3 py-2.5 rounded-lg border transition-all group
+                  {% if progress.pct >= 100 %}
+                    border-secondary/40 bg-secondary/5 hover:border-secondary hover:bg-secondary/10
+                  {% elif progress.pct > 0 %}
+                    border-secondary/30 bg-secondary-container/30 hover:border-secondary hover:bg-secondary-container/50
+                  {% else %}
+                    border-outline-variant/50 bg-surface hover:border-secondary/60 hover:bg-surface-container
+                  {% endif %}">
+          <!-- Module number circle -->
+          <div class="flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center
+                      {% if progress.pct >= 100 %}border-secondary text-secondary
+                      {% elif progress.pct > 0 %}border-secondary text-secondary bg-secondary-container
+                      {% else %}border-outline-variant text-outline{% endif %}">
+            {% if progress.pct >= 100 %}
+            <span class="material-symbols-outlined font-bold text-sm">check</span>
+            {% elif progress.pct > 0 %}
+            <span class="material-symbols-outlined font-bold text-sm" style="font-variation-settings:'FILL' 1">terminal</span>
+            {% else %}
+            <span class="font-label-mono text-xs font-bold">{{ loop.index }}</span>
+            {% endif %}
           </div>
-          {% elif progress.pct > 0 %}
-          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container transition-transform group-hover:scale-110">
-            <span class="material-symbols-outlined font-bold text-lg" style="font-variation-settings:'FILL' 1">terminal</span>
+          <!-- Title + meta -->
+          <div class="flex-1 min-w-0">
+            <p class="font-label-mono text-xs text-primary group-hover:text-secondary transition-colors truncate font-medium">{{ mod.title }}</p>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0
+                {% if mod.difficulty == 'Beginner' %}" style="background-color:#22c55e"
+                {% elif mod.difficulty == 'Intermediate' %}" style="background-color:#eab308"
+                {% else %}" style="background-color:#ef4444{% endif %}"></span>
+              <span class="font-label-mono text-[9px] text-on-surface-variant">{{ mod.difficulty }}</span>
+              <span class="w-0.5 h-0.5 rounded-full bg-outline-variant"></span>
+              <span class="font-label-mono text-[9px] text-on-surface-variant">{{ mod.estimated_minutes }}m</span>
+            </div>
           </div>
-          {% else %}
-          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline">
-            <span class="material-symbols-outlined text-lg">lock</span>
-          </div>
-          {% endif %}
-          <span class="font-label-mono text-[10px] sm:text-[11px] text-on-surface-variant mt-0.5">{{ loop.index }}</span>
-        </div>
+          <!-- Status arrow -->
+          <span class="material-symbols-outlined text-sm text-on-surface-variant/40 group-hover:text-secondary transition-colors flex-shrink-0">arrow_forward</span>
+        </a>
+        {% endif %}
         {% endfor %}
       </div>
     </div>
