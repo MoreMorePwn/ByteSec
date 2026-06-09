@@ -321,22 +321,8 @@
     /* Glow effect */
     .glow-teal { box-shadow: 0 0 15px rgba(79,219,200,0.3); }
 
-    /* Node connectors for roadmap */
-    .node-connector::after {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 100%;
-      width: 0.625rem;
-      height: 2px;
-      background-color: #E5E7EB;
-      transform: translateY(-50%);
-      z-index: 0;
-    }
-    .node-connector:last-child::after { display: none; }
-    .node-connector.completed::after { background-color: #006b58; }
-    .dark .node-connector::after { background-color: #3c4947; }
-    .dark .node-connector.completed::after { background-color: #4fdbc8; }
+    /* Node connectors — kept for legacy references */
+    .node-connector::after { display: none; }
 
     /* Smooth transitions for theme toggle */
     * { transition: background-color 0.2s ease, color 0.15s ease, border-color 0.15s ease; }
