@@ -28,11 +28,11 @@
 <section class="max-w-[1200px] w-full mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
   {% for track in visible_courses %}
   <div class="flex flex-col gap-6">
-    <article class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8 hover:shadow-md transition-shadow duration-300 flex flex-col {{ 'md:flex-row' if selected_course else '' }} gap-8 relative overflow-hidden group">
+    <article class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8 hover:shadow-md transition-shadow duration-300 flex flex-col gap-8 relative overflow-hidden group">
       <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
       <!-- Path Info -->
-      <div class="min-w-0 flex-1 flex flex-col items-start justify-center pr-4">
+      <div class="min-w-0 flex flex-col items-start justify-center">
         <div class="flex flex-wrap items-center gap-2 mb-3">
           <span class="font-label-mono text-label-mono bg-surface-container py-1 px-2 rounded text-on-surface-variant border border-outline-variant">{{ track.label }}</span>
           <span class="font-label-mono text-label-mono text-secondary flex items-center gap-1">
@@ -40,9 +40,9 @@
           </span>
         </div>
         <h2 class="font-headline-md text-headline-md text-primary mb-2">{{ track.title }}</h2>
-        <p class="font-body-md text-body-md text-on-surface-variant mb-5">{{ track.description }}</p>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-5 max-w-2xl">{{ track.description }}</p>
 
-        <div class="grid grid-cols-3 gap-3 w-full mb-6">
+        <div class="grid grid-cols-3 gap-3 w-full max-w-md mb-6">
           <div class="bg-surface-container rounded-lg border border-outline-variant p-3">
             <p class="font-headline-sm text-[18px] text-primary">{{ track.modules|length }}</p>
             <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Modules</p>
@@ -72,37 +72,36 @@
           {% endif %}
         </div>
       </div>
-
-      {% if selected_course %}
-      <!-- Node Visualizer -->
-      <div class="min-w-0 flex-1 bg-surface rounded-lg border border-border-muted p-4 flex flex-col">
-        <h3 class="font-label-mono text-label-mono text-on-surface-variant mb-2 uppercase tracking-widest text-xs">Course Sequence</h3>
-        <div class="flex flex-wrap justify-center items-center gap-3 py-2">
-          {% for mod in track.modules %}
-          {% set progress = mod_progress[mod.id] %}
-          <div class="relative flex flex-col items-center group cursor-pointer" title="{{ mod.title }}">
-            {% if progress.pct >= 100 %}
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
-              <span class="material-symbols-outlined font-bold text-lg">check</span>
-            </div>
-            {% elif progress.pct > 0 %}
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container transition-transform group-hover:scale-110">
-              <span class="material-symbols-outlined font-bold text-lg" style="font-variation-settings:'FILL' 1">terminal</span>
-            </div>
-            {% else %}
-            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline">
-              <span class="material-symbols-outlined text-lg">lock</span>
-            </div>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
     </article>
 
-    <!-- Module List -->
     {% if selected_course %}
+    <!-- Course Sequence - standalone -->
+    <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8">
+      <h3 class="font-label-mono text-label-mono text-secondary mb-5 uppercase tracking-widest text-xs">Course Sequence</h3>
+      <div class="flex flex-wrap justify-center items-start gap-4 sm:gap-5 py-1">
+        {% for mod in track.modules %}
+        {% set progress = mod_progress[mod.id] %}
+        <div class="flex flex-col items-center gap-1 group cursor-pointer" title="{{ mod.title }}">
+          {% if progress.pct >= 100 %}
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
+            <span class="material-symbols-outlined font-bold text-lg">check</span>
+          </div>
+          {% elif progress.pct > 0 %}
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container transition-transform group-hover:scale-110">
+            <span class="material-symbols-outlined font-bold text-lg" style="font-variation-settings:'FILL' 1">terminal</span>
+          </div>
+          {% else %}
+          <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline">
+            <span class="material-symbols-outlined text-lg">lock</span>
+          </div>
+          {% endif %}
+          <span class="font-label-mono text-[10px] sm:text-[11px] text-on-surface-variant mt-0.5">{{ loop.index }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Module List -->
     <div class="flex flex-col gap-4">
       {% for mod in track.modules %}
       {% set progress = mod_progress[mod.id] %}
