@@ -3,6 +3,7 @@
 {% block footer %}{% endblock %}
 {% block content %}
 <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-margin-mobile bg-grid-pattern relative overflow-hidden">
+  <div id="hero-particles" class="absolute inset-0 z-0 pointer-events-none"></div>
   <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background opacity-90"></div>
   <div class="relative z-10 w-full max-w-md">
     <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-8 shadow-sm">
@@ -46,4 +47,97 @@
     </div>
   </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ByteSec Particle System — Three.js (theme-aware)
+(function(){
+  var container = document.getElementById('hero-particles');
+  if (!container || typeof THREE === 'undefined') return;
+
+  var W = container.offsetWidth;
+  var H = container.offsetHeight;
+
+  var COLORS = { dark: '#4fdbc8', light: '#08695f' };
+  function getHex() { return isDark() ? COLORS.dark : COLORS.light; }
+  function isDark() { return document.documentElement.classList.contains('dark'); }
+
+  var scene = new THREE.Scene();
+  var camera = new THREE.OrthographicCamera(0, W, H, 0, -10, 10);
+  camera.position.z = 5;
+
+  var renderer = new THREE.WebGLRenderer({ alpha: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.domElement.style.position = 'absolute';
+  renderer.domElement.style.inset = '0';
+  renderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(renderer.domElement);
+
+  var COUNT = 70;
+  var pos = new Float32Array(COUNT * 3);
+  var meta = [];
+
+  for (var i = 0; i < COUNT; i++) {
+    pos[i*3]   = Math.random() * W;
+    pos[i*3+1] = Math.random() * H;
+    pos[i*3+2] = 0;
+    meta.push({
+      vx: (Math.random() - 0.5) * 0.12,
+      vy: 0.15 + Math.random() * 0.5,
+      size: 1.5 + Math.random() * 2.5
+    });
+  }
+
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+  var mat = new THREE.PointsMaterial({
+    color: getHex(),
+    size: 2.5,
+    transparent: true,
+    opacity: isDark() ? 0.5 : 0.7,
+    blending: isDark() ? THREE.AdditiveBlending : THREE.NormalBlending,
+    sizeAttenuation: false
+  });
+
+  var points = new THREE.Points(geo, mat);
+  scene.add(points);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    var p = geo.attributes.position.array;
+    for (var i = 0; i < COUNT; i++) {
+      var d = meta[i];
+      p[i*3]   += d.vx;
+      p[i*3+1] += d.vy;
+      if (p[i*3] < -15)    p[i*3] = W + 15;
+      if (p[i*3] > W + 15) p[i*3] = -15;
+      if (p[i*3+1] < -15)  p[i*3+1] = H + 15;
+      if (p[i*3+1] > H+15) p[i*3+1] = -15;
+    }
+    geo.attributes.position.needsUpdate = true;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', function() {
+    W = container.offsetWidth;
+    H = container.offsetHeight;
+    camera.right = W;
+    camera.top = H;
+    camera.updateProjectionMatrix();
+    renderer.setSize(W, H);
+  });
+
+  var observer = new MutationObserver(function() {
+    mat.color.set(getHex());
+    mat.opacity = isDark() ? 0.5 : 0.7;
+    mat.blending = isDark() ? THREE.AdditiveBlending : THREE.NormalBlending;
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
 {% endblock %}
