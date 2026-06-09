@@ -86,6 +86,16 @@ COURSE_TRACKS = [
         "order_start": 19,
         "order_end": 23,
     },
+    {
+        "key": "forensics",
+        "label": "[FORENSICS]",
+        "title": "Windows Forensics Investigation Workflow",
+        "short_title": "Forensics",
+        "description": "Artifact-driven Windows investigation across execution, account activity, persistence, network, file, browser, and timeline pivots.",
+        "icon": "travel_explore",
+        "order_start": 24,
+        "order_end": 30,
+    },
 ]
 
 RSA_CHALLENGE_N = 1050042634739472048527415083734141614623526794604292789934035929043944753840232886771262298879903328617034311167949696362901721533840465932367411227174743302792364017856573114095054665590548643385179579641709628757228698065267663737
@@ -260,10 +270,10 @@ def _learning_tracks():
         },
         {
             "title": "Forensics",
-            "description": "Evidence-driven investigation across files, logs, packets, images, and challenge artifacts.",
+            "description": "Artifact-driven Windows investigation using registry, event log, filesystem, execution, account, and network pivots.",
             "icon": "travel_explore",
-            "status": "Planned",
-            "status_class": "bg-surface-container text-on-surface-variant",
+            "status": "Live",
+            "status_class": "bg-secondary-container text-on-secondary-container",
         },
         {
             "title": "Cryptography",
@@ -695,6 +705,60 @@ def logout():
     return redirect(url_for("main.index"))
 
 
+@bp.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not email:
+            flash("Email is required.", "danger")
+            return render_template("profile.html")
+        existing = User.query.filter(User.email == email, User.id != g.user.id).first()
+        if existing:
+            flash("That email is already registered.", "danger")
+            return render_template("profile.html")
+        if password:
+            if len(password) < 6:
+                flash("Password must be at least 6 characters.", "danger")
+                return render_template("profile.html")
+            if password != confirm_password:
+                flash("Password confirmation does not match.", "danger")
+                return render_template("profile.html")
+            g.user.set_password(password)
+
+        g.user.email = email
+        db.session.commit()
+        flash("Profile updated.", "success")
+        return redirect(url_for("main.profile"))
+
+    return render_template("profile.html")
+
+
+@bp.route("/submissions")
+@login_required
+def submissions():
+    my_articles = (
+        Article.query
+        .filter_by(author_id=g.user.id)
+        .order_by(Article.created_at.desc())
+        .all()
+    )
+    my_challenges = (
+        CommunityChallenge.query
+        .filter_by(author_id=g.user.id)
+        .order_by(CommunityChallenge.created_at.desc())
+        .all()
+    )
+    return render_template(
+        "submissions.html",
+        my_articles=my_articles,
+        my_challenges=my_challenges,
+    )
+
+
 @bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -923,7 +987,6 @@ def admin_docker_overview():
 def community():
     category = request.args.get("category", "")
     difficulty = request.args.get("difficulty", "")
-    selected_status = "approved"
 
     query = CommunityChallenge.query.filter_by(status="approved")
     if category:
@@ -1004,8 +1067,8 @@ def community_submit():
             challenge.file_size = filepath.stat().st_size
             db.session.commit()
 
-        flash("Challenge submitted! An admin will review it shortly.", "success")
-        return redirect(url_for("main.community"))
+        flash("Challenge submitted for review. You can track its status below.", "success")
+        return redirect(url_for("main.submissions", _anchor="challenge-submissions"))
 
     return render_template("community_submit.html")
 
@@ -1014,7 +1077,11 @@ def community_submit():
 @login_required
 def community_download(challenge_id):
     challenge = db.session.get(CommunityChallenge, challenge_id)
-    if challenge is None or challenge.status != "approved":
+    can_view = (
+        challenge is not None
+        and (challenge.status == "approved" or _is_admin_user() or challenge.author_id == g.user.id)
+    )
+    if not can_view:
         flash("Challenge not found.", "danger")
         return redirect(url_for("main.community"))
     if not challenge.file_name:
@@ -1035,7 +1102,11 @@ def community_download(challenge_id):
 @login_required
 def community_challenge(challenge_id):
     challenge = db.session.get(CommunityChallenge, challenge_id)
-    if challenge is None or challenge.status != "approved":
+    can_view = (
+        challenge is not None
+        and (challenge.status == "approved" or _is_admin_user() or challenge.author_id == g.user.id)
+    )
+    if not can_view:
         flash("Challenge not found.", "danger")
         return redirect(url_for("main.community"))
 
@@ -1160,7 +1231,7 @@ def article_view(slug):
     """View a single article."""
     article = Article.query.filter_by(slug=slug).first_or_404()
     if article.status != "published":
-        if not _is_admin_user() or g.user is None:
+        if g.user is None or (not _is_admin_user() and article.author_id != g.user.id):
             flash("Article not found.", "danger")
             return redirect(url_for("main.articles"))
     content_html = _render_material(article.content)
@@ -1168,15 +1239,17 @@ def article_view(slug):
 
 
 @bp.route("/articles/new", methods=["GET", "POST"])
-@admin_required
+@login_required
 def article_new():
-    """Create a new article (admin only)."""
+    """Create a new article. Regular users always submit for review."""
     if request.method == "POST":
         title = request.form.get("title", "").strip()
         content = request.form.get("content", "").strip()
         excerpt = request.form.get("excerpt", "").strip() or None
         cover_image = request.form.get("cover_image", "").strip() or None
-        status = request.form.get("status", "draft").strip()
+        status = request.form.get("status", "pending").strip() if _is_admin_user() else "pending"
+        if status not in ("draft", "pending", "published", "rejected"):
+            status = "pending"
 
         if not title or not content:
             flash("Title and content are required.", "danger")
@@ -1199,8 +1272,11 @@ def article_new():
         )
         db.session.add(article)
         db.session.commit()
-        flash("Article created!", "success")
-        return redirect(url_for("main.article_view", slug=article.slug))
+        if status == "published":
+            flash("Article created and published.", "success")
+            return redirect(url_for("main.article_view", slug=article.slug))
+        flash("Article submitted for review. You can track its status below.", "success")
+        return redirect(url_for("main.submissions", _anchor="article-submissions"))
 
     return render_template("article_form.html", article=None)
 
@@ -1220,8 +1296,12 @@ def article_edit(article_id):
         article.excerpt = request.form.get("excerpt", "").strip() or None
         article.cover_image = request.form.get("cover_image", "").strip() or None
         new_status = request.form.get("status", "draft").strip()
+        if new_status not in ("draft", "pending", "published", "rejected"):
+            new_status = "draft"
         if new_status == "published" and article.status != "published":
             article.published_at = utc_now()
+        elif new_status != "published":
+            article.published_at = None
         article.status = new_status
         db.session.commit()
         flash("Article updated!", "success")
@@ -1264,6 +1344,21 @@ def article_toggle_publish(article_id):
     return redirect(url_for("main.admin_articles"))
 
 
+@bp.route("/articles/<int:article_id>/reject", methods=["POST"])
+@admin_required
+def article_reject(article_id):
+    """Reject an article from the review queue."""
+    article = db.session.get(Article, article_id)
+    if article is None:
+        flash("Article not found.", "danger")
+        return redirect(url_for("main.admin_articles"))
+    article.status = "rejected"
+    article.published_at = None
+    db.session.commit()
+    flash("Article rejected.", "warning")
+    return redirect(url_for("main.admin_articles"))
+
+
 @bp.route("/admin/articles")
 @admin_required
 def admin_articles():
@@ -1275,13 +1370,17 @@ def admin_articles():
     articles = query.order_by(Article.created_at.desc()).all()
     total = Article.query.count()
     draft_count = Article.query.filter_by(status="draft").count()
+    pending_count = Article.query.filter_by(status="pending").count()
     published_count = Article.query.filter_by(status="published").count()
+    rejected_count = Article.query.filter_by(status="rejected").count()
     return render_template(
         "admin_articles.html",
         articles=articles,
         total=total,
         draft_count=draft_count,
+        pending_count=pending_count,
         published_count=published_count,
+        rejected_count=rejected_count,
         selected_status=status_filter,
     )
 
@@ -1610,7 +1709,23 @@ def leaderboard():
         .order_by(func.count(UserProgress.id).desc(), User.username.asc())
         .all()
     )
-    return render_template("leaderboard.html", ranking=ranking)
+    community_ranking = (
+        db.session.query(
+            User.username,
+            func.count(CommunityChallengeSolve.id).label("solves"),
+            func.coalesce(func.sum(CommunityChallenge.points), 0).label("points"),
+        )
+        .outerjoin(CommunityChallengeSolve, CommunityChallengeSolve.user_id == User.id)
+        .outerjoin(CommunityChallenge, CommunityChallenge.id == CommunityChallengeSolve.challenge_id)
+        .group_by(User.id)
+        .order_by(
+            func.coalesce(func.sum(CommunityChallenge.points), 0).desc(),
+            func.count(CommunityChallengeSolve.id).desc(),
+            User.username.asc(),
+        )
+        .all()
+    )
+    return render_template("leaderboard.html", ranking=ranking, community_ranking=community_ranking)
 
 
 # ── API Endpoints ────────────────────────────────────────────────────

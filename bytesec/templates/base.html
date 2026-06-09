@@ -382,12 +382,49 @@
           <span class="material-symbols-outlined">deployed_code</span>
         </a>
         {% endif %}
-        <a href="{{ url_for('main.leaderboard') }}" class="text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full flex items-center justify-center">
+        <a href="{{ url_for('main.leaderboard') }}" class="text-on-surface-variant hover:bg-surface-container-low transition-colors p-2 rounded-full flex items-center justify-center" title="Leaderboard">
           <span class="material-symbols-outlined">military_tech</span>
         </a>
-        <a href="{{ url_for('main.logout') }}" class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-3 py-1.5 border border-outline-variant rounded-full">
-          {{ g.user.username }}
-        </a>
+        <div class="relative" id="user-menu">
+          <button type="button"
+                  onclick="toggleUserMenu(event)"
+                  class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface hover:bg-surface-container-low transition-colors px-3 py-1.5 border border-outline-variant rounded-full inline-flex items-center gap-1"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  id="user-menu-button">
+            {{ g.user.username }}
+            <span class="material-symbols-outlined text-[16px]">expand_more</span>
+          </button>
+          <div id="user-menu-panel"
+               class="hidden absolute right-0 mt-2 w-56 bg-surface-container-lowest border border-outline-variant rounded-lg shadow-lg overflow-hidden z-50">
+            <div class="px-4 py-3 border-b border-outline-variant">
+              <p class="font-label-mono text-[12px] text-primary">{{ g.user.username }}</p>
+              <p class="font-body-md text-[12px] text-on-surface-variant truncate">{{ g.user.email }}</p>
+            </div>
+            <a href="{{ url_for('main.profile') }}" class="flex items-center gap-2 px-4 py-2.5 font-label-mono text-[13px] text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-[16px]">manage_accounts</span> Edit Profile
+            </a>
+            <a href="{{ url_for('main.dashboard') }}" class="flex items-center gap-2 px-4 py-2.5 font-label-mono text-[13px] text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-[16px]">dashboard</span> Dashboard
+            </a>
+            <a href="{{ url_for('main.submissions') }}" class="flex items-center gap-2 px-4 py-2.5 font-label-mono text-[13px] text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-[16px]">fact_check</span> My Submissions
+            </a>
+            {% if is_admin_user() %}
+            <div class="border-t border-outline-variant"></div>
+            <a href="{{ url_for('main.admin_articles', status='pending') }}" class="flex items-center gap-2 px-4 py-2.5 font-label-mono text-[13px] text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-[16px]">rate_review</span> Review Articles
+            </a>
+            <a href="{{ url_for('main.admin_community', status='pending') }}" class="flex items-center gap-2 px-4 py-2.5 font-label-mono text-[13px] text-on-surface-variant hover:bg-surface-container hover:text-primary transition-colors">
+              <span class="material-symbols-outlined text-[16px]">fact_check</span> Review Challenges
+            </a>
+            {% endif %}
+            <div class="border-t border-outline-variant"></div>
+            <a href="{{ url_for('main.logout') }}" class="flex items-center gap-2 px-4 py-2.5 font-label-mono text-[13px] text-error hover:bg-error/10 transition-colors">
+              <span class="material-symbols-outlined text-[16px]">logout</span> Log Out
+            </a>
+          </div>
+        </div>
         {% else %}
         <a href="{{ url_for('main.login') }}" class="font-label-mono text-label-mono text-on-surface-variant hover:text-on-surface transition-colors px-3 py-1.5">Sign in</a>
         <a href="{{ url_for('main.register') }}" class="font-label-mono text-label-mono bg-primary text-on-primary px-4 py-1.5 rounded-full hover:opacity-90 transition-opacity">Join</a>
@@ -456,6 +493,26 @@
     }
     // Apply on load
     applyTheme(getTheme());
+
+    function setUserMenu(open) {
+      const panel = document.getElementById('user-menu-panel');
+      const button = document.getElementById('user-menu-button');
+      if (!panel || !button) return;
+      panel.classList.toggle('hidden', !open);
+      button.setAttribute('aria-expanded', open ? 'true' : 'false');
+    }
+    function toggleUserMenu(event) {
+      event.stopPropagation();
+      const panel = document.getElementById('user-menu-panel');
+      setUserMenu(panel ? panel.classList.contains('hidden') : false);
+    }
+    document.addEventListener('click', (event) => {
+      const menu = document.getElementById('user-menu');
+      if (menu && !menu.contains(event.target)) setUserMenu(false);
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') setUserMenu(false);
+    });
   </script>
 
   {% block scripts %}{% endblock %}

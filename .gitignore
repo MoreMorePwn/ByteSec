@@ -9,6 +9,8 @@ venv/
 *.egg-info/
 .eggs/
 dist/
+!ctf_chall/community/**/dist/
+!ctf_chall/community/**/dist/**
 build/
 .pytest_cache/
 .run/

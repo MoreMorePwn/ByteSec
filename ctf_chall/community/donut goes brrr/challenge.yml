@@ -1,0 +1,29 @@
+name: "donut goes brrr"
+category: Reverse Engineering
+description: |-
+  donut spin haha funni also j.co > krispy kreme & dunkin
+
+  Flag format: PETIR{donut_donut}
+connection_info:
+
+##### DON'T CHANGE
+value: 500
+type: dynamic
+extra:
+  initial: 500
+  decay: 25
+  minimum: 100
+##### DON'T CHANGE
+
+flags:
+  - PETIR{mmmm_3d_ascii_d0nut_g0es_brRrRrRr}
+
+tags:
+  - easy
+
+files:
+  - dist/donut.zip
+
+state: visible
+
+version: "0.1"

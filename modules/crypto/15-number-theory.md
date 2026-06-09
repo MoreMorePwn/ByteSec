@@ -13,8 +13,6 @@ By the end of this module, students will be able to:
 - Apply Fermat and Euler style exponent rules conceptually
 - Recognize the difference between easy multiplication and hard factorization
 
-Reference sections: [Integer Factorization](https://cryptohack.gitbook.io/cryptobook/integer-factorization), [Modular Arithmetic](https://cryptohack.gitbook.io/cryptobook/fundamentals/modular-arithmetic)
-
 ---
 
 ## Lesson Flow

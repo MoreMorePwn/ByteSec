@@ -134,7 +134,7 @@ class Article(db.Model):
     content = db.Column(db.Text, nullable=False)
     excerpt = db.Column(db.Text, nullable=True)
     author_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default="draft")  # draft / published
+    status = db.Column(db.String(20), nullable=False, default="draft")  # draft / pending / published / rejected
     cover_image = db.Column(db.String(500), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=utc_now, nullable=False)
     updated_at = db.Column(db.DateTime(timezone=True), default=utc_now, onupdate=utc_now, nullable=False)

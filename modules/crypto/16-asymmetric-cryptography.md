@@ -13,8 +13,6 @@ By the end of this module, students will be able to:
 - Explain Diffie-Hellman shared secret agreement
 - Recognize elliptic curve cryptography as group-based public-key cryptography
 
-Reference sections: [RSA](https://cryptohack.gitbook.io/cryptobook/untitled/rsa-application), [Diffie-Hellman](https://cryptohack.gitbook.io/cryptobook/diffie-hellman)
-
 ---
 
 ## Lesson Flow

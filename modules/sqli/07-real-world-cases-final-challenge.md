@@ -279,9 +279,9 @@ Which of the following is TRUE about SQL injection defense?
 - ✅ Real-world impacts of SQL injection breaches
 
 **Recommended next steps**:
-1. 🔬 Practice on [OWASP WebGoat](https://owasp.org/www-project-webgoat/) or [PortSwigger Web Security Academy](https://portswigger.net/web-security/sql-injection)
-2. 📖 Study the [OWASP SQL Injection Prevention Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/SQL_Injection_Prevention_Cheat_Sheet.html)
-3. 🛠️ Try [sqlmap](https://sqlmap.org/) in a legal lab environment
+1. 🔬 Practice only in legal training labs and intentionally vulnerable environments.
+2. 📖 Study defensive query design, parameterized statements, and least-privilege database access.
+3. 🛠️ Try automated testing tools only where you have explicit permission.
 4. 📜 Pursue security certifications: CompTIA Security+, CEH, or OSCP
 
 ---

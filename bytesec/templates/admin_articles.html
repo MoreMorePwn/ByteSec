@@ -51,10 +51,24 @@
       </div>
     </div>
     <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+      <span class="material-symbols-outlined text-[22px] text-yellow-500">pending</span>
+      <div>
+        <p class="font-headline-sm text-[20px] text-primary leading-none">{{ pending_count }}</p>
+        <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Pending</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
       <span class="material-symbols-outlined text-[22px]" style="color:#29CC57">check_circle</span>
       <div>
         <p class="font-headline-sm text-[20px] text-primary leading-none">{{ published_count }}</p>
         <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Published</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3 bg-surface-container rounded-lg border border-outline-variant px-4 py-3">
+      <span class="material-symbols-outlined text-[22px] text-error">cancel</span>
+      <div>
+        <p class="font-headline-sm text-[20px] text-primary leading-none">{{ rejected_count }}</p>
+        <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider mt-0.5">Rejected</p>
       </div>
     </div>
   </div>
@@ -71,10 +85,20 @@
        {% if selected_status == 'draft' %}bg-yellow-500/20 text-yellow-600 border-yellow-500/30{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-yellow-500 hover:text-yellow-500{% endif %}">
       Drafts
     </a>
+    <a href="?status=pending"
+       class="font-label-mono text-[12px] px-3 py-1.5 rounded-full border transition-colors
+       {% if selected_status == 'pending' %}bg-yellow-500/20 text-yellow-600 border-yellow-500/30{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-yellow-500 hover:text-yellow-500{% endif %}">
+      Pending
+    </a>
     <a href="?status=published"
        class="font-label-mono text-[12px] px-3 py-1.5 rounded-full border transition-colors
        {% if selected_status == 'published' %}bg-success-green/20 text-success-green border-success-green/30{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-success-green hover:text-success-green{% endif %}">
       Published
+    </a>
+    <a href="?status=rejected"
+       class="font-label-mono text-[12px] px-3 py-1.5 rounded-full border transition-colors
+       {% if selected_status == 'rejected' %}bg-error/20 text-error border-error/30{% else %}bg-surface-container-lowest text-on-surface-variant border-outline-variant hover:border-error hover:text-error{% endif %}">
+      Rejected
     </a>
   </div>
 
@@ -107,7 +131,9 @@
             <td class="py-3 px-4">
               <span class="font-label-mono text-[11px] uppercase px-2 py-0.5 rounded-full border
                 {% if article.status == 'published' %}text-success-green border-success-green/30
-                {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
+                {% elif article.status == 'rejected' %}text-error border-error/30
+                {% elif article.status == 'pending' %}text-yellow-600 border-yellow-500/30
+                {% else %}text-on-surface-variant border-outline-variant{% endif %}">
                 {{ article.status }}
               </span>
             </td>
@@ -116,6 +142,10 @@
             </td>
             <td class="py-3 px-4">
               <div class="flex items-center gap-2">
+                <a href="{{ url_for('main.article_view', slug=article.slug) }}"
+                   class="bg-surface-container text-on-surface-variant border border-outline-variant font-label-mono text-[11px] px-3 py-1.5 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">visibility</span> View
+                </a>
                 <a href="{{ url_for('main.article_edit', article_id=article.id) }}"
                    class="bg-surface-container text-on-surface-variant border border-outline-variant font-label-mono text-[11px] px-3 py-1.5 rounded-full hover:bg-primary hover:text-on-primary hover:border-primary transition-colors flex items-center gap-1">
                   <span class="material-symbols-outlined text-[14px]">edit</span> Edit
@@ -129,6 +159,14 @@
                     {% if article.status == 'published' %}Unpublish{% else %}Publish{% endif %}
                   </button>
                 </form>
+                {% if article.status != 'rejected' %}
+                <form method="post" action="{{ url_for('main.article_reject', article_id=article.id) }}" class="inline">
+                  <button type="submit"
+                          class="bg-error/10 text-error border border-error/20 font-label-mono text-[11px] px-3 py-1.5 rounded-full hover:bg-error/20 transition-colors flex items-center gap-1">
+                    <span class="material-symbols-outlined text-[14px]">close</span> Reject
+                  </button>
+                </form>
+                {% endif %}
                 <form method="post" action="{{ url_for('main.article_delete', article_id=article.id) }}"
                       class="inline"
                       onsubmit="return confirm('Delete this article permanently?')">

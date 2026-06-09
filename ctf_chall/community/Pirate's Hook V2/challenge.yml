@@ -1,0 +1,30 @@
+name: "Pirate's Hook V2"
+category: Reverse Engineering
+description: |-
+  Arrrrghhh, bored with ELF reversing mate? then show your might by cracking my fun game HARR HARR HARR  🏴‍☠️
+
+  <b>Flag format: PETIR{*}<b>
+
+connection_info:
+
+##### DON'T CHANGE
+value: 500
+type: dynamic
+extra:
+  initial: 500
+  decay: 25
+  minimum: 100
+##### DON'T CHANGE
+
+flags:
+  - PETIR{f1nally..you_p45sed_1sDebugg3rPresent,_proceed_to_n3xt_chall}
+
+tags:
+  - easy
+
+files:
+  - dist/pirates_hook_v2.exe
+
+state: visible
+
+version: "0.1"

@@ -1,0 +1,36 @@
+name: "Brixton Bullies"
+category: Miscellaneous
+description: |-
+  My niece, Bobby, was playing this one online game when another person cyber bullied him. He asked me to find out what his full name, birth date, and address is. Could you help me out here? 
+
+  Flag Format: PETIR{Full_Name-DD/MM/YY-Address_Name} (e.g.) PETIR{Gordon_Ramsay-17/02/1999-Camelot_Street_21}
+
+  NOTES:
+  - Please convert the abbreviations of the address into long form (e.g. St -> Street, Ave -> Avenue, etc). 
+
+  - Please ignore any information that leads you to Indonesia.
+
+connection_info:
+
+##### DON'T CHANGE
+value: 500
+type: dynamic
+extra:
+  initial: 500
+  decay: 25
+  minimum: 100
+##### DON'T CHANGE
+
+flags:
+  - PETIR{Terrance_Donald-20/11/2006-McWilliam_Road_65}
+
+tags:
+  - hard
+  - OSINT
+
+files:
+  - dist/Brixton_Bullies.png
+
+state: visible
+
+version: "0.1"

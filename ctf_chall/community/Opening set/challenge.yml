@@ -1,0 +1,36 @@
+name: "Opening set"
+category: Cryptography
+description: |-
+  My friend is obsessed with K-pop. Not casually obsessed, the kind of person who organizes playlists by comeback era and memorizes release dates down to the exact day. He has a terrible habit though. Every password he creates follows the same structure: the title followed by the release date. The release date is always formatted as: YYMMDD. 
+
+  Recently, he got locked out of one of his accounts. He swears the password is one of his favorite K-pop titles, but he can’t remember which era he was “emotionally attached to” when he made it. To help narrow things down, I compiled a list of titles he frequently listens to. Before the account fully locked, I managed to grab a string of letters and numbers stored by the system. So like...can you recover the password please :).
+
+  Flag format: PETIR{password}
+  Example: PETIR{wearecharliekirk676767}
+
+  Note: The intended solver/tool shouldn't take more than 5 minutes
+
+# connection_info: nc 103.185.52.198 123123
+
+##### DON'T CHANGE
+value: 500
+type: dynamic
+extra:
+    initial: 500
+    decay: 25
+    minimum: 100
+##### DON'T CHANGE
+
+flags:
+  - PETIR{loveinmyheart241101}
+
+tags:
+  - baby
+
+files:
+  - dist/hmmmmm.txt
+  - dist/string.txt
+
+state: visible
+
+version: "0.1"

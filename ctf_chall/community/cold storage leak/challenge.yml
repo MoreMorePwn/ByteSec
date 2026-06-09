@@ -1,0 +1,30 @@
+name: "cold storage leak"
+category: Cryptography
+description: |-
+  we found one old encrypted archive blob and that is literally all you get. 
+  このレガシー構成が本当に脆いなら, you should still be able to recover the *** from public data alone.
+
+# connection_info: nc 103.185.52.198 123123
+
+##### DON'T CHANGE
+value: 500
+type: dynamic
+extra:
+    initial: 500
+    decay: 25
+    minimum: 100
+##### DON'T CHANGE
+
+flags:
+  - PETIR{kn4p54ck_1s_n0t_th4t_s4f3_4g41nst_LLL_4tt4cks}
+
+tags:
+  - easy
+
+files:
+  - dist/chall.py
+  - dist/output.txt
+
+state: visible
+
+version: "0.1"

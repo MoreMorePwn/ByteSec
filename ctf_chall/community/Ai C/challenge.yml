@@ -1,0 +1,35 @@
+# Required sections
+name: "Ai C"
+category: Reverse Engineering
+description: |-
+  
+  Isiehter zhaler elly mallivrakey nazhr Ai Deu spel, isac orh ofery gdjeiter elvy rido rigahl fpheidr
+  
+##### TIDAK USAH DIGANTI
+value: 500
+type: dynamic
+
+extra:
+    initial: 500
+    decay: 8
+    minimum: 100
+##### TIDAK USAH DIGANTI
+
+connection_info:
+
+hints: 
+
+flags:
+    # A static case sensitive flag
+    - PETIR{Ai-Deu-spel-isac-orh-ofery-gdjeiter-elvy-rido-rigahl-fpheidr-Ai-Dreww}
+
+tags:
+
+files:
+    - dist/chall
+
+state: hidden
+
+# Specifies what version of the challenge specification was used.
+# Subject to change until ctfcli v1.0.0
+version: "0.1"

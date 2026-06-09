@@ -1,0 +1,27 @@
+name: "pppnnnggg"
+category: Forensic
+description: |-
+
+  eh ini tolong diapakan dulu anunya diapain dulu gitu jangan terlalu diiniin biar ga anuan jadi kayak adalah pokoknya tolong ya
+
+##### DON'T CHANGE
+value: 500
+type: dynamic
+extra:
+  initial: 500
+  decay: 25
+  minimum: 100
+##### DON'T CHANGE
+
+flags:
+  - PETIR{ee33aaa44}
+
+tags:
+  - easy
+
+files: 
+  - dist/challenge.jpg
+
+state: visible
+
+version: "0.1"

@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% block title %}My Submissions - ByteSec{% endblock %}
+{% block content %}
+<div class="max-w-[1100px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-8">
+
+  <header class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+    <div>
+      <p class="font-label-mono text-[12px] text-secondary uppercase tracking-wider mb-2">Account</p>
+      <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary mb-2 font-['Hanken_Grotesk']">My Submissions</h1>
+      <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+        Track articles and community challenges you submitted for review.
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-3">
+      <a href="{{ url_for('main.article_new') }}"
+         class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity inline-flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">article</span> Submit Article
+      </a>
+      <a href="{{ url_for('main.community_submit') }}"
+         class="bg-surface-container-lowest border border-border-muted hover:border-secondary hover:text-secondary text-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full transition-colors inline-flex items-center gap-2">
+        <span class="material-symbols-outlined text-[18px]">flag</span> Submit Challenge
+      </a>
+    </div>
+  </header>
+
+  <section id="article-submissions" class="bg-surface-container-lowest border border-border-muted rounded-xl p-5 flex flex-col gap-4">
+    <div>
+      <h2 class="font-headline-sm text-headline-sm text-primary font-['Hanken_Grotesk']">Article Submissions</h2>
+      <p class="font-body-md text-[14px] text-on-surface-variant">Articles stay pending until an admin reviews them.</p>
+    </div>
+    {% if my_articles %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-outline-variant">
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Title</th>
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Status</th>
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Submitted</th>
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider text-right">Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for article in my_articles %}
+          <tr class="border-b border-outline-variant/50 last:border-b-0">
+            <td class="py-2 pr-4 font-label-mono text-[13px] text-primary">{{ article.title }}</td>
+            <td class="py-2 pr-4">
+              <span class="font-label-mono text-[11px] uppercase px-2 py-0.5 rounded-full border
+                {% if article.status == 'published' %}text-success-green border-success-green/30
+                {% elif article.status == 'rejected' %}text-error border-error/30
+                {% elif article.status == 'pending' %}text-yellow-600 border-yellow-500/30
+                {% else %}text-on-surface-variant border-outline-variant{% endif %}">
+                {{ article.status }}
+              </span>
+            </td>
+            <td class="py-2 pr-4 font-label-mono text-[12px] text-on-surface-variant">{{ article.created_at.strftime('%b %d, %Y') }}</td>
+            <td class="py-2 pr-4 text-right">
+              <a href="{{ url_for('main.article_view', slug=article.slug) }}"
+                 class="font-label-mono text-[12px] text-secondary hover:underline">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="font-body-md text-[14px] text-on-surface-variant">No article submissions yet.</p>
+    {% endif %}
+  </section>
+
+  <section id="challenge-submissions" class="bg-surface-container-lowest border border-border-muted rounded-xl p-5 flex flex-col gap-4">
+    <div>
+      <h2 class="font-headline-sm text-headline-sm text-primary font-['Hanken_Grotesk']">Challenge Submissions</h2>
+      <p class="font-body-md text-[14px] text-on-surface-variant">Community challenges stay pending until an admin reviews them.</p>
+    </div>
+    {% if my_challenges %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-outline-variant">
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Title</th>
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Category</th>
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Status</th>
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Submitted</th>
+            <th class="py-2 pr-4 font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider text-right">Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ch in my_challenges %}
+          <tr class="border-b border-outline-variant/50 last:border-b-0">
+            <td class="py-2 pr-4 font-label-mono text-[13px] text-primary">{{ ch.title }}</td>
+            <td class="py-2 pr-4 font-label-mono text-[12px] text-on-surface-variant">{{ ch.category }}</td>
+            <td class="py-2 pr-4">
+              <span class="font-label-mono text-[11px] uppercase px-2 py-0.5 rounded-full border
+                {% if ch.status == 'approved' %}text-success-green border-success-green/30
+                {% elif ch.status == 'rejected' %}text-error border-error/30
+                {% else %}text-yellow-600 border-yellow-500/30{% endif %}">
+                {{ ch.status }}
+              </span>
+            </td>
+            <td class="py-2 pr-4 font-label-mono text-[12px] text-on-surface-variant">{{ ch.created_at.strftime('%b %d, %Y') }}</td>
+            <td class="py-2 pr-4 text-right">
+              <a href="{{ url_for('main.community_challenge', challenge_id=ch.id) }}"
+                 class="font-label-mono text-[12px] text-secondary hover:underline">View</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="font-body-md text-[14px] text-on-surface-variant">No challenge submissions yet.</p>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

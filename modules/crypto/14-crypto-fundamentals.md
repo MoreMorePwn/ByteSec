@@ -13,8 +13,6 @@ By the end of this module, students will be able to:
 - Use modular arithmetic as arithmetic on remainders
 - Recognize why correctness matters for encryption and decryption
 
-Reference section: [CryptoBook Fundamentals](https://cryptohack.gitbook.io/cryptobook/fundamentals/notation)
-
 ---
 
 ## Lesson Flow
