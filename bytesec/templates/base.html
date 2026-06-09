@@ -5,7 +5,6 @@
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>{% block title %}ByteSec{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}ByteSec - Interactive cybersecurity learning platform{% endblock %}">
-  <meta name="view-transition" content="same-origin">
 
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com" rel="preconnect"/>
@@ -374,28 +373,15 @@
       100% { text-shadow: 3px 0 #ff0066, -3px 0 #4fdbc8; transform: translate(0); opacity: 1; }
     }
 
-    /* ── View Transitions ── */
-    @view-transition {
-      navigation: auto;
+    /* ── Swup Page Transitions ── */
+    html.is-animating #swup {
+      opacity: 0;
+      transform: translateY(-12px);
+      pointer-events: none;
     }
-    ::view-transition-old(root) {
-      animation: 350ms ease-in both vt-fade-out;
-    }
-    ::view-transition-new(root) {
-      animation: 400ms ease-out both vt-fade-in;
-    }
-    @keyframes vt-fade-out {
-      to { opacity: 0; transform: scale(0.97); }
-    }
-    @keyframes vt-fade-in {
-      from { opacity: 0; transform: scale(1.03); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    /* Fallback: page load animation for browsers without View Transitions */
-    @supports not (view-transition-name: root) {
-      main {
-        animation: vt-fade-in 400ms ease-out both;
-      }
+    #swup {
+      transition: opacity 0.35s cubic-bezier(.4,0,.2,1),
+                  transform 0.35s cubic-bezier(.4,0,.2,1);
     }
   </style>
 </head>
@@ -482,7 +468,7 @@
   </nav>
 
   <!-- ── Main Content ── -->
-  <main class="flex-grow pt-16">
+  <main class="flex-grow pt-16" id="swup">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop pt-4">
@@ -493,6 +479,7 @@
       {% endif %}
     {% endwith %}
     {% block content %}{% endblock %}
+    {% block scripts %}{% endblock %}
   </main>
 
   <!-- ── Footer ── -->
@@ -563,6 +550,21 @@
     });
   </script>
 
-  {% block scripts %}{% endblock %}
+  <!-- Swup: SPA-style page transitions -->
+  <script type="module">
+    import Swup from 'https://cdn.jsdelivr.net/npm/swup@4/+esm';
+    import SwupScriptsPlugin from 'https://cdn.jsdelivr.net/npm/@swup/scripts-plugin@2/+esm';
+
+    const swup = new Swup({
+      plugins: [
+        new SwupScriptsPlugin({
+          head: false,
+          body: true
+        })
+      ],
+      animateHistoryBrowsing: true,
+    });
+  </script>
+
 </body>
 </html>
