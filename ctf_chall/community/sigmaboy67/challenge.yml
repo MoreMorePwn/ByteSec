@@ -1,0 +1,52 @@
+# Do not make the challenge name too long
+name: "sigmaboy67"
+
+# Binary Exploitation
+# Cryptography
+# Forensics
+# Misc
+# Reverse Engineering
+# Web Exploitation
+# Other
+category: Cryptography
+
+# You can use <br> to make a new line in the description
+# Using ENTER one time does not make a new line in the description, be sure to ENTER two times to make a new line
+description: |-
+  FYI, I asked my friend for a title for this chall. This is his recommendation (Inisial F), sorry about that.
+
+# ENSURE THE PORT YOU WANT TO USE IS NOT CURRENTLY USED BY ANOTHER CHALLENGE
+# If the challenge does not use a port, you can comment this section out like below
+# connection_info: nc {ip_chall} port_chall
+
+####### DON'T CHANGE #######
+value: 500
+type: dynamic
+extra:
+    initial: 500
+    decay: 8
+    minimum: 100
+####### DON'T CHANGE #######
+
+flags:
+  - PETIR{it_is_what_it_is_theyd_be_like_whos_she_shes_a_whole_different_animal}
+
+# Tags should be in string data type, notice the quotation marks
+# e.g. "easy", "medium", "hard", "67"
+tags:
+  - "easy"
+  # - "medium"
+  # - "hard"
+
+files:
+  - dist/chall.py
+  - dist/out.txt
+
+# SPECIFY AT THE COMMENT BELOW at which wave will the challenge be released (1, 2, 3, etc.)
+# If there are no waves, then just leave it as 1
+# Wave : 1
+state: hidden
+# ENSURE THE STATE IS HIDDEN WHEN YOU FIRST UPLOAD THE CHALLENGE
+# ONLY CHANGE THE STATE TO VISIBLE A FEW HOURS BEFORE THE CTF STARTS
+
+version: "0.1"

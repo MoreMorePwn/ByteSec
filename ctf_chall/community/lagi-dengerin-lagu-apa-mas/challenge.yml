@@ -1,0 +1,35 @@
+name: "lagi dengerin lagu apa mas?"
+category: Forensic
+description: |-
+
+  si mas itu lagi ngedengerin lagu pake tws bluetoothnya yang udah tua dan rusak, 
+  nah saya coba ngecapture trafficnya trus dapet. bantuin saya cari tau dong si mas 
+  sebenernya lagi dengerin lagu apasih?
+
+  flag format : PETIR{artist_songname}
+
+  example : PETIR{Radiohead_Creep} | PETIR{Tame Impala_The Less I Know The Better}
+
+  Note : kalo semisal udah dapet lagunya tapi gatau lagu apa pc author.
+
+##### DON'T CHANGE
+value: 500
+type: dynamic
+extra:
+  initial: 500
+  decay: 25
+  minimum: 100
+##### DON'T CHANGE
+
+flags:
+  - PETIR{The Strokes_The Adults Are Talking}
+
+tags:
+  - medium
+
+files: 
+  - dist/whatSong.pcapng
+
+state: visible
+
+version: "0.1"

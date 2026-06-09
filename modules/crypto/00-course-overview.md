@@ -1,6 +1,6 @@
 # Cryptography: CryptoBook Core Track
 
-> A ByteSec course adapted from the core CryptoHack CryptoBook categories: Fundamentals, Number Theory, Asymmetric Cryptography, and Symmetric Cryptography.
+> A ByteSec course covering fundamentals, number theory, asymmetric cryptography, and symmetric cryptography.
 
 ---
 
@@ -14,8 +14,6 @@ This course intentionally includes only these CryptoBook areas:
 - Symmetric Cryptography
 
 It does not include hashes, lattices, isogenies, appendices, or broader abstract algebra sections.
-
-Reference: [CryptoHack CryptoBook](https://cryptohack.gitbook.io/cryptobook)
 
 ---
 

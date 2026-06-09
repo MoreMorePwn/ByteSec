@@ -1,0 +1,32 @@
+name: "joe mama"
+category: Miscellaneous
+description: |-
+  who even is joe
+  (flag is the coordinate of the sign. submit the latitude and longitude rounded to exactly 4 decimal places)
+
+  Flag format : PETIR{lat,lon} without spaces
+  ex: PETIR{-7.5445,110.8049}"
+
+connection_info:
+
+##### DON'T CHANGE
+value: 500
+type: dynamic
+extra:
+  initial: 500
+  decay: 25
+  minimum: 100
+##### DON'T CHANGE
+
+flags:
+  - PETIR{-6.3235,106.8348}
+
+tags:
+  - easy
+
+files:
+  - dist/joe.jpg
+
+state: visible
+
+version: "0.1"

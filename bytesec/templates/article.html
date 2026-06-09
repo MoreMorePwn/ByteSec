@@ -31,6 +31,18 @@
     <h1 class="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-primary font-['Hanken_Grotesk']">
       {{ article.title }}
     </h1>
+    {% if article.status != 'published' %}
+    <div class="inline-flex w-fit items-center gap-2 font-label-mono text-[12px] uppercase tracking-wider px-3 py-1.5 rounded-full border
+      {% if article.status == 'rejected' %}bg-error/10 text-error border-error/20
+      {% elif article.status == 'pending' %}bg-yellow-500/10 text-yellow-600 border-yellow-500/20
+      {% else %}bg-surface-container text-on-surface-variant border-outline-variant{% endif %}">
+      <span class="material-symbols-outlined text-[15px]">{% if article.status == 'rejected' %}cancel{% elif article.status == 'pending' %}pending{% else %}draft{% endif %}</span>
+      {{ article.status }}
+    </div>
+    <p class="font-body-md text-[14px] text-on-surface-variant">
+      This preview is visible because you submitted it or have admin access. It is not listed publicly until published.
+    </p>
+    {% endif %}
     {% if article.excerpt %}
     <p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">{{ article.excerpt }}</p>
     {% endif %}
@@ -70,6 +82,14 @@
           {% if article.status == 'published' %}Unpublish{% else %}Publish{% endif %}
         </button>
       </form>
+      {% if article.status != 'rejected' %}
+      <form method="post" action="{{ url_for('main.article_reject', article_id=article.id) }}" class="inline">
+        <button type="submit"
+                class="font-label-mono text-[13px] text-error hover:underline inline-flex items-center gap-1 transition-colors">
+          <span class="material-symbols-outlined text-[16px]">cancel</span> Reject
+        </button>
+      </form>
+      {% endif %}
     </div>
     {% endif %}
   </div>

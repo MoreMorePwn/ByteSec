@@ -12,10 +12,10 @@
         Tutorials, writeups, and deep dives from the ByteSec team.
       </p>
     </div>
-    {% if is_admin_user() %}
+    {% if g.user %}
     <a href="{{ url_for('main.article_new') }}"
        class="bg-primary text-on-primary font-label-mono text-label-mono px-5 py-2.5 rounded-full hover:opacity-90 transition-opacity inline-flex items-center gap-2 shrink-0">
-      <span class="material-symbols-outlined text-[18px]">add</span> New Article
+      <span class="material-symbols-outlined text-[18px]">add</span> Submit Article
     </a>
     {% endif %}
   </header>

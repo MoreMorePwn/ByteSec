@@ -5,12 +5,23 @@
 
   <!-- Header -->
   <header class="flex flex-col gap-2">
+    {% if is_admin_user() %}
     <a href="{{ url_for('main.admin_articles') }}" class="font-label-mono text-[13px] text-secondary hover:underline inline-flex items-center gap-1">
       <span class="material-symbols-outlined text-[16px]">arrow_back</span> Article Admin
     </a>
+    {% else %}
+    <a href="{{ url_for('main.articles') }}" class="font-label-mono text-[13px] text-secondary hover:underline inline-flex items-center gap-1">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span> Articles
+    </a>
+    {% endif %}
     <h1 class="font-display-lg-mobile text-display-lg-mobile text-primary font-['Hanken_Grotesk']">
-      {% if article %}Edit Article{% else %}New Article{% endif %}
+      {% if article %}Edit Article{% elif is_admin_user() %}New Article{% else %}Submit Article{% endif %}
     </h1>
+    {% if not is_admin_user() %}
+    <p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+      Your article will be submitted as pending and reviewed by an admin before it can be published.
+    </p>
+    {% endif %}
   </header>
 
   <!-- Form -->
@@ -53,23 +64,27 @@
       </div>
 
       <!-- Status -->
+      {% if is_admin_user() %}
       <div class="flex flex-col gap-2">
         <label class="font-label-mono text-[12px] text-on-surface-variant uppercase tracking-wider">Status</label>
         <select name="status"
                 class="bg-surface-container border border-outline-variant text-primary font-label-mono text-[13px] px-4 py-3 rounded-lg outline-none focus:border-secondary transition-colors">
           <option value="draft" {% if article and article.status == 'draft' %}selected{% endif %}>Draft</option>
+          <option value="pending" {% if article and article.status == 'pending' %}selected{% endif %}>Pending Review</option>
           <option value="published" {% if article and article.status == 'published' %}selected{% endif %}>Published</option>
+          <option value="rejected" {% if article and article.status == 'rejected' %}selected{% endif %}>Rejected</option>
         </select>
       </div>
+      {% endif %}
 
       <!-- Actions -->
       <div class="flex items-center gap-4 pt-2">
         <button type="submit"
                 class="bg-primary text-on-primary font-label-mono text-label-mono px-8 py-3 rounded-full hover:opacity-90 transition-opacity inline-flex items-center gap-2">
           <span class="material-symbols-outlined text-[18px]">{% if article %}save{% else %}add_circle{% endif %}</span>
-          {% if article %}Save Changes{% else %}Create Article{% endif %}
+          {% if article %}Save Changes{% elif is_admin_user() %}Create Article{% else %}Submit for Review{% endif %}
         </button>
-        <a href="{{ url_for('main.admin_articles') }}"
+        <a href="{% if is_admin_user() %}{{ url_for('main.admin_articles') }}{% else %}{{ url_for('main.articles') }}{% endif %}"
            class="font-label-mono text-label-mono text-on-surface-variant px-6 py-3 rounded-full border border-outline-variant hover:border-secondary hover:text-secondary transition-all">
           Cancel
         </a>

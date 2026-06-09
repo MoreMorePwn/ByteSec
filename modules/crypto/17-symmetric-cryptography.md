@@ -13,8 +13,6 @@ By the end of this module, students will be able to:
 - Recognize AES as a block cipher over 16-byte blocks
 - Identify why block cipher modes and nonces matter
 
-Reference sections: [Symmetric Encryption](https://cryptohack.gitbook.io/cryptobook/symmetric-cryptography/encryption), [One Time Pad](https://cryptohack.gitbook.io/cryptobook/symmetric-cryptography/the-one-time-pad), [AES](https://cryptohack.gitbook.io/cryptobook/symmetric-cryptography/aes)
-
 ---
 
 ## Lesson Flow

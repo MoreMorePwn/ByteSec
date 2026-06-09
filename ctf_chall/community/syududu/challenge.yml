@@ -1,0 +1,51 @@
+# Do not make the challenge name too long
+name: "SYUDUDU"
+
+# Binary Exploitation
+# Cryptography
+# Forensics
+# Misc
+# Reverse Engineering
+# Web Exploitation
+# Other
+category: Forensic
+
+# You can use <br> to make a new line in the description
+# Using ENTER one time does not make a new line in the description, be sure to ENTER two times to make a new line
+description: |-
+  gupron aja bisa solve ni challenge
+
+# ENSURE THE PORT YOU WANT TO USE IS NOT CURRENTLY USED BY ANOTHER CHALLENGE
+# If the challenge does not use a port, you can comment this section out like below
+# connection_info: nc {ip_chall} port_chall
+
+####### DON'T CHANGE #######
+value: 500
+type: dynamic
+extra:
+    initial: 500
+    decay: 8
+    minimum: 100
+####### DON'T CHANGE #######
+
+flags:
+  - PETIR{mang_apa_artinya_kosong_tapi_berisi_berisi_tapi_kosong}
+
+# Tags should be in string data type, notice the quotation marks
+# e.g. "easy", "medium", "hard", "67"
+tags:
+  - "baby"
+  # - "medium"
+  # - "hard"
+
+files:
+  - dist/syududu.pcap
+
+# SPECIFY AT THE COMMENT BELOW at which wave will the challenge be released (1, 2, 3, etc.)
+# If there are no waves, then just leave it as 1
+# Wave : 1
+state: hidden
+# ENSURE THE STATE IS HIDDEN WHEN YOU FIRST UPLOAD THE CHALLENGE
+# ONLY CHANGE THE STATE TO VISIBLE A FEW HOURS BEFORE THE CTF STARTS
+
+version: "0.1"

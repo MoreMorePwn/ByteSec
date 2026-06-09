@@ -140,6 +140,10 @@
             </td>
             <td class="py-3 px-4">
               <div class="flex items-center gap-2">
+                <a href="{{ url_for('main.community_challenge', challenge_id=ch.id) }}"
+                   class="bg-surface-container text-on-surface-variant border border-outline-variant font-label-mono text-[11px] px-3 py-1.5 rounded-full hover:border-secondary hover:text-secondary transition-colors flex items-center gap-1">
+                  <span class="material-symbols-outlined text-[14px]">visibility</span> View
+                </a>
                 {% if ch.status != 'approved' %}
                 <form method="post" action="{{ url_for('main.admin_community_review', challenge_id=ch.id, action='approve') }}" class="inline">
                   <button type="submit"

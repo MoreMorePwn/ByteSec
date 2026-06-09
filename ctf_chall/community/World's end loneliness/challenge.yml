@@ -1,0 +1,687 @@
+# Required sections
+name: "World's end loneliness"
+category: Reverse Engineering
+description: |-
+    <style>
+        #endmark-intro-root {
+            position: relative;
+        }
+
+        #endmark-intro-root #endmark-description-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        #endmark-intro-root.endmark-intro-pending #endmark-description-content {
+            visibility: hidden;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .endmark-intro-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .endmark-intro-kaleidoscope {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .endmark-intro-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(6, 17, 44, 0.38);
+            backdrop-filter: blur(3px);
+            transition: background 0.65s ease, backdrop-filter 0.65s ease;
+        }
+
+        .endmark-intro-overlay.video-mode .endmark-intro-backdrop {
+            background: #000000;
+            backdrop-filter: none;
+        }
+
+        .endmark-intro-overlay.video-mode .endmark-banner,
+        .endmark-intro-overlay.video-mode .endmark-banner-buttons {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .endmark-intro-shell {
+            position: relative;
+            z-index: 1;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+
+        .endmark-intro-overlay.video-mode .endmark-intro-shell {
+            padding: 0;
+        }
+
+        .endmark-banner {
+            position: relative;
+            width: min(860px, 90vw);
+            aspect-ratio: 16 / 9;
+            min-height: min(380px, 64vh);
+            filter: drop-shadow(0 24px 70px rgba(0, 0, 0, 0.45));
+            transition: opacity 0.65s ease;
+        }
+
+        .endmark-banner-image {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            object-position: center center;
+        }
+
+        .endmark-banner-buttons {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: clamp(26px, 5vw, 56px);
+            width: 100vw;
+            padding: 0 18px max(10px, env(safe-area-inset-bottom));
+            z-index: 3;
+            transition: opacity 0.65s ease;
+        }
+
+        .endmark-choice-button {
+            flex: 1 1 0;
+            max-width: 220px;
+            position: relative;
+            overflow: visible;
+            background: linear-gradient(135deg, #2f67ff, #55d4ff);
+            border: 0;
+            border-radius: 18px;
+            padding: 8px 10px 10px;
+            cursor: pointer;
+            box-shadow: 0 16px 38px rgba(0, 0, 0, 0.28);
+            transition: transform 0.18s ease, filter 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .endmark-choice-button.is-yes {
+            background: linear-gradient(135deg, #ff9340, #ffd166);
+        }
+
+        .endmark-choice-button:hover,
+        .endmark-choice-button:focus-visible {
+            transform: translateY(-4px) scale(1.02);
+            filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.3));
+            box-shadow: 0 20px 42px rgba(0, 0, 0, 0.34);
+            outline: none;
+        }
+
+        .endmark-choice-button img {
+            display: block;
+            width: 100%;
+            height: auto;
+            position: relative;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .endmark-choice-button[data-burst='1'] {
+            transform: translateY(-2px) scale(1.03);
+        }
+
+        .endmark-choice-emitter {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+            overflow: visible;
+            z-index: 2;
+        }
+
+        .endmark-choice-particle {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 10px;
+            height: 16px;
+            margin-left: -5px;
+            margin-top: -8px;
+            border-radius: 4px;
+            opacity: 0;
+            transform: translate3d(0, 0, 0) scale(0.35) rotate(0deg);
+            transition: transform 900ms cubic-bezier(0.12, 0.8, 0.25, 1), opacity 900ms ease;
+        }
+
+        .endmark-video-card {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            border-radius: 0;
+            background: #000000;
+            box-shadow: none;
+            backdrop-filter: none;
+        }
+
+        .endmark-video-card #endmark-youtube-player {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .endmark-video-card #endmark-youtube-player iframe {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            display: block;
+            width: 177.77777778vh;
+            min-width: 100vw;
+            height: 56.25vw;
+            min-height: 100vh;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.18s ease;
+            border-radius: 0;
+            background: #000000;
+            border: 0;
+        }
+
+        .endmark-video-card[data-ready='1'] iframe {
+            opacity: 1;
+        }
+
+        #prism-video-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .prism-video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+        }
+
+        .prism-video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #prism-author {
+            margin-top: 0.75em;
+            font-size: 0.95em;
+            opacity: 0.9;
+        }
+
+        @media (max-width: 720px) {
+            .endmark-banner {
+                min-height: 340px;
+            }
+
+            .endmark-banner-buttons {
+                width: min(96vw, 440px);
+                gap: 16px;
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .endmark-choice-button {
+                max-width: 190px;
+            }
+
+            .endmark-video-card {
+                padding: 0;
+                border-radius: 0;
+            }
+        }
+    </style>
+
+    <img
+        src="x"
+        alt=""
+        style="display:none"
+        onerror="if(!this.dataset.booted){this.dataset.booted='1';var s=document.getElementById('endmark-intro-script');if(s){Function(s.textContent)();}}">
+
+    <div id="endmark-intro-root" class="endmark-intro-pending">
+        <div id="endmark-description-content">
+            <div id="prism-video-container">
+                <div class="prism-video-wrapper">
+                    <iframe
+                        id="youtube-player"
+                        width="560"
+                        height="315"
+                        src="https://www.youtube.com/embed/Zp50fG721ko"
+                        title="Challenge Video"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+                <p><b>Flag Format:</b> PETIR{key1-key2-key3-key4-key5-key6-key7}</p>
+            </div>
+        </div>
+    </div>
+
+    <script id="endmark-intro-script" type="text/plain">
+    (function() {
+        var introRoot = document.getElementById('endmark-intro-root');
+        if (!introRoot) {
+            return;
+        }
+
+        if (typeof window.__endmarkIntroCleanup === 'function') {
+            window.__endmarkIntroCleanup(false);
+        }
+
+        var choiceKey = 'ctfd-endmark-intro-choice:worlds-end-loneliness';
+        var bannerUrl = 'https://petirsec.my.id/files/4d727ea06de835b4d07c3e34e83dbe60/banner_bgrm.png';
+        var videoId = 'Zp50fG721ko';
+        var entryAudioUrl = 'https://petirsec.my.id/files/f2502e4b3cc0b1418aec61525c7434fe/KALEIDXSCOPE_Final_Sequence.wav';
+        var noButtonUrl = 'https://petirsec.my.id/files/f6c0323b3f887bf1f8ee584e55ff3fb2/No_button.png';
+        var noSoundUrl = 'https://petirsec.my.id/files/274fd176669a5e426612e306c969e7f7/no_sound.wav';
+        var yesButtonUrl = 'https://petirsec.my.id/files/58d99cf9d94a3341c4e89b2d8627f2d2/Yes_button.png';
+        var yesSoundUrl = 'https://petirsec.my.id/files/2ac2b056acbd2809c3d756b0233d9219/yes_sound.wav';
+        var kaleidoscopeImageUrl = 'https://petirsec.my.id/files/79247f3b8545ce6eba4fb83a2faf353e/black.png';
+
+        function getStoredChoice() {
+            try {
+                return window.localStorage ? window.localStorage.getItem(choiceKey) : null;
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function storeChoice(choice) {
+            try {
+                if (window.localStorage) {
+                    window.localStorage.setItem(choiceKey, choice);
+                }
+            } catch (error) {}
+        }
+
+        if (getStoredChoice()) {
+            introRoot.classList.remove('endmark-intro-pending');
+            return;
+        }
+
+        var overlay = document.createElement('div');
+        overlay.className = 'endmark-intro-overlay';
+        overlay.innerHTML = [
+            '<canvas class="endmark-intro-kaleidoscope" aria-hidden="true"></canvas>',
+            '<div class="endmark-intro-backdrop"></div>',
+            '<div class="endmark-intro-shell">',
+            '    <div class="endmark-banner">',
+            '        <img class="endmark-banner-image" src="' + bannerUrl + '" alt="Challenge intro prompt">',
+            '    </div>',
+            '    <div class="endmark-banner-buttons">',
+            '        <button type="button" class="endmark-choice-button is-no" data-choice="no" aria-label="No">',
+            '            <img src="' + noButtonUrl + '" alt="No">',
+            '        </button>',
+            '        <button type="button" class="endmark-choice-button is-yes" data-choice="yes" aria-label="Yes">',
+            '            <img src="' + yesButtonUrl + '" alt="Yes">',
+            '        </button>',
+            '    </div>',
+            '</div>'
+        ].join('');
+        introRoot.appendChild(overlay);
+
+        var canvas = overlay.querySelector('.endmark-intro-kaleidoscope');
+        var shell = overlay.querySelector('.endmark-intro-shell');
+        var ctx = canvas.getContext('2d');
+        var dpr = Math.max(window.devicePixelRatio || 1, 1);
+        var width = 0;
+        var height = 0;
+        var radius = 0;
+        var frameId = 0;
+        var rotation = 0;
+        var offsetX = 0;
+        var offsetY = 0;
+        var image = new Image();
+        var pattern = null;
+        var observer = null;
+        var entryAudio = new Audio(entryAudioUrl);
+        var cleanedUp = false;
+        var settings = {
+            slices: 8,
+            zoom: 1.5,
+            rotationSpeed: 0.002,
+            offsetScale: 0.8,
+            autoPanSpeed: 0.6,
+            autoPanAmplitude: 0.35
+        };
+
+        entryAudio.loop = true;
+        entryAudio.volume = 0.15;
+        entryAudio.preload = 'auto';
+
+        function safePlay(media) {
+            if (!media || typeof media.play !== 'function') {
+                return;
+            }
+            var playResult = media.play();
+            if (playResult && typeof playResult.catch === 'function') {
+                playResult.catch(function() {});
+            }
+        }
+
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            radius = Math.sqrt((width * width) + (height * height));
+            canvas.width = Math.ceil(width * dpr);
+            canvas.height = Math.ceil(height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
+
+        function drawFrame(timestamp) {
+            if (!pattern) {
+                frameId = window.requestAnimationFrame(drawFrame);
+                return;
+            }
+
+            var step = (Math.PI * 2) / settings.slices;
+            var pan = radius * settings.autoPanAmplitude;
+            var t = timestamp || 0;
+            offsetX = Math.sin(t * settings.autoPanSpeed * 0.001) * pan;
+            offsetY = Math.cos(t * settings.autoPanSpeed * 0.0009) * pan;
+            rotation -= settings.rotationSpeed;
+
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = pattern;
+
+            for (var i = 0; i < settings.slices; i += 1) {
+                ctx.save();
+                ctx.translate(width / 2, height / 2);
+                ctx.rotate((i * step) + rotation);
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.arc(0, 0, radius, -step * 0.52, step * 0.52);
+                ctx.closePath();
+                ctx.clip();
+                ctx.rotate(Math.PI / 2);
+                ctx.scale((i % 2 ? -1 : 1) * settings.zoom, settings.zoom);
+                ctx.translate(offsetX - (image.width / 2), offsetY - (image.height / 2));
+                ctx.scale(settings.offsetScale, settings.offsetScale);
+                ctx.fillRect(-radius * 2, -radius * 2, radius * 4, radius * 4);
+                ctx.restore();
+            }
+
+            frameId = window.requestAnimationFrame(drawFrame);
+        }
+
+        function stopEntryAudio() {
+            entryAudio.pause();
+            entryAudio.currentTime = 0;
+        }
+
+        function playChoiceSound(url) {
+            var sound = new Audio(url);
+            sound.preload = 'auto';
+            sound.volume = 0.15;
+            safePlay(sound);
+        }
+
+        function burstConfetti(button, palette) {
+            var emitter = button.querySelector('.endmark-choice-emitter');
+            if (!emitter) {
+                emitter = document.createElement('span');
+                emitter.className = 'endmark-choice-emitter';
+                button.appendChild(emitter);
+            }
+
+            button.setAttribute('data-burst', '1');
+            window.setTimeout(function() {
+                button.removeAttribute('data-burst');
+            }, 260);
+
+            for (var i = 0; i < 26; i += 1) {
+                var particle = document.createElement('span');
+                var angle = (-95 + (Math.random() * 190)) * (Math.PI / 180);
+                var distance = 70 + (Math.random() * 130);
+                var lift = 20 + (Math.random() * 60);
+                var size = 6 + (Math.random() * 8);
+                var dx = Math.cos(angle) * distance;
+                var dy = (Math.sin(angle) * distance) - lift;
+                var rotate = -240 + (Math.random() * 480);
+
+                particle.className = 'endmark-choice-particle';
+                particle.style.width = size + 'px';
+                particle.style.height = (size * 1.5) + 'px';
+                particle.style.background = palette[i % palette.length];
+                particle.style.transitionDelay = (Math.random() * 80) + 'ms';
+                emitter.appendChild(particle);
+
+                (function(node, finalX, finalY, finalRotate) {
+                    window.requestAnimationFrame(function() {
+                        node.style.opacity = '1';
+                        node.style.transform = 'translate3d(' + finalX + 'px, ' + finalY + 'px, 0) scale(1) rotate(' + finalRotate + 'deg)';
+                    });
+                    window.setTimeout(function() {
+                        node.style.opacity = '0';
+                    }, 420);
+                    window.setTimeout(function() {
+                        if (node.parentNode) {
+                            node.parentNode.removeChild(node);
+                        }
+                    }, 980);
+                })(particle, dx, dy, rotate);
+            }
+        }
+
+        function revealDescription() {
+            introRoot.classList.remove('endmark-intro-pending');
+        }
+
+        function cleanup(markComplete) {
+            if (cleanedUp) {
+                return;
+            }
+            cleanedUp = true;
+            stopEntryAudio();
+            if (frameId) {
+                window.cancelAnimationFrame(frameId);
+                frameId = 0;
+            }
+            window.removeEventListener('resize', resizeCanvas);
+            if (observer) {
+                observer.disconnect();
+            }
+            if (overlay.parentNode) {
+                overlay.parentNode.removeChild(overlay);
+            }
+            if (markComplete) {
+                revealDescription();
+            }
+            if (window.__endmarkIntroCleanup === cleanup) {
+                window.__endmarkIntroCleanup = null;
+            }
+        }
+
+        window.__endmarkIntroCleanup = cleanup;
+
+        function whenYouTubeReady(callback) {
+            if (window.YT && window.YT.Player) {
+                callback();
+                return;
+            }
+
+            window.__endmarkYouTubeReadyQueue = window.__endmarkYouTubeReadyQueue || [];
+            window.__endmarkYouTubeReadyQueue.push(callback);
+
+            if (!window.__endmarkYouTubeApiLoading) {
+                window.__endmarkYouTubeApiLoading = true;
+                window.onYouTubeIframeAPIReady = function() {
+                    var queue = window.__endmarkYouTubeReadyQueue || [];
+                    while (queue.length) {
+                        queue.shift()();
+                    }
+                };
+
+                var apiScript = document.createElement('script');
+                apiScript.src = 'https://www.youtube.com/iframe_api';
+                document.head.appendChild(apiScript);
+            }
+        }
+
+        function showVideoIntro() {
+            overlay.classList.add('video-mode');
+            shell.innerHTML = [
+                '<div class="endmark-video-card">',
+                '    <div id="endmark-youtube-player"></div>',
+                '</div>'
+            ].join('');
+
+            var card = shell.querySelector('.endmark-video-card');
+            var playerRoot = shell.querySelector('#endmark-youtube-player');
+            if (!playerRoot) {
+                cleanup(true);
+                return;
+            }
+
+            whenYouTubeReady(function() {
+                if (!document.body.contains(playerRoot)) {
+                    return;
+                }
+
+                new window.YT.Player('endmark-youtube-player', {
+                    width: '100%',
+                    height: '100%',
+                    videoId: videoId,
+                    playerVars: {
+                        autoplay: 1,
+                        controls: 0,
+                        disablekb: 1,
+                        fs: 0,
+                        iv_load_policy: 3,
+                        modestbranding: 1,
+                        playsinline: 1,
+                        rel: 0
+                    },
+                    events: {
+                        onReady: function(event) {
+                            if (card) {
+                                card.setAttribute('data-ready', '1');
+                            }
+                            event.target.setVolume(15);
+                            event.target.playVideo();
+                        },
+                        onStateChange: function(event) {
+                            if (window.YT && event.data === window.YT.PlayerState.ENDED) {
+                                cleanup(true);
+                            }
+                        },
+                        onError: function() {
+                            cleanup(true);
+                        }
+                    }
+                });
+            });
+        }
+
+        function handleChoice(choice) {
+            var button = overlay.querySelector('.endmark-choice-button[data-choice="' + choice + '"]');
+            var palette = choice === 'yes'
+                ? ['#ff9f43', '#ffd166', '#ff7b54', '#ffb703']
+                : ['#4dabff', '#7dd3fc', '#2563eb', '#93c5fd'];
+
+            storeChoice(choice);
+            stopEntryAudio();
+            if (button) {
+                burstConfetti(button, palette);
+            }
+
+            if (choice === 'yes') {
+                playChoiceSound(yesSoundUrl);
+                window.setTimeout(function() {
+                    overlay.classList.add('video-mode');
+                }, 260);
+                window.setTimeout(function() {
+                    showVideoIntro();
+                }, 720);
+                return;
+            }
+
+            playChoiceSound(noSoundUrl);
+            window.setTimeout(function() {
+                cleanup(true);
+            }, 220);
+        }
+
+        overlay.addEventListener('click', function(event) {
+            var button = event.target.closest('.endmark-choice-button');
+            if (!button) {
+                return;
+            }
+            handleChoice(button.getAttribute('data-choice'));
+        });
+
+        observer = new MutationObserver(function() {
+            if (!document.body.contains(introRoot)) {
+                cleanup(false);
+            }
+        });
+        observer.observe(document.body, { childList: true, subtree: true });
+
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+        image.onload = function() {
+            pattern = ctx.createPattern(image, 'repeat');
+            frameId = window.requestAnimationFrame(drawFrame);
+        };
+        image.src = kaleidoscopeImageUrl;
+        safePlay(entryAudio);
+    })();
+    </script>
+
+
+##### TIDAK USAH DIGANTI
+value: 500
+type: dynamic
+
+extra:
+    initial: 500
+    decay: 25
+    minimum: 100
+##### TIDAK USAH DIGANTI
+
+hints: 
+
+flags:
+    # A static case sensitive flag
+    - PETIR{L1z&4c1d-Ap0ll0raputaW0r1d3nder-D0ntF1gh7TheMu51c4ndR3v1ve7h3Mel0dy!-Str419htInt0Th3L1ghts-4byssalGr4y3uchr0n1a-XaleidscopiX&R3f:r4inF0r7thHeaven-:)WErAninto4PR0B1emtHEny0USaVEdusThAnky0uwe'rEs71llCoLl3ctiN9fragMentSaNDErROrSANdnOWWE'1LrEst4r7tHI5G4ME9OoDbyewe'r3w4TChIN9oveRY0u(THrougHTHI5ROunDw1ND0W)pri5m_In1tI4l1ZA7iON[kAL3IdXSc0Pe]_Fai1EDweRanint0TroUBLEANdyou5aV3Du57HANky0UWEaReS7iL1co1l3cT1nGFRAgmenTsand3Rr0r5ANdnowi'MgOIng70rE5tArtThisG4m3g0odbY3weareWatCh1NgY0u(b3y0NdTh1SRouNDSCrEEn)}
+tags:
+    - hard
+
+files:
+    - dist/dist.zip
+
+state: visible
+
+# Specifies what version of the challenge specification was used.
+# Subject to change until ctfcli v1.0.0
+version: "0.1"
