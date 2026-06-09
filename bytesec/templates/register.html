@@ -5,7 +5,7 @@
 <div class="min-h-[calc(100vh-4rem)] flex items-center justify-center px-margin-mobile bg-grid-pattern relative overflow-hidden">
   <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background opacity-90"></div>
   <!-- Matrix Rain Canvas -->
-  <canvas id="matrix-canvas" class="absolute inset-0 w-full h-full opacity-[0.08] dark:opacity-[0.12] pointer-events-none"></canvas>
+  <canvas id="matrix-canvas" class="absolute inset-0 w-full h-full pointer-events-none" style="opacity:0"></canvas>
   <div class="relative z-10 w-full max-w-md">
     <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-8 shadow-sm">
       <div class="flex justify-center mb-6">
@@ -57,7 +57,7 @@
 
 {% block scripts %}
 <script>
-// Matrix Rain — ByteSec
+// Matrix Rain — ByteSec (theme-aware)
 (function(){
   const canvas = document.getElementById('matrix-canvas');
   if (!canvas) return;
@@ -65,33 +65,59 @@
   let W, H, cols = [], fontSize = 14;
   const chars = 'アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン0123456789ABCDEF';
 
+  const themes = {
+    dark:  { char: '#4fdbc8', dim: 'rgba(79,219,200,0.12)',  trail: 'rgba(5,20,36,0.06)',   opacity: 0.14 },
+    light: { char: '#0a897a', dim: 'rgba(10,137,122,0.15)',  trail: 'rgba(240,245,250,0.06)', opacity: 0.18 }
+  };
+
+  function isDark() {
+    return document.documentElement.classList.contains('dark');
+  }
+
+  function getTheme() {
+    return isDark() ? themes.dark : themes.light;
+  }
+
+  function applyTheme() {
+    canvas.style.opacity = getTheme().opacity;
+  }
+
   function resize() {
     const parent = canvas.parentElement;
     W = canvas.width = parent.offsetWidth;
     H = canvas.height = parent.offsetHeight;
-    cols = Array(Math.ceil(W / fontSize)).fill(1);
+    cols = Array(Math.ceil(W / fontSize)).fill(0);
   }
 
   function draw() {
-    ctx.fillStyle = 'rgba(0,0,0,0.05)';
+    const t = getTheme();
+    ctx.fillStyle = t.trail;
     ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = '#0f0';
     ctx.font = fontSize + 'px monospace';
 
     for (let i = 0; i < cols.length; i++) {
       const char = chars[Math.floor(Math.random() * chars.length)];
       const x = i * fontSize;
       const y = cols[i] * fontSize;
+      ctx.fillStyle = t.char;
       ctx.fillText(char, x, y);
+      if (cols[i] > 0 && Math.random() > 0.6) {
+        const prevChar = chars[Math.floor(Math.random() * chars.length)];
+        ctx.fillStyle = t.dim;
+        ctx.fillText(prevChar, x, y - fontSize);
+      }
       if (y > H && Math.random() > 0.975) cols[i] = 0;
-      ctx.fillStyle = y > H * 0.7 ? 'rgba(0,255,0,0.15)' : '#0f0';
       cols[i]++;
     }
     requestAnimationFrame(draw);
   }
 
+  const observer = new MutationObserver(applyTheme);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
   resize();
   window.addEventListener('resize', resize);
+  applyTheme();
   draw();
 })();
 </script>
