@@ -1,7 +1,8 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard — ByteSec{% endblock %}
 {% block content %}
-<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
+<canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none" style="opacity:0;z-index:0;will-change:opacity"></canvas>
+<div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12 relative z-10">
   <!-- Header -->
   <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
     <div>
@@ -84,4 +85,91 @@
     </div>
   </section>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ByteSec Particle Network — theme-aware, interactive
+(function(){
+  var c=document.getElementById('particle-canvas');if(!c)return;
+  var x=c.getContext('2d');
+  var W,H,pts=[],mouse={x:-1e4,y:-1e4};
+  var COUNT=80,CONN=150,REPEL=80;
+  var scrollY=0,scrollF=0.3;
+
+  var COL={dark:{p:'#4fdbc8',l:'#4fdbc8'},light:{p:'#08695f',l:'#08695f'}};
+  function dk(){return document.documentElement.classList.contains('dark');}
+
+  function P(){
+    this.x=Math.random()*W;this.y=Math.random()*H;
+    this.vx=(Math.random()-0.5)*0.4;this.vy=(Math.random()-0.5)*0.4;
+    this.r=1+Math.random()*1.5;this.ph=Math.random()*Math.PI*2;
+    this.dp=0.15+Math.random()*0.35; // depth layer for parallax
+  }
+
+  function resize(){
+    W=c.width=window.innerWidth;H=c.height=window.innerHeight;
+    pts=[];for(var i=0;i<COUNT;i++)pts.push(new P());
+  }
+
+  document.addEventListener('mousemove',function(e){mouse.x=e.clientX;mouse.y=e.clientY;});
+  document.addEventListener('mouseleave',function(){mouse.x=-1e4;mouse.y=-1e4;});
+  window.addEventListener('scroll',function(){scrollY=window.pageYOffset||document.documentElement.scrollTop;},{passive:true});
+
+  function draw(){
+    x.clearRect(0,0,W,H);
+    var col=dk()?COL.dark:COL.light,t=Date.now()/3000;
+    var i,j,a,b,dx,dy,dist,px,py;
+
+    // update + draw dots
+    for(i=0;i<pts.length;i++){
+      a=pts[i];
+      dx=a.x-mouse.x;dy=a.y-mouse.y;
+      dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<REPEL&&dist>0){
+        var f=(REPEL-dist)/REPEL*0.3;
+        a.vx+=dx/dist*f;a.vy+=dy/dist*f;
+      }
+      a.vx*=0.99;a.vy*=0.99;
+      a.x+=a.vx;a.y+=a.vy;
+      if(a.x<-20)a.x=W+20;if(a.x>W+20)a.x=-20;
+      if(a.y<-20)a.y=H+20;if(a.y>H+20)a.y=-20;
+
+      // parallax offset
+      px=a.x;py=a.y+scrollY*a.dp*scrollF;
+
+      x.globalAlpha=0.5+0.15*Math.sin(t*0.8+a.ph);
+      x.fillStyle=col.p;
+      x.beginPath();x.arc(px,py,a.r,0,Math.PI*2);x.fill();
+    }
+
+    // connections
+    for(i=0;i<pts.length;i++){
+      for(j=i+1;j<pts.length;j++){
+        a=pts[i];b=pts[j];
+        dx=(a.x+scrollY*a.dp*scrollF)-(b.x+scrollY*b.dp*scrollF);
+        dy=(a.y+scrollY*a.dp*scrollF)-(b.y+scrollY*b.dp*scrollF);
+        dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<CONN){
+          x.globalAlpha=(1-dist/CONN)*0.12;
+          x.strokeStyle=col.l;x.lineWidth=0.5;
+          x.beginPath();
+          x.moveTo(a.x+scrollY*a.dp*scrollF,a.y+scrollY*a.dp*scrollF);
+          x.lineTo(b.x+scrollY*b.dp*scrollF,b.y+scrollY*b.dp*scrollF);
+          x.stroke();
+        }
+      }
+    }
+
+    c.style.opacity=1;
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(function(){
+    resize();window.addEventListener('resize',resize);
+    draw();
+    new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  });
+})();
+</script>
 {% endblock %}

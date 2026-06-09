@@ -4,13 +4,17 @@
 {% block content %}
 <!-- Hero -->
 <section class="w-full relative overflow-hidden pt-16 pb-20 bg-grid-pattern">
+  <div id="hero-particles" class="absolute inset-0 z-0 pointer-events-none"></div>
   <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background opacity-90"></div>
   <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop relative z-10 flex flex-col items-center text-center">
     <div class="inline-flex items-center gap-2 bg-surface-container-lowest border border-border-muted rounded-full px-4 py-1.5 mb-6">
       <span class="material-symbols-outlined text-secondary text-[18px]">bolt</span>
       <span class="font-label-mono text-[12px] text-on-surface-variant">Interactive CTF Learning Platform</span>
     </div>
-    <h1 class="font-display-lg text-display-lg text-primary mb-4 max-w-3xl">Learn CTF<br>By Doing.</h1>
+    <h1 class="font-display-lg text-display-lg text-primary mb-4 max-w-3xl">
+  <span class="glitch" data-text="Learn CTF">Learn CTF</span><br>
+  <span class="glitch" data-text="By Doing.">By Doing.</span>
+</h1>
     <p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl mx-auto mb-8">
       ByteSec turns cybersecurity practice into guided learning: concept-first lessons, small interactive checks, instant feedback, progress tracking, and CTF challenges across Web, Reverse Engineering, Pwn, Forensics, and Cryptography.
     </p>
@@ -119,4 +123,102 @@
     {% endfor %}
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ByteSec Particle System — Three.js (theme-aware)
+(function() {
+  var container = document.getElementById('hero-particles');
+  if (!container || typeof THREE === 'undefined') return;
+
+  var W = container.offsetWidth;
+  var H = container.offsetHeight;
+
+  var COLORS = { dark: '#4fdbc8', light: '#08695f' };
+  function getHex() { return isDark() ? COLORS.dark : COLORS.light; }
+  function isDark() { return document.documentElement.classList.contains('dark'); }
+
+  /* ── Scene ───────────────────────────────── */
+  var scene = new THREE.Scene();
+  var camera = new THREE.OrthographicCamera(0, W, H, 0, -10, 10);
+  camera.position.z = 5;
+
+  var renderer = new THREE.WebGLRenderer({ alpha: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.domElement.style.position = 'absolute';
+  renderer.domElement.style.inset = '0';
+  renderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(renderer.domElement);
+
+  /* ── Particles ───────────────────────────── */
+  var COUNT = 70;
+  var pos = new Float32Array(COUNT * 3);
+  var meta = [];
+
+  for (var i = 0; i < COUNT; i++) {
+    pos[i*3]   = Math.random() * W;
+    pos[i*3+1] = Math.random() * H;
+    pos[i*3+2] = 0;
+    meta.push({
+      vx: (Math.random() - 0.5) * 0.12,
+      vy: 0.15 + Math.random() * 0.5,   // upward drift
+      size: 1.5 + Math.random() * 2.5
+    });
+  }
+
+  var geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+
+  var mat = new THREE.PointsMaterial({
+    color: getHex(),
+    size: 2.5,
+    transparent: true,
+    opacity: isDark() ? 0.5 : 0.7,
+    blending: isDark() ? THREE.AdditiveBlending : THREE.NormalBlending,
+    sizeAttenuation: false
+  });
+
+  var points = new THREE.Points(geo, mat);
+  scene.add(points);
+
+  /* ── Animation ───────────────────────────── */
+  function animate() {
+    requestAnimationFrame(animate);
+    var p = geo.attributes.position.array;
+    for (var i = 0; i < COUNT; i++) {
+      var d = meta[i];
+      p[i*3]   += d.vx;
+      p[i*3+1] += d.vy;
+      if (p[i*3] < -15)    p[i*3] = W + 15;
+      if (p[i*3] > W + 15) p[i*3] = -15;
+      if (p[i*3+1] < -15)  p[i*3+1] = H + 15;
+      if (p[i*3+1] > H+15) p[i*3+1] = -15;
+    }
+    geo.attributes.position.needsUpdate = true;
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  /* ── Resize ─────────────────────────────── */
+  window.addEventListener('resize', function() {
+    W = container.offsetWidth;
+    H = container.offsetHeight;
+    camera.right = W;
+    camera.top = H;
+    camera.updateProjectionMatrix();
+    renderer.setSize(W, H);
+  });
+
+  /* ── Theme toggle ───────────────────────── */
+  var observer = new MutationObserver(function() {
+    mat.color.set(getHex());
+    mat.opacity = isDark() ? 0.5 : 0.7;
+    mat.blending = isDark() ? THREE.AdditiveBlending : THREE.NormalBlending;
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+})();
+</script>
 {% endblock %}

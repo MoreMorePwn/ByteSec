@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{% if selected_course %}{{ selected_course.title }}{% else %}Courses{% endif %} — ByteSec{% endblock %}
 {% block content %}
+<canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none" style="opacity:0;z-index:0;will-change:opacity"></canvas>
 <!-- Hero -->
 <section class="w-full relative overflow-hidden pt-16 pb-12 border-b border-border-muted bg-grid-pattern">
   <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background opacity-90"></div>
@@ -28,11 +29,11 @@
 <section class="max-w-[1200px] w-full mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
   {% for track in visible_courses %}
   <div class="flex flex-col gap-6">
-    <article class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8 hover:shadow-md transition-shadow duration-300 flex flex-col {{ 'md:flex-row' if selected_course else '' }} gap-8 relative overflow-hidden group">
+    <article class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8 hover:shadow-md transition-shadow duration-300 flex flex-col gap-8 relative overflow-hidden group">
       <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
 
       <!-- Path Info -->
-      <div class="min-w-0 flex-1 flex flex-col items-start justify-center pr-4">
+      <div class="min-w-0 flex flex-col items-start justify-center">
         <div class="flex flex-wrap items-center gap-2 mb-3">
           <span class="font-label-mono text-label-mono bg-surface-container py-1 px-2 rounded text-on-surface-variant border border-outline-variant">{{ track.label }}</span>
           <span class="font-label-mono text-label-mono text-secondary flex items-center gap-1">
@@ -40,9 +41,9 @@
           </span>
         </div>
         <h2 class="font-headline-md text-headline-md text-primary mb-2">{{ track.title }}</h2>
-        <p class="font-body-md text-body-md text-on-surface-variant mb-5">{{ track.description }}</p>
+        <p class="font-body-md text-body-md text-on-surface-variant mb-5 max-w-2xl">{{ track.description }}</p>
 
-        <div class="grid grid-cols-3 gap-3 w-full mb-6">
+        <div class="grid grid-cols-3 gap-3 w-full max-w-md mb-6">
           <div class="bg-surface-container rounded-lg border border-outline-variant p-3">
             <p class="font-headline-sm text-[18px] text-primary">{{ track.modules|length }}</p>
             <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Modules</p>
@@ -72,37 +73,63 @@
           {% endif %}
         </div>
       </div>
-
-      {% if selected_course %}
-      <!-- Node Visualizer -->
-      <div class="min-w-0 flex-1 bg-surface rounded-lg border border-border-muted p-4 flex flex-col">
-        <h3 class="font-label-mono text-label-mono text-on-surface-variant mb-2 uppercase tracking-widest text-xs">Course Sequence</h3>
-        <div class="flex items-center relative py-1 overflow-x-auto">
-          {% for mod in track.modules %}
-          {% set progress = mod_progress[mod.id] %}
-          <div class="node-connector {{ 'completed' if progress.pct >= 100 else '' }} relative flex flex-col items-center group cursor-pointer z-10 w-9 sm:w-10 lg:w-12 {{ 'mr-2 sm:mr-3 lg:mr-4' if not loop.last else '' }} flex-shrink-0" title="{{ mod.title }}">
-            {% if progress.pct >= 100 %}
-            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-secondary bg-surface flex items-center justify-center text-secondary transition-transform group-hover:scale-110">
-              <span class="material-symbols-outlined font-bold text-[16px] sm:text-[18px] lg:text-[22px]">check</span>
-            </div>
-            {% elif progress.pct > 0 %}
-            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-secondary bg-secondary-container flex items-center justify-center text-on-secondary-container transition-transform group-hover:scale-110">
-              <span class="material-symbols-outlined font-bold text-[16px] sm:text-[18px] lg:text-[22px]" style="font-variation-settings:'FILL' 1">terminal</span>
-            </div>
-            {% else %}
-            <div class="w-9 h-9 sm:w-10 sm:h-10 lg:w-12 lg:h-12 rounded-full border-2 border-outline-variant bg-surface flex items-center justify-center text-outline">
-              <span class="material-symbols-outlined text-[16px] sm:text-[18px] lg:text-[22px]">lock</span>
-            </div>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-      {% endif %}
     </article>
 
-    <!-- Module List -->
     {% if selected_course %}
+    <!-- Course Sequence - standalone -->
+    <div class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8">
+      <div class="flex items-center gap-3 mb-5">
+        <h3 class="font-label-mono text-label-mono text-secondary uppercase tracking-widest text-xs">Course Sequence</h3>
+        <span class="font-label-mono text-[11px] text-on-surface-variant">{{ track.modules|length }} modules</span>
+      </div>
+      <div class="flex flex-wrap justify-center sm:justify-start gap-3">
+        {% for mod in track.modules %}
+        {% set progress = mod_progress[mod.id] %}
+        {% if mod.lessons %}
+        <a href="{{ url_for('main.lesson_view', lesson_id=mod.lessons[0].id) }}"
+           class="flex items-center gap-3 min-w-[200px] sm:min-w-[230px] px-3 py-2.5 rounded-lg border transition-all group
+                  {% if progress.pct >= 100 %}
+                    border-secondary/40 bg-secondary/5 hover:border-secondary hover:bg-secondary/10
+                  {% elif progress.pct > 0 %}
+                    border-secondary/30 bg-secondary-container/30 hover:border-secondary hover:bg-secondary-container/50
+                  {% else %}
+                    border-outline-variant/50 bg-surface hover:border-secondary/60 hover:bg-surface-container
+                  {% endif %}">
+          <!-- Module number circle -->
+          <div class="flex-shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center
+                      {% if progress.pct >= 100 %}border-secondary text-secondary
+                      {% elif progress.pct > 0 %}border-secondary text-secondary bg-secondary-container
+                      {% else %}border-outline-variant text-outline{% endif %}">
+            {% if progress.pct >= 100 %}
+            <span class="material-symbols-outlined font-bold text-sm">check</span>
+            {% elif progress.pct > 0 %}
+            <span class="material-symbols-outlined font-bold text-sm" style="font-variation-settings:'FILL' 1">terminal</span>
+            {% else %}
+            <span class="font-label-mono text-xs font-bold">{{ loop.index }}</span>
+            {% endif %}
+          </div>
+          <!-- Title + meta -->
+          <div class="flex-1 min-w-0">
+            <p class="font-label-mono text-xs text-primary group-hover:text-secondary transition-colors truncate font-medium">{{ mod.title }}</p>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span class="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0
+                {% if mod.difficulty == 'Beginner' %}" style="background-color:#22c55e"
+                {% elif mod.difficulty == 'Intermediate' %}" style="background-color:#eab308"
+                {% else %}" style="background-color:#ef4444{% endif %}"></span>
+              <span class="font-label-mono text-[9px] text-on-surface-variant">{{ mod.difficulty }}</span>
+              <span class="w-0.5 h-0.5 rounded-full bg-outline-variant"></span>
+              <span class="font-label-mono text-[9px] text-on-surface-variant">{{ mod.estimated_minutes }}m</span>
+            </div>
+          </div>
+          <!-- Status arrow -->
+          <span class="material-symbols-outlined text-sm text-on-surface-variant/40 group-hover:text-secondary transition-colors flex-shrink-0">arrow_forward</span>
+        </a>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Module List -->
     <div class="flex flex-col gap-4">
       {% for mod in track.modules %}
       {% set progress = mod_progress[mod.id] %}
@@ -142,4 +169,91 @@
   </div>
   {% endfor %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ByteSec Particle Network — theme-aware, interactive
+(function(){
+  var c=document.getElementById('particle-canvas');if(!c)return;
+  var x=c.getContext('2d');
+  var W,H,pts=[],mouse={x:-1e4,y:-1e4};
+  var COUNT=80,CONN=150,REPEL=80;
+  var scrollY=0,scrollF=0.3;
+
+  var COL={dark:{p:'#4fdbc8',l:'#4fdbc8'},light:{p:'#08695f',l:'#08695f'}};
+  function dk(){return document.documentElement.classList.contains('dark');}
+
+  function P(){
+    this.x=Math.random()*W;this.y=Math.random()*H;
+    this.vx=(Math.random()-0.5)*0.4;this.vy=(Math.random()-0.5)*0.4;
+    this.r=1+Math.random()*1.5;this.ph=Math.random()*Math.PI*2;
+    this.dp=0.15+Math.random()*0.35; // depth layer for parallax
+  }
+
+  function resize(){
+    W=c.width=window.innerWidth;H=c.height=window.innerHeight;
+    pts=[];for(var i=0;i<COUNT;i++)pts.push(new P());
+  }
+
+  document.addEventListener('mousemove',function(e){mouse.x=e.clientX;mouse.y=e.clientY;});
+  document.addEventListener('mouseleave',function(){mouse.x=-1e4;mouse.y=-1e4;});
+  window.addEventListener('scroll',function(){scrollY=window.pageYOffset||document.documentElement.scrollTop;},{passive:true});
+
+  function draw(){
+    x.clearRect(0,0,W,H);
+    var col=dk()?COL.dark:COL.light,t=Date.now()/3000;
+    var i,j,a,b,dx,dy,dist,px,py;
+
+    // update + draw dots
+    for(i=0;i<pts.length;i++){
+      a=pts[i];
+      dx=a.x-mouse.x;dy=a.y-mouse.y;
+      dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<REPEL&&dist>0){
+        var f=(REPEL-dist)/REPEL*0.3;
+        a.vx+=dx/dist*f;a.vy+=dy/dist*f;
+      }
+      a.vx*=0.99;a.vy*=0.99;
+      a.x+=a.vx;a.y+=a.vy;
+      if(a.x<-20)a.x=W+20;if(a.x>W+20)a.x=-20;
+      if(a.y<-20)a.y=H+20;if(a.y>H+20)a.y=-20;
+
+      // parallax offset
+      px=a.x;py=a.y+scrollY*a.dp*scrollF;
+
+      x.globalAlpha=0.5+0.15*Math.sin(t*0.8+a.ph);
+      x.fillStyle=col.p;
+      x.beginPath();x.arc(px,py,a.r,0,Math.PI*2);x.fill();
+    }
+
+    // connections
+    for(i=0;i<pts.length;i++){
+      for(j=i+1;j<pts.length;j++){
+        a=pts[i];b=pts[j];
+        dx=(a.x+scrollY*a.dp*scrollF)-(b.x+scrollY*b.dp*scrollF);
+        dy=(a.y+scrollY*a.dp*scrollF)-(b.y+scrollY*b.dp*scrollF);
+        dist=Math.sqrt(dx*dx+dy*dy);
+        if(dist<CONN){
+          x.globalAlpha=(1-dist/CONN)*0.12;
+          x.strokeStyle=col.l;x.lineWidth=0.5;
+          x.beginPath();
+          x.moveTo(a.x+scrollY*a.dp*scrollF,a.y+scrollY*a.dp*scrollF);
+          x.lineTo(b.x+scrollY*b.dp*scrollF,b.y+scrollY*b.dp*scrollF);
+          x.stroke();
+        }
+      }
+    }
+
+    c.style.opacity=1;
+    requestAnimationFrame(draw);
+  }
+
+  requestAnimationFrame(function(){
+    resize();window.addEventListener('resize',resize);
+    draw();
+    new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  });
+})();
+</script>
 {% endblock %}
