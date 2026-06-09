@@ -28,9 +28,11 @@
 <!-- Courses -->
 <section class="max-w-[1200px] w-full mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12">
   {% for track in visible_courses %}
+  {% set accent_map = {'web':'#f59e0b','reverse':'#ef4444','crypto':'#8b5cf6','pwn':'#22c55e','forensics':'#3b82f6'} %}
+  {% set ta = accent_map.get(track.key, '#14b8a6') %}
   <div class="flex flex-col gap-6">
     <article class="bg-surface-container-lowest border border-border-muted rounded-xl p-6 md:p-8 hover:shadow-md transition-shadow duration-300 flex flex-col gap-8 relative overflow-hidden group">
-      <div class="absolute left-0 top-0 bottom-0 w-1 bg-secondary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      <div class="absolute left-0 top-0 bottom-0 w-1 opacity-0 group-hover:opacity-100 transition-opacity" style="background-color: {{ ta }}"></div>
 
       <!-- Path Info -->
       <div class="min-w-0 flex flex-col items-start justify-center">
@@ -149,7 +151,7 @@
           <p class="font-body-md text-[14px] text-on-surface-variant line-clamp-2 mb-3">{{ mod.description }}</p>
           <div class="flex items-center gap-3">
             <div class="h-1.5 flex-1 bg-surface-container-highest rounded-full overflow-hidden">
-              <div class="h-full bg-primary" style="width:{{ progress.pct }}%"></div>
+              <div class="h-full rounded-full" style="width:{{ progress.pct }}%; background-color: {{ ta }}"></div>
             </div>
             <span class="font-label-mono text-[12px] text-on-surface-variant">{{ "%.0f"|format(progress.pct) }}%</span>
           </div>

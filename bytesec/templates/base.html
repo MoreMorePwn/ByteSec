@@ -112,6 +112,22 @@
     }
   </script>
   <style>
+    /* ── Scroll Progress Bar ── */
+    #scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #14b8a6, #4fdbc8);
+      z-index: 9999;
+      width: 0%;
+      transition: width 0.1s linear;
+      box-shadow: 0 0 8px rgba(79, 219, 200, 0.3);
+    }
+    .dark #scroll-progress {
+      box-shadow: 0 0 10px rgba(79, 219, 200, 0.2);
+    }
+
     /* ── HTML base background + VT custom property (kills white flash) ── */
     html { background-color: #f9f9f9; --vt-bg: #f9f9f9; }
     html.dark { background-color: #051424; --vt-bg: #051424; }
@@ -422,6 +438,9 @@
 </head>
 <body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col">
 
+  <!-- ── Scroll Progress Bar ── -->
+  <div id="scroll-progress"></div>
+
   <!-- ── Top Navigation Bar ── -->
   <nav class="fixed top-0 w-full z-50 bg-surface border-b border-outline-variant">
     <div class="flex justify-between items-center w-full px-margin-mobile md:px-margin-desktop max-w-[1200px] mx-auto h-16">
@@ -567,6 +586,22 @@
     }
     // Apply on load
     applyTheme(getTheme());
+
+    // ── Scroll Progress Bar ──
+    function updateScrollProgress() {
+      var bar = document.getElementById('scroll-progress');
+      if (!bar) return;
+      var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+      var docHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      if (docHeight > 0) {
+        bar.style.width = (scrollTop / docHeight) * 100 + '%';
+      } else {
+        bar.style.width = '0%';
+      }
+    }
+    window.addEventListener('scroll', updateScrollProgress, {passive: true});
+    window.addEventListener('resize', updateScrollProgress);
+    updateScrollProgress();
 
     function setUserMenu(open) {
       const panel = document.getElementById('user-menu-panel');
