@@ -23,22 +23,17 @@ def create_app(test_config=None):
     turso_token = os.environ.get("TURSO_AUTH_TOKEN")
 
     if turso_url and turso_token:
-        # Turso via libsql-experimental HTTP client
-        import libsql_experimental as libsql
+        # Turso via pure-Python HTTP driver (no native deps)
+        from .turso_driver import connect as turso_connect
 
         def get_turso_connection():
-            return libsql.connect(
-                database="",
-                url=turso_url,
-                auth_token=turso_token,
-            )
+            return turso_connect(url=turso_url, auth_token=turso_token)
 
         app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
             "creator": get_turso_connection,
             "pool_pre_ping": True,
-            "connect_args": {"check_same_thread": False},
         }
-        # URI says sqlite because libsql speaks the same SQL dialect
+        # URI says sqlite because Turso speaks the same SQL dialect
         app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
     else:
         # Local SQLite (development)
