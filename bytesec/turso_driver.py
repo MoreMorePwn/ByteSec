@@ -178,6 +178,9 @@ class TursoConnection:
     def commit(self):
         pass  # HTTP mode auto-commits
 
+    def create_function(self, name, num_params, func):
+        pass  # Turso HTTP driver doesn't support custom SQL functions
+
     def rollback(self):
         pass
 
