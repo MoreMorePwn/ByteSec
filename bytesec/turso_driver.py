@@ -80,6 +80,36 @@ class TursoCursor:
         )
         return urllib.request.urlopen(req, timeout=30)
 
+    def _batch(self, statements):
+        """Execute multiple SQL statements in a single pipeline call.
+
+        statements: list of (sql, params|None) tuples.
+        Returns list of response dicts, one per statement (excluding close).
+        """
+        requests = []
+        for sql, params in statements:
+            args = []
+            if params:
+                for p in params:
+                    args.append(_type_val(p))
+            requests.append(
+                {"type": "execute", "stmt": {"sql": sql, "args": args}}
+            )
+        requests.append({"type": "close"})
+
+        body = json.dumps({"requests": requests}).encode()
+        req = urllib.request.Request(
+            self.connection._url,
+            data=body,
+            headers={
+                "Authorization": f"Bearer {self.connection._token}",
+                "Content-Type": "application/json",
+            },
+        )
+        resp = urllib.request.urlopen(req, timeout=30)
+        data = json.loads(resp.read())
+        return data.get("results", [])
+
     def _parse_response(self, resp_data):
         rows = resp_data.get("rows", [])
         self.description = [
@@ -184,6 +214,29 @@ class TursoConnection:
 
     def commit(self):
         pass  # HTTP mode auto-commits
+
+    def batch_execute(self, statements):
+        """Execute multiple SQL statements in a single HTTP pipeline.
+
+        statements: list of (sql, params|None) tuples.
+        Returns list of (columns, rows) tuples for each statement.
+        """
+        cur = self.cursor()
+        results = cur._batch(statements)
+        out = []
+        for r in results:
+            resp = r.get("response", {})
+            if resp.get("type") == "execute":
+                res = resp.get("result", {})
+                cols = [c["name"] for c in res.get("cols", [])]
+                rows = [
+                    tuple(_parse_val(col) for col in row)
+                    for row in res.get("rows", [])
+                ]
+                out.append((cols, rows))
+            else:
+                out.append(([], []))
+        return out
 
     def create_function(self, name, num_params, func, deterministic=False):
         pass  # Turso HTTP driver doesn't support custom SQL functions

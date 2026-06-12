@@ -62,7 +62,16 @@ def create_app(test_config=None):
     with app.app_context():
         from .seed import ensure_database
 
-        ensure_database()
+        # Run ensure_database() lazily on first request, not at import time
+        # This dramatically reduces cold-start latency for Vercel serverless.
+        _db_seeded = False
+
+        @app.before_request
+        def _lazy_ensure_db():
+            nonlocal _db_seeded
+            if not _db_seeded:
+                ensure_database()
+                _db_seeded = True
 
     @app.cli.command("init-db")
     def init_db_command():
