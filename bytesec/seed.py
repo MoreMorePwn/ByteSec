@@ -1276,12 +1276,14 @@ def ensure_database():
     db.create_all()
     demo = _ensure_demo_user()
 
-    if Module.query.count() == 0 or _course_is_stale():
-        _seed_course_content()
-
-    _ensure_sample_articles(demo)
-    _ensure_community_challenges()
-    _ensure_sample_user_progress()
+    # Quick check: if modules already exist with expected count, skip all seeding
+    expected_count = _expected_module_count()
+    if Module.query.count() != expected_count:
+        if Module.query.count() == 0 or _course_is_stale():
+            _seed_course_content()
+        _ensure_sample_articles(demo)
+        _ensure_community_challenges()
+        _ensure_sample_user_progress()
     db.session.commit()
     print(
         f"Database ready with {Module.query.count()} modules, "
