@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}{% if selected_course %}{{ selected_course.title }}{% else %}Courses{% endif %} — ByteSec{% endblock %}
 {% block content %}
-<canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none" style="opacity:0;z-index:0"></canvas>
+<canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none" style="opacity:0;z-index:0;will-change:opacity"></canvas>
 <!-- Hero -->
 <section class="w-full relative overflow-hidden pt-16 pb-12 border-b border-border-muted bg-grid-pattern">
   <div class="absolute inset-0 bg-gradient-to-b from-transparent to-background opacity-90"></div>
@@ -251,8 +251,11 @@
     requestAnimationFrame(draw);
   }
 
-  resize();window.addEventListener('resize',resize);draw();
-  new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  requestAnimationFrame(function(){
+    resize();window.addEventListener('resize',resize);
+    draw();
+    new MutationObserver(draw).observe(document.documentElement,{attributes:true,attributeFilter:['class']});
+  });
 })();
 </script>
 {% endblock %}
