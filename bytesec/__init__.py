@@ -9,7 +9,13 @@ db = SQLAlchemy()
 
 
 def create_app(test_config=None):
-    app = Flask(__name__, instance_relative_config=True)
+    # Vercel: /var/task is read-only, use /tmp instead
+    if os.environ.get("VERCEL"):
+        _instance_path = "/tmp/bytesec/instance"
+    else:
+        _instance_path = None
+
+    app = Flask(__name__, instance_relative_config=True, instance_path=_instance_path)
     instance_path = Path(app.instance_path)
     instance_path.mkdir(parents=True, exist_ok=True)
 
