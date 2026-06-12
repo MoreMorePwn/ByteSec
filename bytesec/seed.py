@@ -1173,6 +1173,9 @@ def _ensure_community_challenges():
 
 
 def _ensure_sample_user_progress():
+    # Skip if already seeded on a previous cold start
+    if UserProgress.query.first() is not None:
+        return
     _get_or_create_user("student", "student@bytesec.local", "student123", streak_days=7)
     seeded_users = [
         user for user in User.query.filter(User.username.in_(("student", *UPLOADER_NAMES))).all()
