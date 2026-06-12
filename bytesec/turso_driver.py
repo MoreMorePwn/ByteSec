@@ -117,8 +117,12 @@ class TursoCursor:
         return self
 
     def executemany(self, sql, seq_of_params):
+        total = 0
         for p in seq_of_params:
             self.execute(sql, p)
+            if self.rowcount >= 0:
+                total += self.rowcount
+        self.rowcount = total
         return self
 
     def fetchone(self):
