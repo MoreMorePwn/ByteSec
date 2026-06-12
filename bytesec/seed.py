@@ -401,7 +401,9 @@ def _category_label(value):
 
 
 def _sync_challenge_asset(challenge, source_dir, files):
-    upload_dir = ROOT_DIR / "instance" / "community_uploads"
+    from flask import current_app
+
+    upload_dir = Path(current_app.instance_path) / "community_uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
     prefix = f"{challenge.id}_"
     source_files = [
@@ -1171,6 +1173,9 @@ def _ensure_community_challenges():
 
 
 def _ensure_sample_user_progress():
+    # Skip if already seeded on a previous cold start
+    if UserProgress.query.first() is not None:
+        return
     _get_or_create_user("student", "student@bytesec.local", "student123", streak_days=7)
     seeded_users = [
         user for user in User.query.filter(User.username.in_(("student", *UPLOADER_NAMES))).all()
@@ -1267,17 +1272,48 @@ def _course_is_stale():
 
 
 def ensure_database():
-    """Create missing data without wiping users on ordinary restarts."""
+    """Create missing data without wiping users on ordinary restarts.
+
+    Uses a single batch query to check if seeding is needed,
+    keeping cold-start overhead to just 2 HTTP calls.
+    """
+    import os
+
+    # ── /tmp persistent marker: skip everything if already done on this instance ──
+    marker = "/tmp/.bytesec_seeded"
+    if os.path.exists(marker):
+        return
+
     db.create_all()
+
+    exp_mods = _expected_module_count()
+    try:
+        from sqlalchemy import text
+        row = db.session.execute(text(
+            'SELECT '
+            '(SELECT COUNT(*) FROM "module") AS mods, '
+            '(SELECT COUNT(*) FROM "user") AS users, '
+            '(SELECT COUNT(*) FROM "lesson_step") AS steps'
+        )).one()
+        mods, users, steps = row
+    except Exception:
+        mods = users = steps = 0
+
+    if mods >= exp_mods and users > 0 and steps > 0:
+        # Already seeded from a previous run — fast path
+        _ensure_demo_user()
+        db.session.commit()
+        open(marker, "w").close()
+        return
+
+    # ── First-ever cold start: full seeding ──
     demo = _ensure_demo_user()
-
-    if Module.query.count() == 0 or _course_is_stale():
-        _seed_course_content()
-
+    _seed_course_content()
     _ensure_sample_articles(demo)
     _ensure_community_challenges()
     _ensure_sample_user_progress()
     db.session.commit()
+    open(marker, "w").close()
     print(
         f"Database ready with {Module.query.count()} modules, "
         f"{Lesson.query.count()} lessons, {LessonStep.query.count()} steps, "

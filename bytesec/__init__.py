@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from flask import Flask
@@ -8,15 +9,44 @@ db = SQLAlchemy()
 
 
 def create_app(test_config=None):
-    app = Flask(__name__, instance_relative_config=True)
+    # Vercel: /var/task is read-only, use /tmp instead
+    if os.environ.get("VERCEL"):
+        _instance_path = "/tmp/bytesec/instance"
+    else:
+        _instance_path = None
+
+    app = Flask(__name__, instance_relative_config=True, instance_path=_instance_path)
     instance_path = Path(app.instance_path)
     instance_path.mkdir(parents=True, exist_ok=True)
 
     app.config.update(
-        SECRET_KEY="dev-change-me-in-production",
-        SQLALCHEMY_DATABASE_URI=f"sqlite:///{instance_path / 'bytesec.db'}",
+        SECRET_KEY=os.environ.get("SECRET_KEY", "dev-change-me-in-production"),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
     )
+
+    # ── Database: Turso (production) or local SQLite (development) ──
+    turso_url = os.environ.get("TURSO_DATABASE_URL")
+    turso_token = os.environ.get("TURSO_AUTH_TOKEN")
+
+    if turso_url and turso_token:
+        # Turso via pure-Python HTTP driver (no native deps)
+        from .turso_driver import connect as turso_connect
+
+        def get_turso_connection():
+            return turso_connect(url=turso_url, auth_token=turso_token)
+
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+            "creator": get_turso_connection,
+            "pool_pre_ping": True,
+        }
+        # URI says sqlite because Turso speaks the same SQL dialect
+        app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite://"
+    else:
+        # Local SQLite (development)
+        app.config.update(
+            SQLALCHEMY_DATABASE_URI=f"sqlite:///{instance_path / 'bytesec.db'}",
+        )
+
     app.config.from_pyfile("config.py", silent=True)
 
     if test_config is not None:
@@ -31,7 +61,17 @@ def create_app(test_config=None):
 
     with app.app_context():
         from .seed import ensure_database
-        ensure_database()
+
+        # Run ensure_database() lazily on first request, not at import time
+        # This dramatically reduces cold-start latency for Vercel serverless.
+        _db_seeded = False
+
+        @app.before_request
+        def _lazy_ensure_db():
+            nonlocal _db_seeded
+            if not _db_seeded:
+                ensure_database()
+                _db_seeded = True
 
     @app.cli.command("init-db")
     def init_db_command():

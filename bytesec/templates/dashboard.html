@@ -1,7 +1,29 @@
 {% extends 'base.html' %}
 {% block title %}Dashboard — ByteSec{% endblock %}
 {% block content %}
-<canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none" style="opacity:0;z-index:0;will-change:opacity"></canvas>
+<style>
+  @keyframes card-enter {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card-enter { animation: card-enter 0.45s ease-out both; }
+  .card-glow {
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .card-glow:hover {
+    transform: translateY(-3px);
+    border-color: var(--primary, #006b58);
+    box-shadow: 0 8px 30px rgba(79, 219, 200, 0.15);
+  }
+  .dark .card-glow:hover {
+    box-shadow: 0 8px 30px rgba(79, 219, 200, 0.12), 0 0 60px rgba(79, 219, 200, 0.06);
+  }
+  @keyframes progress-fill {
+    from { width: 0% !important; }
+  }
+  .progress-bar { animation: progress-fill 0.8s ease-out 0.3s both; }
+</style>
+<canvas id="particle-canvas" class="fixed inset-0 w-full h-full pointer-events-none" style="opacity:0;z-index:0"></canvas>
 <div class="max-w-[1200px] mx-auto px-margin-mobile md:px-margin-desktop py-12 flex flex-col gap-12 relative z-10">
   <!-- Header -->
   <header class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
@@ -17,7 +39,7 @@
       </div>
       <div>
         <p class="font-label-mono text-label-mono text-on-surface-variant uppercase tracking-wider text-xs">Daily Streak</p>
-        <p class="font-headline-md text-headline-md text-primary">{{ g.user.streak_days }} Days</p>
+        <p class="font-headline-md text-headline-md text-primary"><span class="count-up" data-target="{{ g.user.streak_days }}">0</span> Days</p>
       </div>
     </div>
   </header>
@@ -32,7 +54,11 @@
     </div>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
       {% for track in course_tracks %}
-      <div class="bg-surface-container-lowest border border-border-muted rounded-lg overflow-hidden hover:shadow-md transition-shadow duration-200 flex flex-col">
+      <div class="bg-surface-container-lowest border border-border-muted rounded-lg overflow-hidden card-glow card-enter flex flex-col"
+           style="animation-delay: {{ loop.index0 * 0.07 }}s">
+        {% set ta_map = {'web':'#f59e0b','reverse':'#ef4444','crypto':'#8b5cf6','pwn':'#22c55e','forensics':'#3b82f6'} %}
+        {% set ta = ta_map.get(track.key, '#14b8a6') %}
+        <div class="h-1 w-full" style="background-color: {{ ta }}"></div>
         <div class="h-32 bg-surface-container relative w-full overflow-hidden flex items-center justify-center">
           <span class="material-symbols-outlined text-5xl text-on-surface-variant opacity-40">{{ track.icon }}</span>
           <div class="absolute top-3 left-3 bg-surface-container-lowest backdrop-blur-sm px-2 py-1 rounded font-label-mono text-[12px] text-primary border border-border-muted">
@@ -48,11 +74,11 @@
 
           <div class="grid grid-cols-2 gap-3 mb-5">
             <div class="bg-surface-container rounded-lg border border-outline-variant p-3">
-              <p class="font-headline-sm text-[18px] text-primary">{{ track.lesson_count }}</p>
+              <p class="font-headline-sm text-[18px] text-primary"><span class="count-up" data-target="{{ track.lesson_count }}">0</span></p>
               <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Lessons</p>
             </div>
             <div class="bg-surface-container rounded-lg border border-outline-variant p-3">
-              <p class="font-headline-sm text-[18px] text-primary">{{ track.activity_count }}</p>
+              <p class="font-headline-sm text-[18px] text-primary"><span class="count-up" data-target="{{ track.activity_count }}">0</span></p>
               <p class="font-label-mono text-[11px] text-on-surface-variant uppercase tracking-wider">Activities</p>
             </div>
           </div>
@@ -65,7 +91,7 @@
               </span>
             </div>
             <div class="h-2 w-full bg-surface-container-highest rounded-full overflow-hidden mb-6">
-              <div class="h-full bg-primary" style="width:{{ track.progress_pct }}%"></div>
+              <div class="h-full rounded-full progress-bar" style="width:{{ track.progress_pct }}%; background-color: {{ ta }}"></div>
             </div>
             <div class="flex flex-col sm:flex-row gap-3">
               {% if track.next_lesson %}
@@ -89,6 +115,28 @@
 
 {% block scripts %}
 <script>
+// ── Animated Count Up ──
+(function(){
+  var els = document.querySelectorAll('.count-up');
+  if (!els.length) return;
+  function animate(el) {
+    var target = parseInt(el.getAttribute('data-target'), 10);
+    if (isNaN(target) || target <= 0) { el.textContent = target || 0; return; }
+    var duration = Math.min(800, Math.max(300, target * 10));
+    var start = performance.now();
+    function tick(now) {
+      var p = Math.min(1, (now - start) / duration);
+      // ease-out cubic
+      var eased = 1 - Math.pow(1 - p, 3);
+      el.textContent = Math.round(eased * target);
+      if (p < 1) requestAnimationFrame(tick);
+      else el.textContent = target;
+    }
+    requestAnimationFrame(tick);
+  }
+  els.forEach(animate);
+})();
+
 // ByteSec Particle Network — theme-aware, interactive
 (function(){
   var c=document.getElementById('particle-canvas');if(!c)return;

@@ -111,6 +111,10 @@
     }
   </script>
   <style>
+    /* ── HTML base background + VT custom property (kills white flash) ── */
+    html { background-color: #f9f9f9; --vt-bg: #f9f9f9; }
+    html.dark { background-color: #051424; --vt-bg: #051424; }
+
     /* ── Dark mode overrides ── */
     .dark {
       --bg:              #051424;
@@ -325,7 +329,7 @@
     .node-connector::after { display: none; }
 
     /* Smooth transitions for theme toggle */
-    * { transition: background-color 0.2s ease, color 0.15s ease, border-color 0.15s ease; }
+    .theme-transitioning { transition: background-color 0.2s ease, color 0.15s ease, border-color 0.15s ease; }
 
     /* Flash messages */
     .flash { padding: 12px 16px; border-radius: 0.5rem; margin-bottom: 16px; font-family: 'Inter', sans-serif; font-size: 14px; }
@@ -373,7 +377,47 @@
       100% { text-shadow: 3px 0 #ff0066, -3px 0 #4fdbc8; transform: translate(0); opacity: 1; }
     }
 
+    /* ── View Transitions — scoped to <main> only ── */
+    @view-transition {
+      navigation: auto;
+    }
+    main {
+      view-transition-name: main-content;
+    }
+    ::view-transition-group(main-content) {
+      background-color: var(--vt-bg);
+    }
+    ::view-transition-image-pair(main-content) {
+      mix-blend-mode: normal;
+    }
+    ::view-transition-old(main-content) {
+      animation: 250ms ease-in both vt-fade-out;
+      mix-blend-mode: normal;
+    }
+    ::view-transition-new(main-content) {
+      animation: 350ms ease-out 100ms both vt-fade-in;
+      mix-blend-mode: normal;
+    }
+    @keyframes vt-fade-out {
+      to { opacity: 0; transform: scale(0.97); }
+    }
+    @keyframes vt-fade-in {
+      from { opacity: 0; transform: scale(1.03); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    /* Fallback: page load animation for browsers without View Transitions */
+    @supports not (view-transition-name: root) {
+      main {
+        animation: vt-fade-in 400ms ease-out both;
+      }
+    }
   </style>
+  <script>
+    // Apply theme BEFORE body renders — kills light flash on page load
+    if (localStorage.getItem('bytesec-theme') === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  </script>
 </head>
 <body class="bg-background text-on-background font-body-md text-body-md antialiased min-h-screen flex flex-col">
 
@@ -507,7 +551,12 @@
     function toggleTheme() {
       const current = getTheme();
       const next = current === 'dark' ? 'light' : 'dark';
+      const html = document.getElementById('html-root');
+      // Add transition class for smooth theme swap
+      html.classList.add('theme-transitioning');
       applyTheme(next);
+      // Remove transition class after animation completes
+      setTimeout(() => html.classList.remove('theme-transitioning'), 250);
       // Persist to server if logged in
       fetch('/api/set-theme', {
         method: 'POST',
