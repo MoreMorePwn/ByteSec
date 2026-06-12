@@ -165,6 +165,9 @@ class TursoCursor:
 
 class TursoConnection:
     def __init__(self, url, auth_token):
+        # Convert libsql:// to https:// for urllib
+        if url.startswith("libsql://"):
+            url = "https://" + url[len("libsql://"):]
         # Strip trailing /v2/pipeline if already present
         base = url.rstrip("/")
         if base.endswith("/v2/pipeline"):
