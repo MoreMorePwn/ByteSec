@@ -21,3 +21,4 @@ logs/
 
 # Test artifacts / screenshots
 *.png
+bytesec.db.txt
