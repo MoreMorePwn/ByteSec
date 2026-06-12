@@ -401,7 +401,9 @@ def _category_label(value):
 
 
 def _sync_challenge_asset(challenge, source_dir, files):
-    upload_dir = ROOT_DIR / "instance" / "community_uploads"
+    from flask import current_app
+
+    upload_dir = Path(current_app.instance_path) / "community_uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
     prefix = f"{challenge.id}_"
     source_files = [
