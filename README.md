@@ -1,27 +1,61 @@
 # ByteSec
 
-ByteSec is a Flask-based interactive cybersecurity learning platform for CTF-style education. It includes guided courses, interactive lesson checks, Docker-backed challenge labs, community challenge submissions, article publishing with admin review, progress tracking, and leaderboards.
+<div align="center">
+  <h3>Interactive cybersecurity learning platform for guided lessons, graded activities, and CTF-style practice labs.</h3>
+  <p>Built with Flask, markdown-seeded course content, and local challenge services for hands-on security education.</p>
+</div>
 
-The current project lives in `project2/`.
+---
 
-## What Is Included
+# Interactive Cybersecurity Learning Platform
 
-- Flask app factory in `bytesec/__init__.py`.
-- SQLite persistence through Flask-SQLAlchemy.
-- Runtime database at `instance/bytesec.db`.
-- Markdown-driven course seeding from `modules/`.
-- Interactive lessons with multiple choice, prediction, fill-in-the-blank, line spotting, and flag submission.
-- Docker admin controls for local CTF lab services.
-- Published article browsing plus article submission review.
-- Community challenge browsing, download, solve, submit, and review workflows.
-- Course leaderboard and community challenge leaderboard.
-- User registration, login, logout, theme persistence, and profile editing.
+ByteSec combines structured lessons, challenge-driven practice, and community content workflows in one web app. Learners can move through curated tracks, answer interactive checks, submit flags, and track progress, while admins can review articles, community challenges, and local lab services from the same interface.
 
-## Live Course Tracks
+---
 
-The course tracks are defined in `bytesec/routes.py` and loaded from markdown plus app-generated CTF lab modules.
+## Overview
 
-| Track | Modules | Content Directory |
+| Item | Details |
+| --- | --- |
+| Name | ByteSec |
+| Type | Web-based cybersecurity learning platform |
+| Stack | Flask, Flask-SQLAlchemy, Jinja, Tailwind CSS, SQLite by default, optional Turso |
+| Focus | Guided CTF-style learning across web exploitation, reverse engineering, cryptography, pwn, and Windows forensics |
+| Activity Types | Multiple choice, predict the output, fill in the blank, spot the vulnerable line, flag submission |
+| Supporting Modules | Articles, community challenges, leaderboards, profile management, and Docker lab controls |
+
+---
+
+## Features
+
+- Guided course tracks seeded from `modules/`
+- Interactive lesson steps with instant correctness feedback
+- Multiple activity families for concept checks and applied exercises
+- Downloadable and locally hosted CTF labs
+- Progress tracking through `UserProgress`
+- Course and community leaderboards
+- Article submission, preview, and admin publishing workflow
+- Community challenge upload, review, approval, and download flow
+- Theme persistence, login, logout, and profile editing
+- Docker admin dashboard for local challenge services
+
+---
+
+## What ByteSec Solves
+
+Cybersecurity learning is often split between static notes, separate lab environments, and manual challenge distribution. ByteSec brings those pieces together in one platform so students can:
+
+- read structured lesson material and answer checks in context
+- move from explanation to practice without leaving the platform
+- download or run companion labs for applied exercises
+- submit community content through moderated workflows
+- measure progress with stored completion data and leaderboards
+
+---
+
+## Course Tracks
+
+| Track | Modules | Source |
 | --- | ---: | --- |
 | Web Exploitation: SQL Injection | 1-8 | `modules/sqli/` plus EzSQLi lab |
 | Reverse Engineering: x86-64 Assembly | 9-13 | `modules/reverse-engineering-assembly/` plus XOR checker lab |
@@ -29,69 +63,18 @@ The course tracks are defined in `bytesec/routes.py` and loaded from markdown pl
 | Pwn: Stack Exploitation | 19-23 | `modules/pwn/` plus ret2win lab |
 | Windows Forensics Investigation Workflow | 24-30 | `modules/forensics/` |
 
-## Seeded Articles
+---
 
-The app seeds three published sample articles:
+## Seeded Content
 
-- Linux Rootkits: Hooking Models Defenders Should Recognize
-- Kernel Anti-Cheats and the Security Tradeoff
-- Self-XSS Still Deserves Threat Modeling
+### Demo Accounts
 
-Article content is rendered with the same small markdown renderer used by lesson narratives.
-
-## Community Challenges
-
-The project includes imported community challenges under:
-
-```text
-ctf_chall/community/
-```
-
-Imported challenge folders:
-
-```text
-Ai C
-Brixton Bullies
-Opening set
-Pirate's Hook V2
-World's end loneliness
-cold storage leak
-donut goes brrr
-joe mama
-lagi-dengerin-lagu-apa-mas
-pppnnnggg
-sigmaboy67
-syududu
-```
-
-Each challenge has a `challenge.yml` file. Seed logic parses:
-
-- `name`
-- `category`
-- `description`
-- `value`
-- `flags`
-- `tags`
-- `files`
-
-Multi-file challenge attachments are packed into a zip during seeding. Single-file attachments are copied as their original file. Generated runtime copies are placed under:
-
-```text
-instance/community_uploads/
-```
-
-That directory is created at runtime and should not be treated as source content.
-
-## User Accounts
-
-Seeded accounts:
-
-| Username | Password | Purpose |
+| Username | Password | Role |
 | --- | --- | --- |
 | `demo` | `demo123` | Default admin/demo account |
-| `student` | `student123` | Sample normal user with seeded progress and challenge solves |
+| `student` | `student123` | Sample learner account |
 
-Community uploader accounts are also seeded with password `bytesec123`:
+Uploader accounts are also seeded with password `bytesec123`:
 
 ```text
 Reimu
@@ -108,13 +91,203 @@ Acid
 
 Admin access is controlled by `BYTESEC_ADMIN_USERS`. If it is unset, only `demo` is treated as admin.
 
-Example:
+### Seeded Articles
 
-```bash
-BYTESEC_ADMIN_USERS=demo,teacher flask --app app run
+- Linux Rootkits: Hooking Models Defenders Should Recognize
+- Kernel Anti-Cheats and the Security Tradeoff
+- Self-XSS Still Deserves Threat Modeling
+
+### Imported Community Challenges
+
+The repo includes community challenge sources under `ctf_chall/community/`:
+
+```text
+Ai C
+Brixton Bullies
+Opening set
+Pirate's Hook V2
+World's end loneliness
+cold storage leak
+donut goes brrr
+joe mama
+lagi-dengerin-lagu-apa-mas
+pppnnnggg
+sigmaboy67
+syududu
 ```
 
-## Core Workflows
+Runtime challenge copies are generated under `instance/community_uploads/`.
+
+---
+
+## Technology Stack
+
+### Core Application
+
+- Flask 3.1
+- Flask-SQLAlchemy 3.1
+- Jinja templates
+- Vanilla JavaScript
+- Tailwind CSS CDN
+- Google Material Symbols
+
+### Data and Runtime
+
+- SQLite for local development
+- Optional Turso via the bundled pure-Python HTTP driver
+- Runtime-generated instance data under `instance/`
+- Vercel-compatible entrypoint in `api/index.py`
+
+### Content and Labs
+
+- Markdown course modules
+- Docker Compose for web and pwn lab services
+- GCC and Make for native challenge binaries
+
+---
+
+## Prerequisites
+
+Make sure these are available locally:
+
+- Python with SQLite support
+- `pip`
+- Docker and Docker Compose
+- GCC and Make
+
+If startup fails with `ModuleNotFoundError: No module named '_sqlite3'`, use a Python build that includes SQLite.
+
+---
+
+## How to Run Locally
+
+### 1. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Start the App
+
+```bash
+flask --app app run --debug
+```
+
+You can also run:
+
+```bash
+python app.py
+```
+
+Default URL:
+
+```text
+http://127.0.0.1:5000
+```
+
+### 3. Optional Environment Variables
+
+```text
+BYTESEC_HOST
+BYTESEC_PORT
+SECRET_KEY
+BYTESEC_ADMIN_USERS
+TURSO_DATABASE_URL
+TURSO_AUTH_TOKEN
+```
+
+### 4. Database Commands
+
+Create missing data without wiping users:
+
+```bash
+flask --app app ensure-db
+```
+
+Reload markdown course content while preserving registered users:
+
+```bash
+flask --app app refresh-course
+```
+
+Fully wipe and recreate the database:
+
+```bash
+flask --app app init-db
+```
+
+---
+
+## Run App and Lab Services
+
+The helper script manages the Flask app plus the Docker-backed services:
+
+```bash
+./scripts/dev-services.sh start
+./scripts/dev-services.sh status
+./scripts/dev-services.sh logs
+./scripts/dev-services.sh restart
+./scripts/dev-services.sh stop
+```
+
+Default service locations:
+
+| Service | Endpoint |
+| --- | --- |
+| ByteSec web app | `http://127.0.0.1:5000` |
+| EzSQLi challenge | `http://127.0.0.1:8004` |
+| Ret2win challenge | `nc 127.0.0.1 9001` |
+| Docker admin dashboard | `http://127.0.0.1:5000/admin/docker` |
+
+When running from WSL and opening from Windows, you may need the WSL IP instead of `localhost`:
+
+```bash
+hostname -I | awk '{print $1}'
+```
+
+---
+
+## CTF Labs
+
+### EzSQLi
+
+```bash
+cd ctf_chall/ezsqli
+docker compose up -d --build
+docker compose ps
+docker compose logs --tail=80
+docker compose down
+```
+
+### XOR Flag Checker
+
+```bash
+cd ctf_chall/re_asm_xor_checker
+make
+./xor_checker
+```
+
+Download route: `/downloads/re-asm-xor-checker`
+
+### RSA Starter
+
+Generated by the app and exposed at `/downloads/crypto-rsa-starter`.
+
+### Ret2win
+
+```bash
+cd ctf_chall/ret2win
+docker compose up -d --build
+docker compose ps
+nc 127.0.0.1 9001
+docker compose down
+```
+
+Download route: `/downloads/pwn-ret2win`
+
+---
+
+## Platform Workflows
 
 ### Courses
 
@@ -129,376 +302,65 @@ BYTESEC_ADMIN_USERS=demo,teacher flask --app app run
 
 1. Published articles are listed at `/articles`.
 2. Any logged-in user can submit an article at `/articles/new`.
-3. Normal user submissions always save as `pending`.
-4. Users can see their own article submissions and statuses on `/submissions`.
-5. Admins review articles at `/admin/articles`.
-6. Admins can render/preview any article from the review dashboard.
-7. Admins can publish, unpublish, reject, edit, or delete articles.
-
-Article statuses:
-
-```text
-draft
-pending
-published
-rejected
-```
+3. Normal user submissions are stored as `pending`.
+4. Users can review their submission statuses on `/submissions`.
+5. Admins review, preview, publish, reject, edit, or delete content from `/admin/articles`.
 
 ### Community Challenges
 
 1. Approved challenges are listed at `/community`.
-2. Any logged-in user can submit a challenge at `/community/submit`.
-3. User submissions always save as `pending`.
-4. Users can see their own challenge submissions and statuses on `/submissions`.
-5. Submitters and admins can preview pending/rejected challenge pages.
-6. Only approved challenges are publicly listed and solvable.
-7. Admins review challenges at `/admin/community`.
-8. Admins can render/preview challenges from the review dashboard.
-9. Community leaderboard ranks users by approved challenge solves and points.
+2. Logged-in users can submit a challenge at `/community/submit`.
+3. User submissions are stored as `pending`.
+4. Users can review their challenge statuses on `/submissions`.
+5. Submitters and admins can preview pending or rejected challenge pages.
+6. Admins review approvals from `/admin/community`.
 
-Challenge statuses:
+---
 
-```text
-pending
-approved
-rejected
-```
-
-### Account Menu
-
-Clicking the username in the navbar opens a dropdown with:
-
-- Edit Profile
-- Dashboard
-- Challenge Status
-- Article Status
-- Admin review links for admins
-- Log Out
-
-Profile editing is available at `/profile`.
-
-## Project Layout
+## Project Structure
 
 ```text
-project2/
-  app.py
-  requirements.txt
-  README.md
-  bytesec/
-    __init__.py
-    models.py
-    routes.py
-    seed.py
-    templates/
-      admin_articles.html
-      admin_community.html
-      admin_docker.html
-      article.html
-      article_form.html
-      articles.html
-      base.html
-      community.html
-      community_challenge.html
-      community_submit.html
-      course.html
-      dashboard.html
-      index.html
-      leaderboard.html
-      lesson.html
-      login.html
-      profile.html
-      register.html
-      submissions.html
-  modules/
-    crypto/
-    forensics/
-    pwn/
-    rev/
-    reverse-engineering-assembly/
-    sqli/
-  ctf_chall/
-    baby_sqli/
-    community/
-    ezsqli/
-    re_asm_xor_checker/
-    ret2win/
-  demo/
-  scripts/
-    dev-services.sh
+.
+|-- api/
+|   `-- index.py
+|-- app.py
+|-- bytesec/
+|   |-- __init__.py
+|   |-- models.py
+|   |-- routes.py
+|   |-- seed.py
+|   |-- turso_driver.py
+|   `-- templates/
+|-- ctf_chall/
+|   |-- baby_sqli/
+|   |-- community/
+|   |-- ezsqli/
+|   |-- re_asm_xor_checker/
+|   `-- ret2win/
+|-- demo/
+|-- modules/
+|   |-- crypto/
+|   |-- forensics/
+|   |-- pwn/
+|   |-- rev/
+|   |-- reverse-engineering-assembly/
+|   `-- sqli/
+|-- scripts/
+|   `-- dev-services.sh
+|-- README.md
+|-- requirements.txt
+`-- vercel.json
 ```
 
-## Main Python Modules
-
-### `app.py`
-
-Creates the Flask app through `create_app()` and runs it when executed directly.
-
-Environment variables:
-
-```text
-BYTESEC_HOST
-BYTESEC_PORT
-```
-
-Defaults:
-
-```text
-host = 0.0.0.0
-port = 5000
-```
-
-### `bytesec/__init__.py`
-
-Defines:
-
-- `db = SQLAlchemy()`
-- `create_app(test_config=None)`
-- CLI command `init-db`
-- CLI command `ensure-db`
-- CLI command `refresh-course`
-
-On app startup, `ensure_database()` runs automatically.
-
-### `bytesec/models.py`
-
-Defines:
-
-- `User`
-- `Module`
-- `Lesson`
-- `LessonStep`
-- `UserProgress`
-- `CommunityChallenge`
-- `CommunityChallengeSolve`
-- `Article`
-
-### `bytesec/routes.py`
-
-Defines:
-
-- auth routes
-- dashboard route
-- course and lesson routes
-- markdown/material rendering helpers
-- Docker admin routes
-- community challenge routes
-- article routes
-- admin review routes
-- leaderboard route
-- progress/theme APIs
-
-### `bytesec/seed.py`
-
-Handles:
-
-- markdown curriculum parsing
-- course module seeding
-- generated CTF lab module seeding
-- demo/admin user seeding
-- sample normal user seeding
-- sample article seeding
-- community challenge import seeding
-- sample progress and solve seeding
-
-## Database
-
-The app uses SQLite by default:
-
-```text
-instance/bytesec.db
-```
-
-The database is created at runtime. `instance/` is not part of the source curriculum.
-
-Create missing data without wiping users:
-
-```bash
-flask --app app ensure-db
-```
-
-Reload course content from markdown while preserving registered users:
-
-```bash
-flask --app app refresh-course
-```
-
-Fully wipe and recreate all tables:
-
-```bash
-flask --app app init-db
-```
-
-Use `init-db` only when a reset is intended.
-
-## Requirements
-
-Python dependencies:
-
-```text
-Flask==3.1.0
-Flask-SQLAlchemy==3.1.1
-```
-
-Install:
-
-```bash
-pip install -r requirements.txt
-```
-
-The Python interpreter must include SQLite support. If startup fails with `ModuleNotFoundError: No module named '_sqlite3'`, use a Python build that includes the SQLite extension.
-
-Docker and Docker Compose are needed for the Docker-backed CTF labs.
-
-GCC and Make are needed to rebuild binary artifacts.
-
-## Run The App
-
-Run directly:
-
-```bash
-flask --app app run --debug
-```
-
-Or:
-
-```bash
-python app.py
-```
-
-Default web app URL:
-
-```text
-http://127.0.0.1:5000
-```
-
-## Run App And CTF Services
-
-The helper script manages the Flask app and Docker CTF services:
-
-```bash
-./scripts/dev-services.sh start
-./scripts/dev-services.sh status
-./scripts/dev-services.sh logs
-./scripts/dev-services.sh restart
-./scripts/dev-services.sh stop
-```
-
-Default service locations:
-
-| Service | URL or endpoint |
-| --- | --- |
-| ByteSec web app | `http://127.0.0.1:5000` |
-| EzSQLi challenge | `http://127.0.0.1:8004` |
-| Ret2win challenge | `nc 127.0.0.1 9001` |
-| Docker admin dashboard | `http://127.0.0.1:5000/admin/docker` |
-
-When running from WSL and opening from Windows, use the WSL IP if `localhost` does not work:
-
-```bash
-hostname -I | awk '{print $1}'
-```
-
-Then open:
-
-```text
-http://<wsl-ip>:5000
-http://<wsl-ip>:8004
-nc <wsl-ip> 9001
-```
-
-## CTF Labs
-
-### EzSQLi
-
-Path:
-
-```text
-ctf_chall/ezsqli/
-```
-
-Direct commands:
-
-```bash
-cd ctf_chall/ezsqli
-docker compose up -d --build
-docker compose ps
-docker compose logs --tail=80
-docker compose down
-```
-
-### XOR Flag Checker
-
-Path:
-
-```text
-ctf_chall/re_asm_xor_checker/
-```
-
-Direct commands:
-
-```bash
-cd ctf_chall/re_asm_xor_checker
-make
-./xor_checker
-```
-
-The app also exposes a download route:
-
-```text
-/downloads/re-asm-xor-checker
-```
-
-### RSA Starter
-
-The RSA starter is generated by the app and exposed as a download route:
-
-```text
-/downloads/crypto-rsa-starter
-```
-
-### Ret2win
-
-Path:
-
-```text
-ctf_chall/ret2win/
-```
-
-Direct commands:
-
-```bash
-cd ctf_chall/ret2win
-docker compose up -d --build
-docker compose ps
-nc 127.0.0.1 9001
-docker compose down
-```
-
-The app also exposes a download route:
-
-```text
-/downloads/pwn-ret2win
-```
+---
 
 ## Curriculum Parser Rules
 
-The parser in `bytesec/seed.py` reads markdown and creates course content.
-
-Module heading:
+The parser in `bytesec/seed.py` reads markdown files and builds lesson data from these headings:
 
 ```markdown
 # Module NN: Title
-```
-
-Lesson heading:
-
-```markdown
 ### N.N - Lesson Title
-```
-
-Activity heading:
-
-```markdown
 #### Activity ...
 ```
 
@@ -512,36 +374,19 @@ Supported activity families:
 - `SPOT`
 - app-generated `flag` steps
 
-Skipped classroom-only activity families:
+Skipped classroom-only formats:
 
 - drag/drop
 - build-query
 - fix-code
 - sandbox
-- other free-form activities not represented by current UI controls
+- other free-form activities not represented by the current UI
 
-## Rendering Support
-
-The app includes a small markdown renderer for lesson and article material.
-
-Supported content:
-
-- headings
-- paragraphs
-- links
-- inline code
-- bold and italic text
-- unordered lists
-- ordered lists
-- blockquotes
-- tables
-- code fences
-- horizontal rules
-- simple diagram-like code blocks rendered as SVG images
+---
 
 ## Important Routes
 
-Public or auth routes:
+### Main Pages
 
 ```text
 /
@@ -563,7 +408,7 @@ Public or auth routes:
 /community/<challenge_id>
 ```
 
-Admin routes:
+### Admin Pages
 
 ```text
 /admin/docker
@@ -571,7 +416,7 @@ Admin routes:
 /admin/articles
 ```
 
-Download routes:
+### Download Routes
 
 ```text
 /downloads/re-asm-xor-checker
@@ -580,7 +425,7 @@ Download routes:
 /community/<challenge_id>/download
 ```
 
-API routes:
+### API Routes
 
 ```text
 /api/complete-step
@@ -588,14 +433,17 @@ API routes:
 /api/set-theme
 ```
 
+---
+
 ## Verification
 
-Syntax-only check without writing bytecode:
+Syntax-only check:
 
 ```bash
 python - <<'PY'
 import ast
 from pathlib import Path
+
 for path in [Path('app.py'), *Path('bytesec').glob('*.py')]:
     ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
     print('ok', path)
@@ -607,8 +455,10 @@ Flask smoke check:
 ```bash
 python - <<'PY'
 from bytesec import create_app
+
 app = create_app({'TESTING': True})
 client = app.test_client()
+
 for path in ['/', '/leaderboard', '/articles']:
     print(path, client.get(path).status_code)
 PY
@@ -621,19 +471,18 @@ make -C ctf_chall/re_asm_xor_checker
 make -C ctf_chall/ret2win
 ```
 
-Check service status:
+Check managed service status:
 
 ```bash
 ./scripts/dev-services.sh status
 ```
 
-## Notes
+---
 
-- `instance/` and `__pycache__/` are runtime/generated artifacts.
-- The app seeds content automatically on startup.
-- Normal users cannot publish articles immediately.
-- Normal users cannot publish community challenges immediately.
-- Admins can render article and community challenge submissions before approving or rejecting them.
-- Course leaderboard rows start with the normal surface background and use blue-green highlighting on hover.
-- `ctf_chall/baby_sqli/` is present but the active SQL injection lab route uses `ctf_chall/ezsqli/`.
-- `modules/rev/` is present, but the active reverse engineering course track is loaded from `modules/reverse-engineering-assembly/`.
+## Important Notes
+
+- `instance/` and `__pycache__/` are runtime-generated artifacts.
+- The app seeds core content automatically on startup.
+- Normal users cannot immediately publish articles or community challenges.
+- `ctf_chall/baby_sqli/` exists in the repo, but the active SQL injection lab route uses `ctf_chall/ezsqli/`.
+- `modules/rev/` is present, but the active reverse engineering track loads from `modules/reverse-engineering-assembly/`.
