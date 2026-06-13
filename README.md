@@ -46,18 +46,6 @@ Security learning often gets split across slide decks, notes, challenge portals,
 
 ---
 
-## Course Tracks
-
-| Track | Modules | Source |
-| --- | ---: | --- |
-| Web Exploitation: SQL Injection | 1-8 | `modules/sqli/` plus EzSQLi lab |
-| Reverse Engineering: x86-64 Assembly | 9-13 | `modules/reverse-engineering-assembly/` plus XOR checker lab |
-| Cryptography: CryptoBook Core | 14-18 | `modules/crypto/` plus RSA starter lab |
-| Pwn: Stack Exploitation | 19-23 | `modules/pwn/` plus ret2win lab |
-| Windows Forensics Investigation Workflow | 24-30 | `modules/forensics/` |
-
----
-
 ## Demo Account
 
 | Username | Password | Access |
@@ -72,43 +60,103 @@ The gallery below was captured with Playwright using [`demo/capture_readme_scree
 
 ### Public Pages
 
-| Landing | Sign In | Register |
-| --- | --- | --- |
-| <img src="docs/screenshots/landing.jpg" alt="ByteSec landing page" width="100%"> | <img src="docs/screenshots/login.jpg" alt="ByteSec sign in page" width="100%"> | <img src="docs/screenshots/register.jpg" alt="ByteSec registration page" width="100%"> |
+#### Landing
+
+<img src="docs/screenshots/landing.jpg" alt="ByteSec landing page" width="100%">
+
+#### Sign In
+
+<img src="docs/screenshots/login.jpg" alt="ByteSec sign in page" width="100%">
+
+#### Register
+
+<img src="docs/screenshots/register.jpg" alt="ByteSec registration page" width="100%">
 
 ### Learning Flow
 
-| Dashboard | Course Catalog | Course Track |
-| --- | --- | --- |
-| <img src="docs/screenshots/dashboard.jpg" alt="ByteSec dashboard" width="100%"> | <img src="docs/screenshots/course-catalog.jpg" alt="ByteSec course catalog" width="100%"> | <img src="docs/screenshots/course-track-web.jpg" alt="ByteSec web track page" width="100%"> |
+#### Dashboard
 
-| Multiple Choice | Predict | Fill in the Blank |
-| --- | --- | --- |
-| <img src="docs/screenshots/lesson-mcq.jpg" alt="Multiple choice lesson activity" width="100%"> | <img src="docs/screenshots/lesson-predict.jpg" alt="Predict the output lesson activity" width="100%"> | <img src="docs/screenshots/lesson-fitb.jpg" alt="Fill in the blank lesson activity" width="100%"> |
+<img src="docs/screenshots/dashboard.jpg" alt="ByteSec dashboard" width="100%">
 
-| Spot the Vulnerability | Flag Submission | Leaderboard |
-| --- | --- | --- |
-| <img src="docs/screenshots/lesson-spot.jpg" alt="Spot the vulnerability lesson activity" width="100%"> | <img src="docs/screenshots/lesson-flag.jpg" alt="Flag submission lesson activity" width="100%"> | <img src="docs/screenshots/leaderboard.jpg" alt="ByteSec leaderboard page" width="100%"> |
+#### Course Catalog
+
+<img src="docs/screenshots/course-catalog.jpg" alt="ByteSec course catalog" width="100%">
+
+#### Course Track
+
+<img src="docs/screenshots/course-track-web.jpg" alt="ByteSec web track page" width="100%">
+
+#### Multiple Choice Activity
+
+<img src="docs/screenshots/lesson-mcq.jpg" alt="Multiple choice lesson activity" width="100%">
+
+#### Predict Activity
+
+<img src="docs/screenshots/lesson-predict.jpg" alt="Predict the output lesson activity" width="100%">
+
+#### Fill in the Blank Activity
+
+<img src="docs/screenshots/lesson-fitb.jpg" alt="Fill in the blank lesson activity" width="100%">
+
+#### Spot the Vulnerability Activity
+
+<img src="docs/screenshots/lesson-spot.jpg" alt="Spot the vulnerability lesson activity" width="100%">
+
+#### Flag Submission Activity
+
+<img src="docs/screenshots/lesson-flag.jpg" alt="Flag submission lesson activity" width="100%">
+
+#### Leaderboard
+
+<img src="docs/screenshots/leaderboard.jpg" alt="ByteSec leaderboard page" width="100%">
 
 ### Articles and Community
 
-| Articles | Article Detail | New Article |
-| --- | --- | --- |
-| <img src="docs/screenshots/articles.jpg" alt="Articles page" width="100%"> | <img src="docs/screenshots/article-detail.jpg" alt="Article detail page" width="100%"> | <img src="docs/screenshots/article-new.jpg" alt="New article page" width="100%"> |
+#### Articles
 
-| Community | Challenge Detail | Submit Challenge |
-| --- | --- | --- |
-| <img src="docs/screenshots/community.jpg" alt="Community challenges page" width="100%"> | <img src="docs/screenshots/community-detail.jpg" alt="Community challenge detail page" width="100%"> | <img src="docs/screenshots/community-submit.jpg" alt="Community challenge submission page" width="100%"> |
+<img src="docs/screenshots/articles.jpg" alt="Articles page" width="100%">
+
+#### Article Detail
+
+<img src="docs/screenshots/article-detail.jpg" alt="Article detail page" width="100%">
+
+#### New Article
+
+<img src="docs/screenshots/article-new.jpg" alt="New article page" width="100%">
+
+#### Community
+
+<img src="docs/screenshots/community.jpg" alt="Community challenges page" width="100%">
+
+#### Challenge Detail
+
+<img src="docs/screenshots/community-detail.jpg" alt="Community challenge detail page" width="100%">
+
+#### Submit Challenge
+
+<img src="docs/screenshots/community-submit.jpg" alt="Community challenge submission page" width="100%">
 
 ### Account and Admin Pages
 
-| Submissions | Profile |
-| --- | --- |
-| <img src="docs/screenshots/submissions.jpg" alt="Submissions page" width="100%"> | <img src="docs/screenshots/profile.jpg" alt="Profile page" width="100%"> |
+#### Submissions
 
-| Admin Articles | Admin Community | Admin Docker |
-| --- | --- | --- |
-| <img src="docs/screenshots/admin-articles.jpg" alt="Admin articles page" width="100%"> | <img src="docs/screenshots/admin-community.jpg" alt="Admin community page" width="100%"> | <img src="docs/screenshots/admin-docker.jpg" alt="Admin docker page" width="100%"> |
+<img src="docs/screenshots/submissions.jpg" alt="Submissions page" width="100%">
+
+#### Profile
+
+<img src="docs/screenshots/profile.jpg" alt="Profile page" width="100%">
+
+#### Admin Articles
+
+<img src="docs/screenshots/admin-articles.jpg" alt="Admin articles page" width="100%">
+
+#### Admin Community
+
+<img src="docs/screenshots/admin-community.jpg" alt="Admin community page" width="100%">
+
+#### Admin Docker
+
+<img src="docs/screenshots/admin-docker.jpg" alt="Admin docker page" width="100%">
 
 ---
 
@@ -231,12 +279,6 @@ Default service locations:
 | EzSQLi challenge | `http://127.0.0.1:8004` |
 | Ret2win challenge | `nc 127.0.0.1 9001` |
 | Docker admin dashboard | `http://127.0.0.1:5000/admin/docker` |
-
-When running from WSL and opening from Windows, you may need the WSL IP instead of the default loopback address:
-
-```bash
-hostname -I | awk '{print $1}'
-```
 
 ---
 
