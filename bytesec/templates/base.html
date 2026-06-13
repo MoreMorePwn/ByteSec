@@ -230,6 +230,25 @@
       border-color: var(--primary, #000) !important;
       background-color: var(--primary, #000) !important;
     }
+    .indicator-label {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      line-height: 1;
+    }
+    .indicator-icon {
+      display: block;
+      font-size: 16px !important;
+      line-height: 1;
+    }
+    .dark .mcq-option.correct .indicator-icon {
+      color: #d7fff5 !important;
+    }
+    .dark .mcq-option.incorrect .indicator-icon {
+      color: #ffe1dc !important;
+    }
     .mcq-option.selected .indicator-label {
       color: #ffffff !important;
     }

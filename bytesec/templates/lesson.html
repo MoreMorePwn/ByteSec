@@ -390,12 +390,12 @@
             o.classList.add('correct');
             indicator.classList.add('bg-green-100', 'border-green-500');
             indicator.classList.remove('bg-surface-container');
-            label.innerHTML = '<span class="material-symbols-outlined text-green-600 text-[16px]">check</span>';
+            label.innerHTML = '<span class="material-symbols-outlined indicator-icon text-green-600">check</span>';
           } else {
             o.classList.add('incorrect');
             indicator.classList.add('bg-red-100', 'border-red-400');
             indicator.classList.remove('bg-surface-container');
-            label.innerHTML = '<span class="material-symbols-outlined text-red-600 text-[16px]">close</span>';
+            label.innerHTML = '<span class="material-symbols-outlined indicator-icon text-red-600">close</span>';
           }
         }
         if (!isCorrect && id !== userAnswer) {
