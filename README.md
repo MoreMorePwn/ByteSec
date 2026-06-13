@@ -2,14 +2,14 @@
 
 <div align="center">
   <h3>Interactive cybersecurity learning platform for guided lessons, graded activities, and CTF-style practice labs.</h3>
-  <p>Built with Flask, markdown-seeded course content, and local challenge services for hands-on security education.</p>
+  <p>Built with Flask, markdown course content, and integrated challenge services for hands-on security education.</p>
 </div>
 
 ---
 
 # Interactive Cybersecurity Learning Platform
 
-ByteSec combines structured lessons, challenge-driven practice, and community content workflows in one web app. Learners can move through curated tracks, answer interactive checks, submit flags, and track progress, while admins can review articles, community challenges, and local lab services from the same interface.
+ByteSec is a web platform for learning cybersecurity through guided modules, short activity checks, article publishing, community challenge sharing, and hands-on challenge practice. It brings structured lesson flow and CTF-style exercises into one interface for both learners and admins.
 
 ---
 
@@ -19,37 +19,30 @@ ByteSec combines structured lessons, challenge-driven practice, and community co
 | --- | --- |
 | Name | ByteSec |
 | Type | Web-based cybersecurity learning platform |
-| Stack | Flask, Flask-SQLAlchemy, Jinja, Tailwind CSS, SQLite by default, optional Turso |
-| Focus | Guided CTF-style learning across web exploitation, reverse engineering, cryptography, pwn, and Windows forensics |
+| Stack | Flask, Flask-SQLAlchemy, Jinja, Tailwind CSS, SQLite, optional Turso |
+| Focus | Web exploitation, reverse engineering, cryptography, pwn, and Windows forensics |
 | Activity Types | Multiple choice, predict the output, fill in the blank, spot the vulnerable line, flag submission |
-| Supporting Modules | Articles, community challenges, leaderboards, profile management, and Docker lab controls |
+| Included Areas | Courses, articles, community challenges, leaderboards, profile management, and admin review pages |
 
 ---
 
 ## Features
 
-- Guided course tracks seeded from `modules/`
-- Interactive lesson steps with instant correctness feedback
-- Multiple activity families for concept checks and applied exercises
-- Downloadable and locally hosted CTF labs
-- Progress tracking through `UserProgress`
-- Course and community leaderboards
-- Article submission, preview, and admin publishing workflow
-- Community challenge upload, review, approval, and download flow
-- Theme persistence, login, logout, and profile editing
-- Docker admin dashboard for local challenge services
+- Guided course tracks loaded from `modules/`
+- Interactive lesson checks with immediate feedback
+- Multiple activity formats for concept validation and hands-on practice
+- Downloadable challenge materials and challenge service integration
+- Course progress tracking and leaderboard support
+- Article submission and review workflow
+- Community challenge submission, review, approval, and solve flow
+- Theme toggle, authentication, and profile editing
+- Admin surfaces for article, challenge, and service management
 
 ---
 
-## What ByteSec Solves
+## Problem Solved
 
-Cybersecurity learning is often split between static notes, separate lab environments, and manual challenge distribution. ByteSec brings those pieces together in one platform so students can:
-
-- read structured lesson material and answer checks in context
-- move from explanation to practice without leaving the platform
-- download or run companion labs for applied exercises
-- submit community content through moderated workflows
-- measure progress with stored completion data and leaderboards
+Security learning often gets split across slide decks, notes, challenge portals, and separate practice environments. ByteSec closes that gap by combining structured explanation, interactive checking, and challenge practice in one application so learners can move from concept to execution without changing tools.
 
 ---
 
@@ -65,58 +58,57 @@ Cybersecurity learning is often split between static notes, separate lab environ
 
 ---
 
-## Seeded Content
+## Demo Account
 
-### Demo Accounts
-
-| Username | Password | Role |
+| Username | Password | Access |
 | --- | --- | --- |
-| `demo` | `demo123` | Default admin/demo account |
-| `student` | `student123` | Sample learner account |
+| `demo` | `demo123` | Demo account with admin access |
 
-Uploader accounts are also seeded with password `bytesec123`:
+---
 
-```text
-Reimu
-Erin
-Marisa
-Sakuya
-Scarlet
-Cirno
-Milk
-Shama
-Liz
-Acid
-```
+## Screenshots
 
-Admin access is controlled by `BYTESEC_ADMIN_USERS`. If it is unset, only `demo` is treated as admin.
+The gallery below was captured with Playwright using [`demo/capture_readme_screenshots.py`](demo/capture_readme_screenshots.py).
 
-### Seeded Articles
+### Public Pages
 
-- Linux Rootkits: Hooking Models Defenders Should Recognize
-- Kernel Anti-Cheats and the Security Tradeoff
-- Self-XSS Still Deserves Threat Modeling
+| Landing | Sign In | Register |
+| --- | --- | --- |
+| <img src="docs/screenshots/landing.jpg" alt="ByteSec landing page" width="100%"> | <img src="docs/screenshots/login.jpg" alt="ByteSec sign in page" width="100%"> | <img src="docs/screenshots/register.jpg" alt="ByteSec registration page" width="100%"> |
 
-### Imported Community Challenges
+### Learning Flow
 
-The repo includes community challenge sources under `ctf_chall/community/`:
+| Dashboard | Course Catalog | Course Track |
+| --- | --- | --- |
+| <img src="docs/screenshots/dashboard.jpg" alt="ByteSec dashboard" width="100%"> | <img src="docs/screenshots/course-catalog.jpg" alt="ByteSec course catalog" width="100%"> | <img src="docs/screenshots/course-track-web.jpg" alt="ByteSec web track page" width="100%"> |
 
-```text
-Ai C
-Brixton Bullies
-Opening set
-Pirate's Hook V2
-World's end loneliness
-cold storage leak
-donut goes brrr
-joe mama
-lagi-dengerin-lagu-apa-mas
-pppnnnggg
-sigmaboy67
-syududu
-```
+| Multiple Choice | Predict | Fill in the Blank |
+| --- | --- | --- |
+| <img src="docs/screenshots/lesson-mcq.jpg" alt="Multiple choice lesson activity" width="100%"> | <img src="docs/screenshots/lesson-predict.jpg" alt="Predict the output lesson activity" width="100%"> | <img src="docs/screenshots/lesson-fitb.jpg" alt="Fill in the blank lesson activity" width="100%"> |
 
-Runtime challenge copies are generated under `instance/community_uploads/`.
+| Spot the Vulnerability | Flag Submission | Leaderboard |
+| --- | --- | --- |
+| <img src="docs/screenshots/lesson-spot.jpg" alt="Spot the vulnerability lesson activity" width="100%"> | <img src="docs/screenshots/lesson-flag.jpg" alt="Flag submission lesson activity" width="100%"> | <img src="docs/screenshots/leaderboard.jpg" alt="ByteSec leaderboard page" width="100%"> |
+
+### Articles and Community
+
+| Articles | Article Detail | New Article |
+| --- | --- | --- |
+| <img src="docs/screenshots/articles.jpg" alt="Articles page" width="100%"> | <img src="docs/screenshots/article-detail.jpg" alt="Article detail page" width="100%"> | <img src="docs/screenshots/article-new.jpg" alt="New article page" width="100%"> |
+
+| Community | Challenge Detail | Submit Challenge |
+| --- | --- | --- |
+| <img src="docs/screenshots/community.jpg" alt="Community challenges page" width="100%"> | <img src="docs/screenshots/community-detail.jpg" alt="Community challenge detail page" width="100%"> | <img src="docs/screenshots/community-submit.jpg" alt="Community challenge submission page" width="100%"> |
+
+### Account and Admin Pages
+
+| Submissions | Profile |
+| --- | --- |
+| <img src="docs/screenshots/submissions.jpg" alt="Submissions page" width="100%"> | <img src="docs/screenshots/profile.jpg" alt="Profile page" width="100%"> |
+
+| Admin Articles | Admin Community | Admin Docker |
+| --- | --- | --- |
+| <img src="docs/screenshots/admin-articles.jpg" alt="Admin articles page" width="100%"> | <img src="docs/screenshots/admin-community.jpg" alt="Admin community page" width="100%"> | <img src="docs/screenshots/admin-docker.jpg" alt="Admin docker page" width="100%"> |
 
 ---
 
@@ -133,22 +125,23 @@ Runtime challenge copies are generated under `instance/community_uploads/`.
 
 ### Data and Runtime
 
-- SQLite for local development
+- SQLite
 - Optional Turso via the bundled pure-Python HTTP driver
-- Runtime-generated instance data under `instance/`
+- Runtime data under `instance/`
 - Vercel-compatible entrypoint in `api/index.py`
 
-### Content and Labs
+### Content and Tooling
 
 - Markdown course modules
-- Docker Compose for web and pwn lab services
-- GCC and Make for native challenge binaries
+- Docker Compose
+- GCC and Make
+- Playwright for README screenshot capture
 
 ---
 
 ## Prerequisites
 
-Make sure these are available locally:
+Make sure these are installed on your machine:
 
 - Python with SQLite support
 - `pip`
@@ -159,7 +152,7 @@ If startup fails with `ModuleNotFoundError: No module named '_sqlite3'`, use a P
 
 ---
 
-## How to Run Locally
+## How to Run
 
 ### 1. Install Dependencies
 
@@ -218,7 +211,7 @@ flask --app app init-db
 
 ---
 
-## Run App and Lab Services
+## Run App and Challenge Services
 
 The helper script manages the Flask app plus the Docker-backed services:
 
@@ -239,7 +232,7 @@ Default service locations:
 | Ret2win challenge | `nc 127.0.0.1 9001` |
 | Docker admin dashboard | `http://127.0.0.1:5000/admin/docker` |
 
-When running from WSL and opening from Windows, you may need the WSL IP instead of `localhost`:
+When running from WSL and opening from Windows, you may need the WSL IP instead of the default loopback address:
 
 ```bash
 hostname -I | awk '{print $1}'
@@ -247,242 +240,12 @@ hostname -I | awk '{print $1}'
 
 ---
 
-## CTF Labs
+## Made by Kelompok 4
 
-### EzSQLi
-
-```bash
-cd ctf_chall/ezsqli
-docker compose up -d --build
-docker compose ps
-docker compose logs --tail=80
-docker compose down
-```
-
-### XOR Flag Checker
-
-```bash
-cd ctf_chall/re_asm_xor_checker
-make
-./xor_checker
-```
-
-Download route: `/downloads/re-asm-xor-checker`
-
-### RSA Starter
-
-Generated by the app and exposed at `/downloads/crypto-rsa-starter`.
-
-### Ret2win
-
-```bash
-cd ctf_chall/ret2win
-docker compose up -d --build
-docker compose ps
-nc 127.0.0.1 9001
-docker compose down
-```
-
-Download route: `/downloads/pwn-ret2win`
-
----
-
-## Platform Workflows
-
-### Courses
-
-1. Users open `/course`.
-2. They choose a track.
-3. Lessons are shown in module order.
-4. Activities are completed through `/api/complete-step` or `/api/check-flag-step`.
-5. Progress is stored in `UserProgress`.
-6. Course leaderboard ranks users by completed lesson steps.
-
-### Articles
-
-1. Published articles are listed at `/articles`.
-2. Any logged-in user can submit an article at `/articles/new`.
-3. Normal user submissions are stored as `pending`.
-4. Users can review their submission statuses on `/submissions`.
-5. Admins review, preview, publish, reject, edit, or delete content from `/admin/articles`.
-
-### Community Challenges
-
-1. Approved challenges are listed at `/community`.
-2. Logged-in users can submit a challenge at `/community/submit`.
-3. User submissions are stored as `pending`.
-4. Users can review their challenge statuses on `/submissions`.
-5. Submitters and admins can preview pending or rejected challenge pages.
-6. Admins review approvals from `/admin/community`.
-
----
-
-## Project Structure
-
-```text
-.
-|-- api/
-|   `-- index.py
-|-- app.py
-|-- bytesec/
-|   |-- __init__.py
-|   |-- models.py
-|   |-- routes.py
-|   |-- seed.py
-|   |-- turso_driver.py
-|   `-- templates/
-|-- ctf_chall/
-|   |-- baby_sqli/
-|   |-- community/
-|   |-- ezsqli/
-|   |-- re_asm_xor_checker/
-|   `-- ret2win/
-|-- demo/
-|-- modules/
-|   |-- crypto/
-|   |-- forensics/
-|   |-- pwn/
-|   |-- rev/
-|   |-- reverse-engineering-assembly/
-|   `-- sqli/
-|-- scripts/
-|   `-- dev-services.sh
-|-- README.md
-|-- requirements.txt
-`-- vercel.json
-```
-
----
-
-## Curriculum Parser Rules
-
-The parser in `bytesec/seed.py` reads markdown files and builds lesson data from these headings:
-
-```markdown
-# Module NN: Title
-### N.N - Lesson Title
-#### Activity ...
-```
-
-Supported activity families:
-
-- `MC`
-- `MULTIPLE CHOICE`
-- `PREDICT`
-- `FITB`
-- fill in the blank
-- `SPOT`
-- app-generated `flag` steps
-
-Skipped classroom-only formats:
-
-- drag/drop
-- build-query
-- fix-code
-- sandbox
-- other free-form activities not represented by the current UI
-
----
-
-## Important Routes
-
-### Main Pages
-
-```text
-/
-/register
-/login
-/logout
-/dashboard
-/profile
-/submissions
-/course
-/course/<track_key>
-/lesson/<lesson_id>
-/leaderboard
-/articles
-/articles/<slug>
-/articles/new
-/community
-/community/submit
-/community/<challenge_id>
-```
-
-### Admin Pages
-
-```text
-/admin/docker
-/admin/community
-/admin/articles
-```
-
-### Download Routes
-
-```text
-/downloads/re-asm-xor-checker
-/downloads/crypto-rsa-starter
-/downloads/pwn-ret2win
-/community/<challenge_id>/download
-```
-
-### API Routes
-
-```text
-/api/complete-step
-/api/check-flag-step
-/api/set-theme
-```
-
----
-
-## Verification
-
-Syntax-only check:
-
-```bash
-python - <<'PY'
-import ast
-from pathlib import Path
-
-for path in [Path('app.py'), *Path('bytesec').glob('*.py')]:
-    ast.parse(path.read_text(encoding='utf-8'), filename=str(path))
-    print('ok', path)
-PY
-```
-
-Flask smoke check:
-
-```bash
-python - <<'PY'
-from bytesec import create_app
-
-app = create_app({'TESTING': True})
-client = app.test_client()
-
-for path in ['/', '/leaderboard', '/articles']:
-    print(path, client.get(path).status_code)
-PY
-```
-
-Build binary labs:
-
-```bash
-make -C ctf_chall/re_asm_xor_checker
-make -C ctf_chall/ret2win
-```
-
-Check managed service status:
-
-```bash
-./scripts/dev-services.sh status
-```
-
----
-
-## Important Notes
-
-- `instance/` and `__pycache__/` are runtime-generated artifacts.
-- The app seeds core content automatically on startup.
-- Normal users cannot immediately publish articles or community challenges.
-- `ctf_chall/baby_sqli/` exists in the repo, but the active SQL injection lab route uses `ctf_chall/ezsqli/`.
-- `modules/rev/` is present, but the active reverse engineering track loads from `modules/reverse-engineering-assembly/`.
+| Name | Student ID |
+| --- | --- |
+| Jonathan Irvin Susanto | 2802440430 |
+| Owen Ourelio Bong | 2802461196 |
+| Huang Earl Gunawan | 2802444523 |
+| Haikal Satrio Dewandaru | 2802459600 |
+| Fathia Ramadhanti Hardianto | 2802477414 |
